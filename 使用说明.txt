@@ -1,0 +1,89 @@
+============================================
+ 到新电脑上怎么用这个项目
+============================================
+
+【第一次：把项目弄到新电脑上】
+
+  装 Git（没装的话）：https://git-scm.com/download/win
+  一路默认下一步，Git Credential Manager 会跟着装上。
+
+  然后打开命令行（cmd 或 PowerShell），执行：
+
+      cd D:\你想放代码的地方
+      git clone https://github.com/partjava/android-class.git
+
+  再用 Android Studio → Open → 选 android-class 这个文件夹。
+
+
+【以后每次改完代码：三行】
+
+      cd D:\你的路径\android-class
+      git add .
+      git commit -m "改了什么"
+      git push
+
+  第一条 push 会弹一个浏览器窗口让你登录 GitHub，登一次就记住了。
+
+
+============================================
+ 学校电脑有还原系统，要注意什么
+============================================
+
+  关机后 C 盘恢复原样。所以：
+
+  · 代码不会丢 —— 它在 GitHub 上。下次重新 clone 一遍就回来了。
+
+  · Git 身份每次都要重设（存在 C 盘，会被清掉）：
+
+        git config --global user.name "比额"
+        git config --global user.email "partjava.qq@gmail.com"
+
+    不设的话 commit 会失败，或者提交记录里不是你的名字。
+
+  · GitHub 登录状态也会被清，push 时要重新登录一次。
+
+  · 第一次打开项目会下载 Gradle 7.4（约 100MB）和依赖。
+    学校网慢、或者挡了 services.gradle.org 的话，会卡在
+    "Gradle Sync" 很久。这跟仓库本身无关。
+
+
+============================================
+ 两个容易懵的地方
+============================================
+
+1. 项目里没有 local.properties 这个文件
+
+   是故意的 —— 它记录的是每台机器各自的 SDK 路径，
+   所以被 .gitignore 挡掉了，没有上传。
+
+   用 Android Studio 打开项目：不用管，它会自己生成。
+
+   但如果用命令行敲 ./gradlew assembleDebug，会报错：
+
+       SDK location not found. Define a valid SDK location with an
+       ANDROID_HOME environment variable or by setting the sdk.dir
+       path in your project's local properties file
+
+   解决办法是自己建一个 local.properties 放在项目根目录，
+   里面写一行：
+
+       sdk.dir=C:/Users/你的用户名/AppData/Local/Android/Sdk
+
+   注意用正斜杠。写成反斜杠转义的形式会直接报错。
+
+
+2. 项目里找不到 Craftsman.java / CraftsmanAdapter.java
+
+   这两个类被合并进 HomeActivity.java 当内部类了：
+
+       HomeActivity.java:351    public static class Craftsman
+       HomeActivity.java:379    class CraftsmanAdapter
+
+   答辩要翻代码的话，别在这两个文件名上找。
+
+
+============================================
+ 仓库地址
+============================================
+
+  https://github.com/partjava/android-class
