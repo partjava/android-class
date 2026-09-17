@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    纯文字新闻。四种 item 布局里最小的一种。
+
+    元信息行的改法是四种布局共用的：来源 TextView 从 wrap_content 改成
+    0dp + weight=1 并加 maxLines/ellipsize，时间保持 wrap_content。
+    这样来源再长也只是自己被截断，不会把时间挤出屏幕。
+    改造前两者都是 wrap_content 且没有 maxLines，来源一长时间就没了。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_surface"
+    android:layout_marginBottom="@dimen/space_s"
+    android:padding="@dimen/page_padding">
+
+    <TextView
+        android:id="@+id/tv_title_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_primary"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_s"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/tv_source_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+        <TextView
+            android:id="@+id/tv_time_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_l"
+            android:maxLines="1"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+    </LinearLayout>
+</LinearLayout>

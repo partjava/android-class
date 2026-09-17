@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 未选中的筛选项胶囊底色（我的页「视频」「微头条」）。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_subtle"/>
+    <corners android:radius="18dp"/>
+</shape>

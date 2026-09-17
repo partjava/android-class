@@ -1,0 +1,5 @@
+<resources>
+    <!-- 桌面图标下的名字。和首页顶栏标题保持一致。
+         「仿」字保留，表明这是课程设计的仿制版，不是官方应用。 -->
+    <string name="app_name">仿今日头条</string>
+</resources>

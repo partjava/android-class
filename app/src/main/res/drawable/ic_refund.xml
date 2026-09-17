@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    「退款/售后」的图标。
+
+    改造前和 ic_service.xml 是同一个"圆圈感叹号"的两个变体，分不出来。
+    客服那边改成耳机了，这边改成人民币符号（退款 = 钱）。
+    下面紧跟着"退款/售后"的文字标签，语义不会有歧义。
+
+    用描边而不是填充：¥ 这个字形全用填充路径画会很别扭，
+    描边宽度 2.2 + 圆头圆角，在 48dp 下粗细和旁边的填充图标基本齐平。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- ¥：两撇 + 一竖 + 两横 -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"
+        android:pathData="M6.5,4.5L12,11.5L17.5,4.5M12,11.5L12,20M7,13.2L17,13.2M7,16.4L17,16.4"/>
+</vector>

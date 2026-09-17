@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    大国工匠列表项（首页「视频」标签切过去之后的 ListView）。
+
+    和 4 个新闻 item 保持同一套卡片规则：白底 + 下方 8dp 间距，
+    父容器是灰底，靠间距自然分隔，不画分隔线。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/bg_surface"
+    android:layout_marginBottom="@dimen/space_s"
+    android:padding="@dimen/page_padding">
+
+    <ImageView
+        android:id="@+id/iv_craft_img"
+        android:layout_width="120dp"
+        android:layout_height="90dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="工匠配图"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="@dimen/space_m">
+
+        <!-- 名字原来是 wrap_content，长了会顶出去。改 match_parent，
+             在竖向列里就等于"占满这一列"，配合 ellipsize 不会溢出。 -->
+        <TextView
+            android:id="@+id/tv_craft_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold"/>
+
+        <!-- 简介用 weight=1 吃掉图片下方剩下的高度，文字垂直居中，
+             右列不会缩在顶部、下面空一大块。 -->
+        <TextView
+            android:id="@+id/tv_craft_short"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="@dimen/space_xs"
+            android:gravity="top"
+            android:maxLines="3"
+            android:ellipsize="end"
+            android:textColor="@color/text_secondary"
+            android:textSize="@dimen/text_body_small"/>
+    </LinearLayout>
+</LinearLayout>

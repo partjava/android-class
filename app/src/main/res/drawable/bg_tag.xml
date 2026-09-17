@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    我的页的两枚标签底色（"IP属地:湖北"、"添加年龄、学校标签"）。
+
+    改造前是 background="#EEEEEE" 的直角方块。加 4dp 圆角，
+    和页面里其它圆角元素（搜索框、按钮、胶囊）成一套。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_subtle"/>
+    <corners android:radius="4dp"/>
+</shape>

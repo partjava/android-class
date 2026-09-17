@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    自适应启动图标的前景层。
+
+    改造前这里是 Android Studio 模板的白色小机器人（带渐变阴影）——
+    和"仿今日头条"这个 App 没有任何关系，答辩时一眼就能看出是模板没换。
+
+    现在画成一张资讯卡片：白色圆角卡片 + 顶部红色图区 + 三条深灰正文线，
+    压在 ic_launcher_background 的红色底上。
+
+    坐标说明：108x108 的画布里，自适应图标的安全区是中间 72x72
+    （即 x/y 各 18..90）。卡片取 x 27..81、y 22..86，四周留够，
+    任何形状的图标遮罩（圆/方/水滴）都不会切到内容。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 白色卡片。（圆角半径 5） -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,22h44a5,5 0 0 1 5,5v54a5,5 0 0 1 -5,5h-44a5,5 0 0 1 -5,-5v-54a5,5 0 0 1 5,-5z" />
+
+    <!-- 顶部图区：只有上面两个角是圆的，下面是直的。 -->
+    <path
+        android:fillColor="#E63939"
+        android:pathData="M32,22h44a5,5 0 0 1 5,5v23h-54v-23a5,5 0 0 1 5,-5z" />
+
+    <!-- 三条正文线，最后一条短一截，像排版过的正文。 -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M35,58h38v5h-38z" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M35,68h38v5h-38z" />
+    <path
+        android:fillColor="#999999"
+        android:pathData="M35,78h25v5h-25z" />
+</vector>

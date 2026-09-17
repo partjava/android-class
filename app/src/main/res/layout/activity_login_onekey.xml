@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  一键登录页。
+
+  保留了原有的关键结构：根布局是 ScrollView + fillViewport，
+  内容紧凑排布保证一屏放得下（可用高度约 592dp，实际内容约 560dp），
+  小屏手机还能上下滚动兜底。
+
+  本次精修：
+  · 「一键登录」按钮原来是 backgroundTint="#F72C2F" —— 这是全项目第 5 个
+    红色（其余四个是 #E63939 / #F44336 / #FF3333 / #FF4444），而且没有圆角。
+    现在改用 Widget.Toutiao.Button，统一到 brand_red 并拿到按压态。
+  · 两条权限说明文字原来是 wrap_content，文字比可用宽度长时会顶出去。
+    改 0dp + weight=1，让它们老实换行。
+  · 字号从 5 档（22/20/16/15/13sp）收到 4 档（text_* token）。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/bg_surface"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/space_xl"
+        android:paddingVertical="@dimen/space_m">
+
+        <!-- 关闭按钮。左移 8dp 抵消图标盒子自带的内边距，
+             让叉号视觉上和下面的文字对齐在同一列。 -->
+        <ImageView
+            android:id="@+id/iv_close"
+            style="@style/Widget.Toutiao.NavIcon.Dark"
+            android:layout_marginStart="-8dp"
+            android:src="@drawable/ic_close"
+            android:contentDescription="关闭"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_l"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="登录你的头条 精彩永不丢失"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_display"
+            android:textStyle="bold"/>
+
+        <!--头条logo-->
+        <ImageView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="@dimen/space_l"
+            android:src="@drawable/ic_toutiao_logo"
+            android:contentDescription="头条logo"/>
+
+        <!--一键登录按钮-->
+        <Button
+            android:id="@+id/btn_onekey_login"
+            style="@style/Widget.Toutiao.Button"
+            android:layout_width="match_parent"
+            android:layout_marginTop="@dimen/space_xl"
+            android:text="♪ 一键登录"/>
+
+        <!--协议勾选-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/space_l">
+            <CheckBox
+                android:id="@+id/cb_agree_onekey"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="0dp"
+                android:paddingEnd="@dimen/space_xs"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已阅读并同意 "
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_agreement1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="用户协议"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" 和 "
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_privacy1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="隐私政策"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!--权限说明文本-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_l"
+            android:text="授权后应用将获得以下权限"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_body_small"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/space_s">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="2dp"
+                android:src="@drawable/ic_check_red"
+                android:contentDescription="权限"/>
+            <!-- 0dp + weight=1：这行 21 个字，wrap_content 会顶出屏幕。 -->
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_s"
+                android:text="获得你的公开信息（头像、昵称、地区和性别）"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_caption"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/space_xs">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="2dp"
+                android:src="@drawable/ic_check_red"
+                android:contentDescription="权限"/>
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_s"
+                android:text="获得你的抖音手机号"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_caption"/>
+        </LinearLayout>
+
+        <!--三个第三方登录入口：手机号、苹果、更多-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/space_l">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+                <ImageView
+                    android:id="@+id/ic_phone_login"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_phone"
+                    android:contentDescription="手机号登录"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="手机号"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_caption"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginStart="@dimen/space_2xl">
+                <ImageView
+                    android:id="@+id/ic_apple_login"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_apple"
+                    android:contentDescription="Apple登录"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="Apple"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_caption"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginStart="@dimen/space_2xl">
+                <ImageView
+                    android:id="@+id/ic_more_login"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/ic_more"
+                    android:contentDescription="更多登录方式"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:text="更多"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="@dimen/text_caption"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!--底部文字-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/space_m">
+            <TextView
+                android:id="@+id/tv_app_setting2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="应用设置"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" | "
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_problem2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="遇到问题"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

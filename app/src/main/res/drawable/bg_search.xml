@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    首页顶栏里的搜索框底色。
+
+    改造前它是一块 background="#FFFFFF" 的纯白矩形，压在红色顶栏上是个生硬的方块。
+    改成圆角白色胶囊，和红底形成正常的搜索框观感。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_surface"/>
+    <corners android:radius="18dp"/>
+</shape>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    大国工匠详情弹窗。
+
+    改造前 tv_detail_top_desc 和 tv_detail_long 这两个 TextView 是全项目
+    仅有的两处没写 textColor 的地方，颜色靠主题的 ?attr/textColorPrimary 兜底。
+    这在 AppCompat 主题下是黑色，但换成 Material 主题后会变成另一套默认值
+    （textAppearanceBody1 的 87% 黑），是换主题时最容易"某处莫名变色"的隐患。
+    现在两个都显式指定了。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/space_xl">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_detail_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_display"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tv_detail_top_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_m"
+            android:textSize="@dimen/text_title"
+            android:textColor="@color/text_primary"/>
+
+        <ImageView
+            android:id="@+id/iv_detail_img"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="@dimen/space_m"
+            android:scaleType="centerCrop"
+            android:contentDescription="工匠配图"/>
+
+        <TextView
+            android:id="@+id/tv_detail_long"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_m"
+            android:textSize="@dimen/text_body"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/tv_btn_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="@dimen/space_xl"
+            android:paddingVertical="@dimen/space_s"
+            android:paddingHorizontal="@dimen/space_m"
+            android:text="了解"
+            android:textColor="@color/brand_red"
+            android:textSize="@dimen/text_body"/>
+
+    </LinearLayout>
+</ScrollView>

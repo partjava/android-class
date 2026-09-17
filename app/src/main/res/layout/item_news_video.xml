@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 标题 + 大图封面 + 播放键的新闻 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_surface"
+    android:layout_marginBottom="@dimen/space_s"
+    android:padding="@dimen/page_padding">
+
+    <TextView
+        android:id="@+id/tv_title_video"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_primary"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_marginTop="@dimen/space_m">
+        <ImageView
+            android:id="@+id/iv_video_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="视频封面"/>
+        <!-- 原来是系统自带的 @android:drawable/ic_media_play（纯黑三角），
+             压在浅色封面上几乎看不见，已换成半透明黑圆 + 白三角。 -->
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_play_circle"
+            android:contentDescription="播放"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_s"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/tv_source_video"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+        <TextView
+            android:id="@+id/tv_time_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_l"
+            android:maxLines="1"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+    </LinearLayout>
+</LinearLayout>

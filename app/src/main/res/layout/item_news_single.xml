@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 左文右单图的新闻 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:background="@color/bg_surface"
+    android:layout_marginBottom="@dimen/space_s"
+    android:padding="@dimen/page_padding">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/tv_title_single"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_title"
+            android:textColor="@color/text_primary"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_s"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tv_source_single"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_tertiary"/>
+            <TextView
+                android:id="@+id/tv_time_single"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_l"
+                android:maxLines="1"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_tertiary"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_single"
+        android:layout_width="110dp"
+        android:layout_height="74dp"
+        android:layout_marginStart="@dimen/space_m"
+        android:scaleType="centerCrop"
+        android:contentDescription="新闻配图"/>
+</LinearLayout>

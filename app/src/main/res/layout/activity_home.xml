@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    首页。
+
+    注意 7 个 tab 的 textColor 必须逐个保留：HomeActivity 切换 tab 时用
+    setTextColor(0xFFE63939 / 0xFF333333) 直接改颜色，XML 这边是初始状态。
+    两边的色值必须同源（@color/brand_red 和 @color/tab_inactive），
+    不一致的话点一下 tab 颜色就会跳。
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page">
+
+    <!-- 顶部红色标题栏 -->
+    <LinearLayout
+        android:id="@+id/ll_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand_red"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- 标题+搜索框 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_m"
+            android:paddingVertical="@dimen/space_m">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="仿今日头条"
+                android:textColor="@color/on_brand"
+                android:textSize="@dimen/text_headline"
+                android:textStyle="bold"/>
+
+            <!-- 原来是纯白直角矩形，改成圆角胶囊 + 放大镜图标 -->
+            <EditText
+                android:id="@+id/et_search"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_m"
+                android:background="@drawable/bg_search"
+                android:drawableStart="@drawable/ic_search"
+                android:drawableTint="@color/text_hint"
+                android:drawablePadding="@dimen/space_s"
+                android:hint="搜你想搜的"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:paddingHorizontal="@dimen/space_m"
+                android:textSize="@dimen/text_body_small"
+                android:inputType="text"
+                android:maxLines="1"
+                android:imeOptions="actionSearch"/>
+        </LinearLayout>
+
+        <!-- 分类标签行：推荐、抗疫、小视频、北京、视频、热点、娱乐 -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/bg_surface"
+            android:scrollbars="none">
+            <LinearLayout
+                android:id="@+id/ll_tab_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="@dimen/space_s">
+
+                <TextView
+                    android:id="@+id/tab_recommend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="推荐"
+                    android:textColor="@color/brand_red"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_kangyi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="抗疫"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_video_small"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="小视频"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_beijing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="北京"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_video"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="视频"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_hot"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="热点"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+                <TextView
+                    android:id="@+id/tab_entertain"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="娱乐"
+                    android:textColor="@color/tab_inactive"
+                    android:textSize="@dimen/text_title"
+                    android:paddingHorizontal="@dimen/space_m"/>
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <!-- 新闻列表区域：RecyclerView + NewsMultiAdapter，支持 4 种 item 布局。
+         这里不再需要分隔线：每个 item 自己是白底 + 下方 8dp 间距，
+         在灰底上自然形成卡片分隔。 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_news"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/bg_page"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/space_s"
+        app:layout_constraintTop_toBottomOf="@id/ll_top_bar"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"/>
+
+    <!-- ===== 大国工匠列表，默认隐藏 =====
+         item 自己带白底 + 下方 8dp 间距，所以不要分隔线，
+         和上面 RecyclerView 的卡片做法保持一致。 -->
+    <ListView
+        android:id="@+id/lv_craft"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/bg_page"
+        android:divider="@null"
+        android:dividerHeight="0dp"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/space_s"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/ll_top_bar"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav"/>
+
+    <!--底部导航栏，和我的页面共用同一个样式-->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        style="@style/Widget.Toutiao.BottomNav"
+        android:fitsSystemWindows="true"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

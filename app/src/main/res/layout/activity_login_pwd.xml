@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    账号密码登录页。改造前这一页有 4 个独立缺陷：
+
+    1. et_account 在横向 LinearLayout 里写了 layout_width="match_parent"，
+       测量宽度等于父容器宽度，会水平溢出。全项目 59 处 0dp 里唯一的例外，
+       同页的密码输入框反而是正确写法。已改 0dp + weight=1。
+
+    2. 「立即登录」按钮背景写的是 backgroundTint="#FCA8A8"（褪色的粉红），
+       看着像禁用状态；而且 android:radius="12dp" 是无效属性——它只对
+       <shape> 根节点生效，写在 Button 上不报错也不起作用，圆角从来没生效过。
+       现在改用 Widget.Toutiao.Button 的真圆角 drawable。
+
+    3. 协议行 4 个 TextView 里只有「已同意用户协议」那个带了 padding="12dp"，
+       导致它和 CheckBox 基线错位。已删掉该 padding 改用 gravity 对齐。
+
+    4. 整页没有 ScrollView（全项目唯一一个高页面不包 ScrollView 的），
+       底部那个 marginTop="80dp" 就是被挤出来硬撑的补丁。已包上 ScrollView
+       并把 80dp 降到 32dp。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/space_xl"
+        android:paddingBottom="@dimen/space_xl">
+
+        <!-- 返回箭头。左移 8dp 是为了抵消图标盒子自带的内边距，
+             让箭头视觉上和下面的文字对齐在同一列。 -->
+        <ImageView
+            android:id="@+id/iv_back"
+            style="@style/Widget.Toutiao.NavIcon.Dark"
+            android:layout_marginStart="-8dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+
+        <!-- 标题。24sp 不是 28sp：这行 12 个中文字 + 1 空格，
+             360dp 屏减左右各 24dp 内边距只剩 312dp 可用，
+             28sp 需要约 343dp 必然折行（改造前截图里"丢失"两字单独掉到第二行）。 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xl"
+            android:gravity="center"
+            android:text="登录你的头条 精彩永不丢失"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_display"
+            android:textStyle="bold"/>
+
+        <!-- 手机号/邮箱输入行 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/space_2xl">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+86"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_title"/>
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="@dimen/space_xs"
+                android:src="@drawable/ic_dropdown"
+                android:contentDescription="选择区号"/>
+            <!-- 0dp + weight=1：占满剩余宽度。写 match_parent 会溢出。 -->
+            <EditText
+                android:id="@+id/et_account"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_l"
+                android:hint="手机号/邮箱"
+                android:textSize="@dimen/text_title"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@null"
+                android:maxLines="1"
+                android:inputType="text"/>
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="@dimen/space_s"
+            android:background="@color/input_line"/>
+
+        <!-- 密码行 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/space_xl">
+            <EditText
+                android:id="@+id/et_pwd"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="密码"
+                android:textSize="@dimen/text_title"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:background="@null"
+                android:maxLines="1"
+                android:inputType="textPassword"/>
+            <TextView
+                android:id="@+id/tv_forget_pwd"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/space_s"
+                android:text="找回密码"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="@dimen/space_s"
+            android:background="@color/input_line"/>
+
+        <!-- 立即登录 -->
+        <Button
+            android:id="@+id/btn_login"
+            style="@style/Widget.Toutiao.Button"
+            android:layout_width="match_parent"
+            android:layout_marginTop="@dimen/space_2xl"
+            android:text="立即登录"/>
+
+        <!-- 协议勾选。改造前这里写着「已同意用户协议」+「用户协议」，
+             同一个词出现了两次，是复制粘贴留下的。删掉重复后这一行也
+             刚好排得下（原来文字一直顶到屏幕右边缘 x=680）。 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="@dimen/space_xl">
+            <CheckBox
+                android:id="@+id/cb_agree"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="0dp"
+                android:paddingEnd="@dimen/space_xs"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已同意"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_user_agreement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="用户协议"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" 和 "
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_privacy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="隐私政策"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!-- 撑开剩余空间，把下面的链接压到页面底部。
+             配合根布局的 fillViewport="true"：内容不足一屏时这个 View
+             吸收多余高度，弹出键盘时它收缩为 0，内容仍可滚动。 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="@dimen/space_2xl"/>
+
+        <!-- 底部文字。原来是 marginTop="80dp"，纯粹为了让内容够到屏幕底部。 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/tv_app_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="应用设置"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" | "
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+            <TextView
+                android:id="@+id/tv_problem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingVertical="@dimen/space_s"
+                android:text="遇到问题"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

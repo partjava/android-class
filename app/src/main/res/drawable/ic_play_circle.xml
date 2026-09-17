@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    视频封面上的播放键。
+
+    改造前这里用的是系统自带的 @android:drawable/ic_media_play——一个纯黑三角，
+    压在浅色封面上几乎看不见（首页视频 tab 截图里就是这样）。
+
+    现在改成半透明黑底圆 + 白色三角：无论封面是深是浅都能看清。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- 半透明黑圆 -->
+    <path
+        android:fillColor="@color/scrim_40"
+        android:pathData="M24,4 A20,20 0 1,1 23.99,4 Z"/>
+
+    <!-- 白色播放三角，视觉重心略右移才显得居中 -->
+    <path
+        android:fillColor="@color/on_brand"
+        android:pathData="M19,15 L35,24 L19,33 Z"/>
+</vector>

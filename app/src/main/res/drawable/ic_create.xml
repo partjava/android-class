@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    「创作中心」的图标。
+
+    改造前这个文件和 ic_edit.xml 的 pathData 是一个字都不差的同一条路径
+    （Material 的 create 铅笔图），也就是说「创作中心」和「编辑资料」
+    在界面上长得完全一样 —— 我的页里 pencil 同时出现在名字旁边和功能格里。
+    答辩时老师问"这两个图标为什么一样"是没法解释的。
+
+    现在改成一个灯泡（创意 / 创作），和铅笔彻底区分开。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 灯泡主体：圆头 + 收窄的颈部 -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M12,2a7,7 0 0 1 4.2,12.6c-0.4,0.32 -0.6,0.68 -0.6,1.1V17h-7.2v-1.3c0,-0.42 -0.2,-0.78 -0.6,-1.1A7,7 0 0 1 12,2z"/>
+    <!-- 灯头：两段横线表示螺纹 -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M9,18h6v1.6h-6z" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M10,20.8h4v1.2h-4z" />
+</vector>

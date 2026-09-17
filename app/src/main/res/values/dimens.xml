@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============================================================
+         字号
+         改造前全项目有 15 档字号（20sp 出现 52 次、18sp 25 次…），
+         其中 8 档只在一两处用过。这里收敛成 6 档语义层级。
+
+         用 textSize="@dimen/text_xxx" 引用，不要再写字面量。
+         ============================================================ -->
+    <!-- 登录页大标题、工匠弹窗姓名。
+         注意是 24sp 不是 28sp：登录页标题「登录你的头条 精彩永不丢失」
+         共 12 个中文字 + 1 空格，中文按 1em 估算约 12.25×字号，
+         360dp 屏减去左右各 24dp 内边距只剩 312dp 可用，
+         28sp 需要 343dp 必然折行，24sp 只需 294dp 才排得下。 -->
+    <dimen name="text_display">24sp</dimen>
+    <!-- 顶栏标题、详情页新闻标题 -->
+    <dimen name="text_headline">22sp</dimen>
+    <!-- 首页 tab、新闻列表标题、设置项标题 -->
+    <dimen name="text_title">18sp</dimen>
+    <!-- 正文、设置项标签、按钮文字 -->
+    <dimen name="text_body">16sp</dimen>
+    <!-- 来源/时间/评论数等元信息 -->
+    <dimen name="text_body_small">14sp</dimen>
+    <!-- 角标、小标签 -->
+    <dimen name="text_caption">12sp</dimen>
+
+    <!-- ============================================================
+         间距刻度（4dp 栅格）
+         改造前 marginTop 有 14 种取值，其中 6/10/14/18dp 都不在栅格上。
+         ============================================================ -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+    <dimen name="space_2xl">32dp</dimen>
+    <dimen name="space_3xl">40dp</dimen>
+
+    <!-- ============================================================
+         尺寸
+         ============================================================ -->
+    <!-- 页面左右统一内边距 -->
+    <dimen name="page_padding">16dp</dimen>
+    <!-- 顶栏返回图标。改造前有 26/28/32dp 三种尺寸画同一个图形 -->
+    <dimen name="icon_nav">24dp</dimen>
+    <!-- 我的功能九宫格图标 -->
+    <dimen name="icon_feature">48dp</dimen>
+    <!-- 最小可点区域，Material 规范 -->
+    <dimen name="touch_target">48dp</dimen>
+    <!-- 单行设置项高度 -->
+    <dimen name="row_height">56dp</dimen>
+    <!-- 双行设置项最小高度（用 minHeight，不要写死 height） -->
+    <dimen name="row_height_multi">72dp</dimen>
+    <!-- 主按钮 -->
+    <dimen name="button_height">52dp</dimen>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    角标底色（"3"、"领现金"）。
+
+    改造前是 background="#F44336" 的直角块 —— 那是 AS 模板里的红，
+    和品牌红 #E63939 不是同一个（全项目 4 个红之一）。
+    现在统一到 brand_red，并加圆角。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/brand_red"/>
+    <corners android:radius="8dp"/>
+</shape>

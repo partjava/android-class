@@ -1,0 +1,612 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    我的页。
+
+    三处结构性缺陷在这里修掉：
+
+    1. 右侧信息列原来是 wrap_content，宽度由文字自己撑。可里面的
+       "填写简介更容易获得大家的关注，点击添加 >" 实测 336dp，而这一列
+       可用宽度只有约 214dp（360 - 左右 20dp - 头像 90dp - 间距 16dp）。
+       多出来的部分不会换行、只会被屏幕裁掉——截图里"添加年龄、学校标签"
+       那枚标签只剩一半就是这个原因。现在整列改 0dp + weight=1，
+       宽度由父容器定死，文字自己换行。
+
+    2. 头像从 90dp 收到 72dp。90dp 的头像吃掉四分之一的屏宽，挤得右边
+       连两枚标签都放不下。
+
+    3. "0关注   1粉丝   1获赞" 是一个 TextView 用空格硬拼的。数字变四位数
+       就折行，三组也对不齐。拆成三个 TextView（原本没有 id，也没被
+       MineActivity.java 引用，拆了不影响逻辑）。
+
+    ⚠️ 保留的 id：MineActivity.java 会用到 iv_setting / iv_avatar /
+       tv_apply_auth / ll_* / btn_go_comment / bottom_nav，不要改名。
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+
+    <ScrollView
+        android:id="@+id/scroll_view_mine"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- ===================== 顶部栏 ===================== -->
+            <!-- 补 gravity：原来 48dp 的按钮和 36dp 的图标顶对齐，
+                 视觉上按钮像是往下掉了一截。 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_m">
+
+                <Button
+                    android:id="@+id/btn_publish"
+                    style="@style/Widget.Toutiao.Button.Small"
+                    android:text="+ 发布"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+
+                <ImageView
+                    android:id="@+id/iv_friend"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:src="@drawable/ic_friend"
+                    android:contentDescription="好友"/>
+                <ImageView
+                    android:id="@+id/iv_msg"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_msg"
+                    android:contentDescription="消息"/>
+                <ImageView
+                    android:id="@+id/iv_setting"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_setting"
+                    android:contentDescription="设置"/>
+            </LinearLayout>
+
+            <!-- ===================== 用户信息 ===================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="@dimen/page_padding">
+
+                <ImageView
+                    android:id="@+id/iv_avatar"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:src="@drawable/avatar"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="头像"/>
+
+                <!-- 0dp + weight=1：整列宽度由父容器定死 -->
+                <LinearLayout
+                    style="@style/Widget.Toutiao.SettingLabelColumn"
+                    android:layout_marginStart="@dimen/space_l">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="凝墨"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_display"
+                            android:textStyle="bold"/>
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="@dimen/space_xs"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_edit"
+                            android:contentDescription="编辑资料"/>
+                    </LinearLayout>
+
+                    <!-- 拆成三段，各自对齐 -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/space_s">
+
+                        <TextView
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:text="0关注"/>
+                        <TextView
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:layout_marginStart="@dimen/space_l"
+                            android:text="1粉丝"/>
+                        <TextView
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:layout_marginStart="@dimen/space_l"
+                            android:text="1获赞"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_apply_auth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:text="申请认证 >"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_small"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:text="填写简介更容易获得大家的关注，点击添加 >"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_small"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/space_s">
+
+                        <TextView
+                            style="@style/Widget.Toutiao.Tag"
+                            android:text="IP属地:湖北"/>
+                        <TextView
+                            style="@style/Widget.Toutiao.Tag"
+                            android:layout_marginStart="@dimen/space_s"
+                            android:text="添加年龄、学校标签"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===================== 我的功能 ===================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="我的功能"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/tv_all_func"
+                        style="@style/Widget.Toutiao.SectionMore"
+                        android:text="全部 >"/>
+                </LinearLayout>
+
+                <!-- 第一行：消息私信 / 浏览历史 / 创作中心 / 书架 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_l">
+
+                    <LinearLayout
+                        android:id="@+id/ll_msg_private"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <RelativeLayout
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature">
+                            <ImageView
+                                android:layout_width="@dimen/icon_feature"
+                                android:layout_height="@dimen/icon_feature"
+                                android:src="@drawable/ic_msg_private"
+                                android:contentDescription="消息私信"/>
+                            <!-- 角标。改造前用固定 6dp/2dp 内边距，数字一宽就变形。
+                                 改成 minWidth + 居中，1 位数和 2 位数都好看。 -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/bg_badge"
+                                android:gravity="center"
+                                android:minWidth="16dp"
+                                android:paddingHorizontal="4dp"
+                                android:paddingVertical="1dp"
+                                android:text="3"
+                                android:textColor="@color/on_brand"
+                                android:textSize="@dimen/text_caption"/>
+                        </RelativeLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="消息私信"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_history"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_history"
+                            android:contentDescription="浏览历史"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="浏览历史"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_create"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_create"
+                            android:contentDescription="创作中心"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="创作中心"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_book"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_book"
+                            android:contentDescription="书架"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="书架"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 第二行：购物/订单 / 收藏 / 客服中心 / 退款售后 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_l">
+
+                    <LinearLayout
+                        android:id="@+id/ll_shop"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <RelativeLayout
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature">
+                            <ImageView
+                                android:layout_width="@dimen/icon_feature"
+                                android:layout_height="@dimen/icon_feature"
+                                android:src="@drawable/ic_shop"
+                                android:contentDescription="购物订单"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/bg_badge"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:paddingVertical="1dp"
+                                android:text="领现金"
+                                android:textColor="@color/on_brand"
+                                android:textSize="@dimen/text_caption"/>
+                        </RelativeLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="购物/订单"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_collect"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_collect"
+                            android:contentDescription="收藏"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="收藏"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_service"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_service"
+                            android:contentDescription="客服中心"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="客服中心"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_refund"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_refund"
+                            android:contentDescription="退款售后"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="退款/售后"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===================== 头条聊天室 ===================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingBottom="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="头条聊天室"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionMore"
+                        android:text="..."/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/ic_chat_room"
+                        android:contentDescription="聊天室"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/space_m">
+
+                        <!-- 这一行右边有「去评论」按钮、左边有 56dp 图标，
+                             文字可用宽约 178dp。"每日评论 瓜分20万红包" 11 字
+                             按 18sp 算是 171dp，几乎顶格；降到 16sp 留出余量。
+                             maxLines 给 2 是保险丝：真换行了也不会被裁。 -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="每日评论 瓜分20万红包"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body"
+                            android:maxLines="2"
+                            android:ellipsize="end"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_xs"
+                            android:text="头条聊天室 正在热聊中>"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_body_small"
+                            android:maxLines="1"
+                            android:ellipsize="end"/>
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btn_go_comment"
+                        style="@style/Widget.Toutiao.Button.Small"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:text="去评论"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===================== 作品 ===================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="作品"/>
+
+                    <TextView
+                        android:id="@+id/tv_collect_tab"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xl"
+                        android:text="收藏"
+                        android:textColor="@color/brand_red"
+                        android:textSize="@dimen/text_body"/>
+
+                    <TextView
+                        android:id="@+id/tv_like_tab"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xl"
+                        android:text="赞过"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <ImageView
+                        android:layout_width="@dimen/icon_nav"
+                        android:layout_height="@dimen/icon_nav"
+                        android:src="@drawable/ic_search"
+                        android:tint="@color/icon_primary"
+                        android:contentDescription="搜索"/>
+                </LinearLayout>
+
+                <!-- 三个筛选项。
+                     原来是三个默认灰按钮，看不出哪个选中；现在「全部」用
+                     浅红胶囊 + 红字表示选中，另两个是中性灰胶囊。
+                     它们没有对应的点击逻辑（MineActivity 不引用这三个 id），
+                     所以这里只是静态外观。 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_m">
+
+                    <!-- 用 TextView 而不是 Button：见 styles.xml 里
+                         Widget.Toutiao.Chip 的注释（Material 主题下 Button
+                         会被 MaterialButton 抢走背景，三个胶囊会糊成一片红）。 -->
+                    <TextView
+                        android:id="@+id/btn_all_work"
+                        style="@style/Widget.Toutiao.Chip.Selected"
+                        android:text="全部"/>
+                    <TextView
+                        android:id="@+id/btn_video_work"
+                        style="@style/Widget.Toutiao.Chip"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:text="视频"/>
+                    <TextView
+                        android:id="@+id/btn_micro_work"
+                        style="@style/Widget.Toutiao.Chip"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:text="微头条"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="6个作品"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="@dimen/text_body_small"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!--底部导航栏，固定在屏幕底部，不会跟着滚动-->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        style="@style/Widget.Toutiao.BottomNav"
+        android:fitsSystemWindows="true"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

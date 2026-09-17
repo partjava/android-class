@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    设置页。
+
+    改造前这个文件 785 行，27 个设置行每一行都是手写的 9 行属性，结构完全一样，
+    外加 27 条手写分隔线。现在行模板收进 Widget.Toutiao.SettingRow，
+    分隔线收进 Widget.Toutiao.Divider，行高从写死的 64dp 降到 56dp，
+    字号从 20sp 降到 16sp（原来比首页新闻标题还大，层级是倒挂的）。
+
+    两处结构性缺陷（都是文字和右侧内容重叠）的修法一致：
+    左侧文字列的宽度从 wrap_content 改成 0dp + weight=1，让它主动占满剩余空间，
+    同时删掉那个多余的、和它抢空间的 <View weight=1> 撑开占位。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!--标题栏-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_s">
+            <ImageView
+                android:id="@+id/iv_back_setting"
+                style="@style/Widget.Toutiao.NavIcon.Dark"
+                android:src="@drawable/ic_back"
+                android:contentDescription="返回"/>
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+            <TextView
+                style="@style/Widget.Toutiao.PageTitle"
+                android:text="设置"/>
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+            <!--和左边返回图标等宽的占位，保证标题真正居中-->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="40dp"/>
+        </LinearLayout>
+
+        <!-- ==================== 设置列表 ==================== -->
+
+        <LinearLayout
+            android:id="@+id/item_scan"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="扫一扫"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_edit_profile"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="编辑资料"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_account_safe"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="账号与安全"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_privacy"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="隐私设置"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <!--深色模式，右侧带当前值-->
+        <LinearLayout
+            android:id="@+id/item_dark_mode"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="深色模式"/>
+            <TextView
+                style="@style/Widget.Toutiao.SettingValue"
+                android:text="已关闭"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_big_font"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="大字模式"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_font_size"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="字体大小"/>
+            <TextView
+                style="@style/Widget.Toutiao.SettingValue"
+                android:text="标准"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <!--双行 + 右侧值。原来这行的标题和右侧"一滑一个"是贴在一起的。-->
+        <LinearLayout
+            android:id="@+id/item_slide_mode"
+            style="@style/Widget.Toutiao.SettingRow.Multi">
+            <LinearLayout style="@style/Widget.Toutiao.SettingLabelColumn">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingRowTitle"
+                    android:text="图文详情滑动方式"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingRowSubtitle"
+                    android:text="设置图文详情页不同内容的切换方式"/>
+            </LinearLayout>
+            <TextView
+                style="@style/Widget.Toutiao.SettingValue"
+                android:text="一滑一个"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <!--双行 + 右侧开关。原来这行余量只剩 8dp，副标题已经顶到开关边上。-->
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow.Multi">
+            <LinearLayout style="@style/Widget.Toutiao.SettingLabelColumn">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingRowTitle"
+                    android:text="自动开启阅读模式/清爽模式"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingRowSubtitle"
+                    android:text="访问第三方站点时，更流畅的阅读体验"/>
+            </LinearLayout>
+            <Switch
+                android:id="@+id/switch_read_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_clear_cache"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="清理缓存"/>
+            <TextView
+                style="@style/Widget.Toutiao.SettingValue"
+                android:text="33.67MB"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_audio_setting"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="音频设置"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_play_network"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="播放与网络设置"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_push_notify"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="推送通知设置"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_safe_browse"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="安全浏览设置"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="提示音开关"/>
+            <Switch
+                android:id="@+id/switch_tip_sound"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_cover"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="头条封面"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="作品配图自动添加水印"/>
+            <Switch
+                android:id="@+id/switch_watermark"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="截屏自动分享"/>
+            <Switch
+                android:id="@+id/switch_screen_share"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="评论区显示一键发评"/>
+            <Switch
+                android:id="@+id/switch_quick_comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="评论区推荐相关讨论"/>
+            <Switch
+                android:id="@+id/switch_recommend_discuss"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="评论时自动匹配表情包"/>
+            <Switch
+                android:id="@+id/switch_auto_emoji"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_privacy_simple"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="隐私政策及简明版"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_personal_info"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="个人信息收集清单"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_third_share"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="第三方信息共享清单"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_check_version"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="检查版本"/>
+            <TextView
+                style="@style/Widget.Toutiao.SettingValue"
+                android:text="18.4.0"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <LinearLayout
+            android:id="@+id/item_about"
+            style="@style/Widget.Toutiao.SettingRow">
+            <TextView
+                style="@style/Widget.Toutiao.SettingLabel"
+                android:text="关于头条"/>
+            <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+        </LinearLayout>
+        <View style="@style/Widget.Toutiao.Divider"/>
+
+        <!--退出登录。单独居中，不套 SettingRow（那会变成左对齐的小字）。-->
+        <TextView
+            android:id="@+id/tv_logout"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/row_height"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center"
+            android:text="退出登录"
+            android:textColor="@color/brand_red"
+            android:textSize="@dimen/text_body"/>
+    </LinearLayout>
+</ScrollView>

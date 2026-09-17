@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ================================================================
+         使用规则（重要）
+
+         1. 一个 TextView 只能有一个颜色来源。
+            要么写 style，要么写元素级 android:textColor，不要同时写。
+            同时写的时候元素级会赢，看着"生效了"其实和预期不符，极难排查。
+
+         2. 这里的 style 只放"跨页面重复"的属性。只在某一页出现一次的
+            属性留在布局里，不要为了统一而硬抽。
+
+         3. textSize 一律引用 @dimen/text_*，不要再写字面量。
+         ================================================================ -->
+
+
+    <!-- ================================================================
+         基样式
+
+         style 名字里的点号表示隐式继承：Widget.Toutiao.Divider 会被
+         解析成"继承 Widget.Toutiao"。所以这个空样式必须存在，否则下面
+         每个 Widget.Toutiao.* 都会报 "resource style/Widget.Toutiao
+         not found"。
+
+         parent="" 是必须的：不写的话它又会去隐式继承 Widget，
+         继续报 "resource style/Widget not found"。空 parent 表示
+         到此为止，不再往上找。
+         ================================================================ -->
+    <style name="Widget.Toutiao" parent=""/>
+
+
+    <!-- ================================================================
+         通用
+         ================================================================ -->
+
+    <!-- 分隔线。改造前全项目手写了 80 处同样的 View。 -->
+    <style name="Widget.Toutiao.Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/divider</item>
+    </style>
+
+
+    <!-- ================================================================
+         顶栏（红底）
+         ================================================================ -->
+
+    <!-- 红色顶栏容器。新闻详情页用。 -->
+    <style name="Widget.Toutiao.TopBar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@color/brand_red</item>
+        <!-- 4dp 而不是 16dp：返回图标的盒子自带 8dp 内边距，
+             两者相加刚好让箭头落在视觉的 12dp 处。 -->
+        <item name="android:paddingHorizontal">@dimen/space_xs</item>
+        <item name="android:paddingVertical">@dimen/space_s</item>
+    </style>
+
+    <!-- 红顶栏上的白色标题。不设左边距：图标的盒子已经留出 8dp 了。 -->
+    <style name="Widget.Toutiao.TopBarTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/on_brand</item>
+        <item name="android:textSize">@dimen/text_headline</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 顶栏图标（返回箭头等），白色。
+         40dp 的盒子 + 8dp 内边距 = 图形实际显示 24dp，盒子本身可点。
+         改造前是 26/28/32dp 三种尺寸、点上去只有图形本身能响应。 -->
+    <style name="Widget.Toutiao.NavIcon">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:padding">@dimen/space_s</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/on_brand</item>
+    </style>
+
+    <!-- 白底页面上的同款图标，深色 -->
+    <style name="Widget.Toutiao.NavIcon.Dark">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:padding">@dimen/space_s</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/icon_primary</item>
+    </style>
+
+    <!-- 白底页面的居中标题（设置页那种） -->
+    <style name="Widget.Toutiao.PageTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_headline</item>
+    </style>
+
+
+    <!-- ================================================================
+         底部导航
+         首页和我的页面原来逐字重复了 11 行，这里收成一处。
+         ================================================================ -->
+    <style name="Widget.Toutiao.BottomNav">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:background">@color/bg_surface</item>
+        <item name="menu">@menu/bottom_menu</item>
+        <item name="labelVisibilityMode">labeled</item>
+        <item name="itemIconTint">@color/nav_color_selector</item>
+        <item name="itemTextColor">@color/nav_color_selector</item>
+    </style>
+
+
+    <!-- ================================================================
+         设置项行
+         设置页 27 行 + 编辑资料页 11 行原来都是手写的 9 行属性。
+         ================================================================ -->
+
+    <!-- 单行设置项。带点击波纹，改造前点上去完全没有反馈。 -->
+    <style name="Widget.Toutiao.SettingRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/row_height</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingHorizontal">@dimen/page_padding</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- 双行设置项（主标题 + 灰色副标题）。
+         用 wrap_content + minHeight 而不是写死高度：写死高度时文字一变多
+         就会溢出压到右边的内容上——改造前「图文详情滑动方式」这行就是
+         这么坏的（64dp 写死，内容实测约 368dp 宽，屏幕只有 360dp）。 -->
+    <style name="Widget.Toutiao.SettingRow.Multi">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">@dimen/row_height_multi</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingHorizontal">@dimen/page_padding</item>
+        <item name="android:paddingVertical">@dimen/space_m</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+
+    <!-- 单行设置项的标题。0dp + weight=1 会主动占满剩余宽度，
+         右边的值/箭头就永远不会被文字顶出去。 -->
+    <style name="Widget.Toutiao.SettingLabel">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+
+    <!-- 双行设置项的左侧文字列。同样 0dp + weight=1，
+         把剩余宽度全部占掉，右侧的值/开关就永远挤不进来。
+         改造前这一列写的是 wrap_content，宽度由文字自己撑，
+         文字一长就顶到右边去——「图文详情滑动方式」那行就是这么坏的。 -->
+    <style name="Widget.Toutiao.SettingLabelColumn">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <!-- 双行设置项的主标题（在列内部，所以是 match_parent 而不是 0dp+weight） -->
+    <style name="Widget.Toutiao.SettingRowTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+
+    <!-- 双行设置项的副标题 -->
+    <style name="Widget.Toutiao.SettingRowSubtitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:textSize">@dimen/text_body_small</item>
+    </style>
+
+    <!-- 设置项右侧的值文字（"已关闭"、"标准"、"33.67MB"）。
+         左留 8dp 和主标题拉开；maxLines + ellipsize 防止值太长把箭头挤出去。 -->
+    <style name="Widget.Toutiao.SettingValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">@dimen/space_s</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_body_small</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- 已经填好的值（"凝墨"、"保密"）用主色，
+         没填的（"待完善"、"去更换"）用次级色，一眼能看出哪些还没填。 -->
+    <style name="Widget.Toutiao.SettingValue.Strong">
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 设置项右侧的箭头 -->
+    <style name="Widget.Toutiao.SettingArrow">
+        <item name="android:layout_width">@dimen/icon_nav</item>
+        <item name="android:layout_height">@dimen/icon_nav</item>
+        <item name="android:layout_marginStart">@dimen/space_s</item>
+        <item name="android:src">@drawable/ic_arrow_right</item>
+        <item name="android:tint">@color/icon_arrow</item>
+    </style>
+
+
+    <!-- ================================================================
+         按钮
+         ================================================================ -->
+
+    <!-- 主按钮。
+
+         ⚠️ 这里刻意不写 android:background。
+         Material 主题的 viewInflaterClass 会把布局里的 <Button> 换成
+         MaterialButton，而 MaterialButton **直接丢弃 android:background**，
+         换成它自带的 MaterialShapeDrawable，再用 backgroundTint
+         （默认 = ?attr/colorPrimary）填底。所以：
+           · 原来那套 bg_button_primary 三态 selector 在这里是**死的**；
+           · 想给 @null 让它别染色也没用——背景整个被换掉了，
+             按下时按钮会一动不动地停在实心主色上。
+         要表达颜色和圆角只能用 MaterialButton 自己的属性：
+         backgroundTint（含三态）+ cornerRadius。
+
+         顺带修掉的老问题：改造前登录页写的 android:radius="12dp" 是无效
+         属性（只对 <shape> 根节点生效），圆角从来没有真正生效过。 -->
+    <style name="Widget.Toutiao.Button">
+        <item name="android:layout_height">@dimen/button_height</item>
+        <item name="backgroundTint">@color/button_primary_tint</item>
+        <item name="cornerRadius">8dp</item>
+        <!-- MaterialButton 默认带 6dp 的上下 inset，视觉高度会比 layout_height
+             小一圈。不清零的话 48dp 只画出 36dp，"矮一截"。 -->
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:textColor">@color/on_brand</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:gravity">center</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- 小号按钮：我的页的「+ 发布」「去评论」。
+         这些按钮都在一行文字的旁边，套 52dp 的 @dimen/button_height
+         会把整行撑得很空。
+
+         minWidth/minHeight 必须显式清零：Button 的默认样式里带着
+         minHeight=48dp、minWidth=88dp，不清零的话 layout_height="36dp"
+         根本不生效，量出来还是 48dp。 -->
+    <style name="Widget.Toutiao.Button.Small">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:paddingHorizontal">@dimen/space_l</item>
+        <item name="android:textSize">@dimen/text_body_small</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <!-- 筛选项胶囊：我的页「全部 / 视频 / 微头条」。
+         改造前是三个写死 44dp 的默认灰按钮，看不出哪个是选中的。
+
+         ⚠️ 这里刻意用 <TextView> 而不是 <Button>。
+         Material 主题里 <Button> 会被 viewInflaterClass 换成 MaterialButton，
+         它丢弃 android:background 并拿 colorPrimary 填底 —— 结果三个胶囊全
+         变成一片实心红，浅红/灰的区分没了，"全部"两个字直接看不见。
+         改用 TextView 就完全不经过 MaterialButton 那套，自定义背景原样生效。
+         这三个 id 没有任何 Java 引用，换标签不影响逻辑。 -->
+    <style name="Widget.Toutiao.Chip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:paddingHorizontal">@dimen/space_l</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_body_small</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="Widget.Toutiao.Chip.Selected">
+        <item name="android:background">@drawable/bg_chip_selected</item>
+        <item name="android:textColor">@color/brand_red</item>
+    </style>
+
+
+    <!-- ================================================================
+         我的页
+         ================================================================ -->
+
+    <!-- 小节标题（"我的功能"、"头条聊天室"、"作品"） -->
+    <style name="Widget.Toutiao.SectionTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_headline</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 小节标题右侧的"全部 >"、"..." -->
+    <style name="Widget.Toutiao.SectionMore">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+
+    <!-- 关注/粉丝/获赞。
+         改造前是"0关注   1粉丝   1获赞"一个 TextView 用空格硬拼出来的，
+         数字一变四位数就折行、三组数字也对不齐。拆成三个。 -->
+    <style name="Widget.Toutiao.StatsItem">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_body</item>
+    </style>
+
+    <!-- 标签（"IP属地:湖北"、"添加年龄、学校标签"） -->
+    <style name="Widget.Toutiao.Tag">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_tag</item>
+        <item name="android:paddingHorizontal">@dimen/space_s</item>
+        <item name="android:paddingVertical">@dimen/space_xs</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+    </style>
+
+</resources>

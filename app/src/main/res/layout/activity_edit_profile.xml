@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    编辑资料页。
+
+    9 个资料行原来每行都是手写的 9 行属性（标签 + 一个 weight=1 的撑开 View +
+    值 + 箭头），一共 81 行。现在套 Widget.Toutiao.SettingRow：
+    标签用 SettingLabel（0dp + weight=1）自己就把剩余宽度吃掉，
+    那个撑开用的 <View> 整个不需要了。
+
+    行高 64dp → 56dp，标签 20sp → 16sp，值 20sp → 14sp。
+    改造前标签和值是同一个字号，看不出哪边是标题哪边是内容。
+
+    ⚠️ EditProfileActivity.java 会用到 iv_back_edit / iv_avatar_edit /
+       tv_change_avatar / item_* 这些 id，不要改名。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!--标题栏-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_s">
+
+            <ImageView
+                android:id="@+id/iv_back_edit"
+                style="@style/Widget.Toutiao.NavIcon.Dark"
+                android:src="@drawable/ic_back"
+                android:contentDescription="返回"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="编辑资料"
+                    android:textColor="@color/text_primary"
+                    android:textSize="@dimen/text_headline"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="资料完成度 40%"
+                    android:textColor="@color/brand_red"
+                    android:textSize="@dimen/text_caption"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <!-- 配重：左边返回图标是 40dp 的盒子，右边也放一个等宽的，
+                 标题才是真的居中。 -->
+            <View
+                android:layout_width="40dp"
+                android:layout_height="40dp"/>
+        </LinearLayout>
+
+        <!--提示横幅。原来是 #FFDD88 的直角黄块，改成低饱和的圆角琥珀。 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/page_padding"
+            android:layout_marginBottom="@dimen/space_l"
+            android:background="@drawable/bg_banner"
+            android:gravity="center"
+            android:paddingVertical="@dimen/space_m"
+            android:paddingHorizontal="@dimen/space_l"
+            android:text="再填 3 项资料 得头像挂件"
+            android:textColor="@color/banner_fg"
+            android:textSize="@dimen/text_body_small"/>
+
+        <!--头像。140dp 在 360dp 宽的屏上占了近四成，收到 96dp。 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <ImageView
+                android:id="@+id/iv_avatar_edit"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:src="@drawable/avatar"
+                android:contentDescription="头像"/>
+
+            <TextView
+                android:id="@+id/tv_change_avatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:text="点击更换头像"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!--资料列表项-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="@dimen/space_l">
+
+            <LinearLayout
+                android:id="@+id/item_username"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="用户名"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue.Strong"
+                    android:text="凝墨"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改用户名"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_intro"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="简介"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="待完善"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改简介"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_bg"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="背景图"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="去更换"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="更换背景图"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_gender"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="性别"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue.Strong"
+                    android:text="保密"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改性别"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_birth"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="生日"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="待完善"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改生日"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_location"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="所在地"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="待完善"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改所在地"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_school"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="学校"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="待完善"/>
+                <ImageView
+                    android:layout_width="@dimen/icon_nav"
+                    android:layout_height="@dimen/icon_nav"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_red_dot"
+                    android:contentDescription="待完善标记"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改学校"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_job"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="职业"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="待完善"/>
+                <ImageView
+                    android:layout_width="@dimen/icon_nav"
+                    android:layout_height="@dimen/icon_nav"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_red_dot"
+                    android:contentDescription="待完善标记"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="修改职业"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <LinearLayout
+                android:id="@+id/item_avatar_frame"
+                style="@style/Widget.Toutiao.SettingRow">
+                <TextView
+                    style="@style/Widget.Toutiao.SettingLabel"
+                    android:text="头像挂件"/>
+                <TextView
+                    style="@style/Widget.Toutiao.SettingValue"
+                    android:text="去更换"/>
+                <ImageView
+                    style="@style/Widget.Toutiao.SettingArrow"
+                    android:contentDescription="更换头像挂件"/>
+            </LinearLayout>
+            <View style="@style/Widget.Toutiao.Divider"/>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/page_padding"
+            android:text="页面编辑的资料不会用于个性化推荐，仅丰富你的主页内容"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_body_small"/>
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_surface">
+
+    <!-- 顶部标题栏，品牌红，和首页一致 -->
+    <LinearLayout style="@style/Widget.Toutiao.TopBar">
+
+        <ImageView
+            android:id="@+id/iv_news_back"
+            style="@style/Widget.Toutiao.NavIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+
+        <TextView
+            style="@style/Widget.Toutiao.TopBarTitle"
+            android:text="新闻详情"/>
+    </LinearLayout>
+
+    <!-- 正文区域，内容长了可以滚动 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/page_padding"
+            android:paddingTop="@dimen/space_l"
+            android:paddingBottom="@dimen/space_xl">
+
+            <!-- 原来 23sp，比正文 17sp 大不了多少，层级看不出来。
+                 收到 22sp，同时正文降到 16sp，主次才拉开。 -->
+            <TextView
+                android:id="@+id/tv_news_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_headline"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp"/>
+
+            <TextView
+                android:id="@+id/tv_news_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_m"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="@color/text_tertiary"/>
+
+            <ImageView
+                android:id="@+id/iv_news_pic"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="@dimen/space_l"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:contentDescription="新闻配图"/>
+
+            <!-- 正文。原来是 #333333（次级色），正文应该是主色。 -->
+            <TextView
+                android:id="@+id/tv_news_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_l"
+                android:textSize="@dimen/text_body"
+                android:textColor="@color/text_primary"
+                android:lineSpacingExtra="8dp"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

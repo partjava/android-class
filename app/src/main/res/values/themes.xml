@@ -1,0 +1,62 @@
+<resources>
+
+    <!-- ================================================================
+         应用主题
+
+         改造前这个主题是"死"的：Theme.Toutiao 全项目零引用，
+         AndroidManifest 用的是 @style/Theme.AppCompat.Light.NoActionBar。
+         后果是里面配的颜色一个都没生效——复选框退化成系统原生方块、
+         Switch 用了 AppCompat 默认的青绿色（colorAccent 默认值），
+         而 colors.xml 里的 purple/teal 模板色只被这个死主题引用，
+         等于整个文件也是死的。
+
+         现在 manifest 已指向 Theme.Toutiao，下面这些配置才真正起作用。
+
+         注意 statusBarColor 用品牌红：首页和详情页的顶栏就是 #E63939，
+         状态栏不改的话会在红顶栏上方留一条系统灰带（已在基线截图确认）。
+         ================================================================ -->
+    <!-- parent 用 MaterialComponents 而不是 DayNight：
+         DayNight 会让 values-night 的深色定义真正生效，而布局里全是
+         硬编码的浅色底 + 深色字，深色设备上会直接错乱。
+         用 Light 强制浅色，既拿到 Material 控件样式，又不激活那套坏的主题。 -->
+    <style name="Theme.Toutiao" parent="Theme.MaterialComponents.Light.NoActionBar">
+
+        <item name="colorPrimary">@color/brand_red</item>
+        <item name="colorPrimaryDark">@color/brand_red_dark</item>
+        <!-- colorAccent 决定 Switch / CheckBox / 输入框光标的颜色。
+             改造前没设，走的是 AppCompat 默认青绿，所以设置页 7 个开关
+             全是青色的。
+             Material 主题下真正管事的是 colorSecondary（colorAccent 在
+             Material 里只是它的别名），两个都写上，双保险。 -->
+        <item name="colorAccent">@color/brand_red</item>
+
+        <item name="colorPrimaryVariant">@color/brand_red_dark</item>
+        <item name="colorOnPrimary">@color/on_brand</item>
+        <item name="colorSecondary">@color/brand_red</item>
+        <item name="colorSecondaryVariant">@color/brand_red_dark</item>
+        <item name="colorOnSecondary">@color/on_brand</item>
+
+        <!-- 状态栏 -->
+        <item name="android:statusBarColor">@color/brand_red</item>
+
+        <!-- 文字默认色。设置页那些不写 textColor 的 TextView 靠这个取值，
+             不显式指定的话换 Material 主题后会变成另一套默认值。 -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+
+        <!-- 窗口底色，冷启动瞬间可见 -->
+        <item name="android:windowBackground">@color/bg_surface</item>
+
+        <!-- 挡掉 Android 10 的强制深色反色。
+             布局里全是硬编码的浅色底 + 深色字，被系统强行反色会直接错乱。 -->
+        <item name="android:forceDarkAllowed">false</item>
+
+        <!-- 把 Switch 的外观钉死在 AppCompat 这一款。
+             7 个开关分布在设置页，不钉的话阶段 5 换 Material 主题时
+             外观会整体突变（能变好也能变坏，但不可控）。
+             钉住之后开关只跟着上面的 colorAccent 变红。 -->
+        <item name="switchStyle">@style/Widget.AppCompat.CompoundButton.Switch</item>
+    </style>
+
+</resources>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ============================================================
+         品牌色
+         全项目统一用这一个红：顶栏、主按钮、选中态、退出登录、链接。
+         改造前散落着 4 个不同的红（#E63939 / #F44336 / #FF3333 / #FF4444），
+         现已全部并入 brand_red。
+
+         ⚠️ HomeActivity.java 里还有硬编码的 0xFFE63939（tab 选中色），
+            改这里的值必须同步改那边，否则首页 tab 颜色会和别处对不上。
+         ============================================================ -->
+    <color name="brand_red">#E63939</color>
+    <color name="brand_red_dark">#C62828</color>
+    <color name="on_brand">#FFFFFF</color>
+    <!-- 选中态胶囊的底色（我的页「全部」）。红主色的浅色版本，
+         不能直接用 brand_red，那样文字会糊在底色里。 -->
+    <color name="brand_red_light">#FDECEC</color>
+
+    <!-- ============================================================
+         文字
+         原来是 7 种灰（#000/#111/#222/#333/#666/#777/#888/#999），
+         收敛成 4 个语义层级。
+         ============================================================ -->
+    <color name="text_primary">#222222</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_tertiary">#999999</color>
+    <color name="text_hint">#BBBBBB</color>
+
+    <!-- ============================================================ -->
+    <color name="icon_primary">#333333</color>
+    <color name="icon_arrow">#C8C8C8</color>
+
+    <!-- 首页 tab 未选中色。
+         ⚠️ 锁死 #333333：HomeActivity.java 的 resetTabColor() 里硬编码了
+            0xFF333333，XML 这边必须用同一个值，否则点一下 tab 颜色就会跳。 -->
+    <color name="tab_inactive">#333333</color>
+
+    <!-- ============================================================ -->
+    <color name="bg_page">#F5F5F5</color>
+    <color name="bg_surface">#FFFFFF</color>
+    <color name="bg_subtle">#EEEEEE</color>
+    <color name="divider">#EEEEEE</color>
+    <!-- 输入框下面那条线。比列表分隔线深一点，否则在白底上看不清。 -->
+    <color name="input_line">#DDDDDD</color>
+
+    <!-- ============================================================
+         底部导航
+         ============================================================ -->
+    <color name="nav_selected">@color/brand_red</color>
+    <color name="nav_unselected">#999999</color>
+
+    <!-- ============================================================
+         默认头像 / 视频播放键遮罩
+         ============================================================ -->
+    <color name="avatar_bg">#E0E0E0</color>
+    <color name="avatar_fg">#FFFFFF</color>
+    <color name="scrim_40">#66000000</color>
+
+    <!-- ============================================================
+         提示横幅（编辑资料页顶部"再填 3 项资料 得头像挂件"）。
+         原来是 #FFDD88 的纯黄，在白底页面上很扎眼、也压不住黑字。
+         换成低饱和的琥珀底 + 深棕字。
+         ============================================================ -->
+    <color name="banner_bg">#FFF4D6</color>
+    <color name="banner_fg">#8A6A2F</color>
+</resources>

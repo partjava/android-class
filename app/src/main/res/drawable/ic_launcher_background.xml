@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    自适应启动图标的背景层。
+
+    改造前这里是 Android Studio 新建项目时自带的绿色 #3DDC84 + 网格线
+    （AS 模板的默认机器人图标底色），和 App 的品牌红毫无关系。
+    现在改成品牌红纯色。
+
+    色值写死字面量而不是 @color/brand_red：桌面启动器可能在自己的进程里
+    渲染这个图标，直接用字面量最稳。改主色时记得同步这里。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#E63939"
+        android:pathData="M0,0h108v108h-108z" />
+</vector>

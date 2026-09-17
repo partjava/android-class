@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    默认头像。
+
+    改造前这个图形是"细圆环套细圆环"——一个大圆环里再放一个小圆环和圆点，
+    看着像个靶心，完全不像头像（我的页面截图里那个大灰圈就是它）。
+
+    现在改成常规做法：实心浅灰圆底 + 白色人形剪影。
+    人形用 clip-path 裁在圆内，所以肩部不会溢出圆外。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 圆底 -->
+    <path
+        android:fillColor="@color/avatar_bg"
+        android:pathData="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 Z"/>
+
+    <group>
+        <!-- 把人形裁在圆内 -->
+        <clip-path android:pathData="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 Z"/>
+
+        <!-- 头 -->
+        <path
+            android:fillColor="@color/avatar_fg"
+            android:pathData="M8.5,9.4 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z"/>
+
+        <!-- 肩。画成一个比圆更大的圆，露出来的上半部分就是肩膀，
+             下缘被 clip-path 切掉，不会出现平的横边。 -->
+        <path
+            android:fillColor="@color/avatar_fg"
+            android:pathData="M5.2,21 a6.8,6.8 0 1,0 13.6,0 a6.8,6.8 0 1,0 -13.6,0 Z"/>
+    </group>
+</vector>
