@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 商品卡片底：白底圆角，压在商城页 bg_page 的浅灰上，卡片感就出来了 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/bg_surface"/>
+    <corners android:radius="8dp"/>
+</shape>

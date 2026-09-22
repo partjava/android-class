@@ -90,7 +90,9 @@ public class MineActivity extends AppCompatActivity {
                 }else if(itemId == R.id.nav_add){
                     Toast.makeText(MineActivity.this,"点击发布",Toast.LENGTH_SHORT).show();
                 }else if(itemId == R.id.nav_shop){
-                    Toast.makeText(MineActivity.this,"点击商城",Toast.LENGTH_SHORT).show();
+                    //跳转到商城页
+                    Intent intent = new Intent(MineActivity.this, ShopActivity.class);
+                    startActivity(intent);
                 }else if(itemId == R.id.nav_mine){
                     Toast.makeText(MineActivity.this,"当前在我的页面",Toast.LENGTH_SHORT).show();
                 }

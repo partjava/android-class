@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 商城顶部的单个频道标签：文字 + 选中时才出现的小圆角下划线。
+     文字颜色和下划线的可见性由 ShopActivity.selectTab() 切换 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingHorizontal="@dimen/space_m"
+    android:paddingTop="@dimen/space_s"
+    android:paddingBottom="@dimen/space_xs"
+    android:background="?attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tv_tab_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_primary"/>
+
+    <View
+        android:id="@+id/v_tab_line"
+        android:layout_width="20dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="3dp"
+        android:background="@drawable/bg_tab_indicator"
+        android:visibility="invisible"/>
+</LinearLayout>

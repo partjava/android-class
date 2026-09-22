@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 宫格入口的单个格子：图标 + 文字。
+     layout_columnWeight="1" 让 5 个格子平分一行宽度
+     （GridLayout 的 weight 是 API 21 加的，项目 minSdk 29 没问题）。
+     图标是从淘宝截图里裁出来的位图，放 drawable-nodpi 按原始像素渲染 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_columnWeight="1"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingTop="@dimen/space_m"
+    android:paddingBottom="@dimen/space_xs"
+    android:background="?attr/selectableItemBackground">
+
+    <ImageView
+        android:id="@+id/iv_entry_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="入口图标"/>
+
+    <TextView
+        android:id="@+id/tv_entry_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:maxLines="1"
+        android:textSize="@dimen/text_caption"
+        android:textColor="@color/text_primary"/>
+</LinearLayout>

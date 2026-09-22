@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 宫格入口的一整页：5 列的 GridLayout。
+     格子（item_shop_entry.xml）由 ShopActivity 的 EntryPageAdapter
+     逐个 inflate 进来，GridLayout 按行主序自动排布，
+     第一页 10 个占 2 行，第二页 15 个占 3 行 -->
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:columnCount="5"
+    android:paddingBottom="@dimen/space_s"/>

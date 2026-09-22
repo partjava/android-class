@@ -35,7 +35,15 @@
   - 三图（文下三张并排）
   - 视频（封面 + 播放键）
 - **热点**频道换的是另一套数据：`ListView` + `ArrayAdapter` 渲染的大国工匠列表，点击条目弹出人物详情弹窗
-- 底部 5 项导航：首页 / 视频 / 添加 / 商城 / 我的
+- 底部 5 项导航：首页 / 视频 / 添加 / 商城 / 我的（商城已接通，见下文）
+
+### 商城
+
+- **顶部频道标签**（关注 / 推荐 / 闪购 / 国补 / 飞猪 / 新风潮 / 穿搭）：`HorizontalScrollView` 里塞一排 tab，7 个一屏放不下、可左右滑动；选中的带红色圆角下划线，并按商品分类过滤下方瀑布流的数据
+- **宫格入口**（两页，左右翻页 + 圆点指示）：横向 `RecyclerView` + `PagerSnapHelper` 实现淘宝式整页翻页，一页就是一个 5 列 `GridLayout`；25 个图标从淘宝截图裁出（`drawable-nodpi/shop_entry_01~25.png`），图标下带文字、有点击波纹
+- **两列瀑布流**：`RecyclerView` + `StaggeredGridLayoutManager`，12 个商品卡片高低错落；错落感来自图片本身——商品图统一 400px 宽但高度各不相同（300~560px），item 布局用 `adjustViewBounds` 让高度自适应
+- 顶栏品牌红 + 搜索入口（演示），底部导航与首页 / 我的共用同一份菜单，可互相跳转
+- 价格统一两位小数，已售过万显示成"x.x万件"
 
 ### 我的
 
@@ -63,7 +71,7 @@
 | Gradle | 7.4 |
 | compileSdk / targetSdk | 32 |
 | minSdk | 29 |
-| Java 版本 | 11 |
+| Java 版本 | 源码兼容 8（运行 Gradle 需 JDK 11 及以上） |
 | 开发工具 | Android Studio Dolphin (2021.3.1) |
 
 依赖只有三个（无网络库、无图片加载库）：
@@ -99,14 +107,18 @@ app/src/main/
 │   │                               （内含 Craftsman / CraftsmanAdapter 内部类）
 │   ├── NewsDetailActivity.java     新闻详情
 │   ├── MineActivity.java           个人中心
+│   ├── ShopActivity.java           商城（两列瀑布流）
+│   ├── ShopItem.java               商品数据模型
+│   ├── ShopAdapter.java            瀑布流适配器
 │   ├── SettingsActivity.java       设置
 │   ├── EditProfileActivity.java    编辑资料
 │   ├── News.java                   新闻数据模型
 │   └── NewsMultiAdapter.java       多布局 RecyclerView 适配器
 │
 └── res/
-    ├── layout/        13 个布局文件
+    ├── layout/        18 个布局文件
     ├── drawable/      矢量图标与图片资源
+    ├── drawable-nodpi/  商城商品照片 + 淘宝宫格图标（按原始像素渲染，不随密度缩放）
     ├── values/        colors / dimens / styles / themes / strings
     ├── values-night/  深色模式下的主题定义
     ├── color/         状态着色表（底部导航、按钮）
@@ -143,6 +155,8 @@ app/src/main/
 已在模拟器上开启系统深色模式逐页验证，与浅色模式表现一致。
 
 ### 顺带修掉的问题
+
+- 首页 tab 选中色 / 未选中色原来在 Java 里硬编码 `0xFFE63939` / `0xFF333333`，与色板 token 脱节，已改为引用 `colors.xml`（`selectTab()` / `resetTabColor()`），6 个新闻标签的点击监听也收敛成 `bindNewsTab()` 一处
 
 - 设置页「图文详情滑动方式」标题与右侧值**重叠**——原因是行高写死 64dp，而该行内容实测约 368dp，超出 360dp 的屏幕宽度。改为 `wrap_content` + `minHeight`，左侧文字列用 `0dp` + `weight=1` 主动占满剩余宽度
 - 登录页按钮上的 `android:radius="12dp"` **从未生效**——该属性只对 `<shape>` 根节点有效，写在 `<Button>` 上会被忽略

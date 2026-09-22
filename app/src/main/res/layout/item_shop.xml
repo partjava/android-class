@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    瀑布流商品卡片。
+
+    瀑布流的关键在这张图上：adjustViewBounds="true" 让 ImageView
+    宽度撑满卡片、高度按原图比例自适应。12 张商品图的高度各不相同，
+    配合 StaggeredGridLayoutManager 两列各自往下排，就成了淘宝那种
+    高低错落的布局。
+
+    ⚠️ 高度必须 wrap_content：写死一个值就变普通九宫格网格了。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_margin="4dp"
+    android:background="@drawable/bg_shop_card">
+
+    <ImageView
+        android:id="@+id/iv_shop_cover"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:contentDescription="商品图"/>
+
+    <TextView
+        android:id="@+id/tv_shop_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_s"
+        android:layout_marginTop="@dimen/space_s"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="@dimen/text_body_small"
+        android:textColor="@color/text_primary"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_s"
+        android:layout_marginTop="@dimen/space_s"
+        android:layout_marginBottom="@dimen/space_m"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tv_shop_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold"
+            android:textColor="@color/brand_red"/>
+
+        <TextView
+            android:id="@+id/tv_shop_sales"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
+            android:maxLines="1"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+    </LinearLayout>
+</LinearLayout>

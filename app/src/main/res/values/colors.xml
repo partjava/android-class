@@ -6,8 +6,8 @@
          改造前散落着 4 个不同的红（#E63939 / #F44336 / #FF3333 / #FF4444），
          现已全部并入 brand_red。
 
-         ⚠️ HomeActivity.java 里还有硬编码的 0xFFE63939（tab 选中色），
-            改这里的值必须同步改那边，否则首页 tab 颜色会和别处对不上。
+         ⚠️ 首页 tab 的选中色也走这个 token（HomeActivity 的 selectTab()
+            通过 ContextCompat 引用），改这里的值会全局生效，无需同步别处。
          ============================================================ -->
     <color name="brand_red">#E63939</color>
     <color name="brand_red_dark">#C62828</color>
@@ -31,8 +31,8 @@
     <color name="icon_arrow">#C8C8C8</color>
 
     <!-- 首页 tab 未选中色。
-         ⚠️ 锁死 #333333：HomeActivity.java 的 resetTabColor() 里硬编码了
-            0xFF333333，XML 这边必须用同一个值，否则点一下 tab 颜色就会跳。 -->
+         HomeActivity 的 resetTabColor() 同样通过 ContextCompat 引用这里，
+         值改了 Java 侧会自动跟着变。 -->
     <color name="tab_inactive">#333333</color>
 
     <!-- ============================================================ -->
@@ -48,6 +48,9 @@
          ============================================================ -->
     <color name="nav_selected">@color/brand_red</color>
     <color name="nav_unselected">#999999</color>
+
+    <!-- 商城宫格入口的翻页指示点（当前页用 brand_red） -->
+    <color name="dot_inactive">#DDDDDD</color>
 
     <!-- ============================================================
          默认头像 / 视频播放键遮罩

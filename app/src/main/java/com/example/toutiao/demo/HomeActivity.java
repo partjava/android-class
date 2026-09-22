@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -47,6 +48,8 @@ public class HomeActivity extends AppCompatActivity {
 
     //全部标签
     private TextView tabRecommend, tabKangyi, tabVideoSmall, tabBeijing, tabVideo, tabHot, tabEntertain;
+    //7 个标签收进数组,resetTabColor() 遍历它统一重置,不用逐个写 7 行
+    private TextView[] allTabs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +75,9 @@ public class HomeActivity extends AppCompatActivity {
         tabVideo = findViewById(R.id.tab_video);
         tabHot = findViewById(R.id.tab_hot);
         tabEntertain = findViewById(R.id.tab_entertain);
+
+        allTabs = new TextView[]{tabRecommend, tabKangyi, tabVideoSmall,
+                tabBeijing, tabVideo, tabHot, tabEntertain};
     }
 
     //初始化新闻数据：每个标签页各有一套内容
@@ -234,21 +240,29 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    //重置所有标签文字颜色
+    //重置所有标签文字颜色。
+    //颜色不再硬编码，统一引用 colors.xml 的 token，
+    //改色板时首页 tab 会跟着变，不用再同步两处。
     private void resetTabColor(){
-        tabRecommend.setTextColor(0xFF333333);
-        tabKangyi.setTextColor(0xFF333333);
-        tabVideoSmall.setTextColor(0xFF333333);
-        tabBeijing.setTextColor(0xFF333333);
-        tabVideo.setTextColor(0xFF333333);
-        tabHot.setTextColor(0xFF333333);
-        tabEntertain.setTextColor(0xFF333333);
+        for (TextView tab : allTabs) {
+            tab.setTextColor(ContextCompat.getColor(this, R.color.tab_inactive));
+        }
+    }
+
+    //高亮选中的标签，其余恢复默认色
+    private void selectTab(TextView activeTab){
+        resetTabColor();
+        activeTab.setTextColor(ContextCompat.getColor(this, R.color.brand_red));
+    }
+
+    //给一个新闻标签绑定点击事件：选中它并切换到对应数据
+    private void bindNewsTab(TextView tab, List<News> data){
+        tab.setOnClickListener(v -> switchNewsTab(data, tab));
     }
 
     //切换新闻标签：换上该标签自己的数据并刷新列表
     private void switchNewsTab(List<News> data, TextView activeTab){
-        resetTabColor();
-        activeTab.setTextColor(0xFFE63939);
+        selectTab(activeTab);
 
         newsList.clear();
         newsList.addAll(data);
@@ -294,7 +308,11 @@ public class HomeActivity extends AppCompatActivity {
                 }else if(itemId == R.id.nav_add){
                     Toast.makeText(HomeActivity.this,"点击发布",Toast.LENGTH_SHORT).show();
                 }else if(itemId == R.id.nav_shop){
-                    Toast.makeText(HomeActivity.this,"点击商城",Toast.LENGTH_SHORT).show();
+                    //跳转到商城页,复用栈里已有的 ShopActivity,
+                    //和上面跳"我的"用的是同一套栈管理策略
+                    Intent intent = new Intent(HomeActivity.this, ShopActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                 }else if(itemId == R.id.nav_mine){
                     //跳转到我的页面。
                     //CLEAR_TOP + SINGLE_TOP 会复用栈里已有的 MineActivity，
@@ -310,17 +328,16 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         //==== 分类标签：每个标签换上自己那一套新闻数据 ====
-        tabRecommend.setOnClickListener(v -> switchNewsTab(recommendList, tabRecommend));
-        tabKangyi.setOnClickListener(v -> switchNewsTab(kangyiList, tabKangyi));
-        tabVideoSmall.setOnClickListener(v -> switchNewsTab(videoSmallList, tabVideoSmall));
-        tabBeijing.setOnClickListener(v -> switchNewsTab(beijingList, tabBeijing));
-        tabVideo.setOnClickListener(v -> switchNewsTab(videoList, tabVideo));
-        tabEntertain.setOnClickListener(v -> switchNewsTab(entertainList, tabEntertain));
+        bindNewsTab(tabRecommend, recommendList);
+        bindNewsTab(tabKangyi, kangyiList);
+        bindNewsTab(tabVideoSmall, videoSmallList);
+        bindNewsTab(tabBeijing, beijingList);
+        bindNewsTab(tabVideo, videoList);
+        bindNewsTab(tabEntertain, entertainList);
 
         //热点标签显示的是大国工匠列表，和其他标签不是一套数据
         tabHot.setOnClickListener(v -> {
-            resetTabColor();
-            tabHot.setTextColor(0xFFE63939);
+            selectTab(tabHot);
             rvNews.setVisibility(View.GONE);
             lvCraft.setVisibility(View.VISIBLE);
         });

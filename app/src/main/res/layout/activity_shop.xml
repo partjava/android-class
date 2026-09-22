@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    商城页，从上到下四段：
+
+    1. 红色顶栏：标题 + 搜索入口
+    2. 频道标签：HorizontalScrollView 里塞一排 tab（关注/推荐/闪购...），
+       放不下 7 个，可以左右滑动；选中的带红色下划线，会过滤下方瀑布流
+    3. 可滚动内容区（NestedScrollView）：
+       · 宫格入口：横向 RecyclerView + PagerSnapHelper 左右翻页，带圆点指示
+       · 商品瀑布流：RecyclerView 关掉自身嵌套滚动，高度交给外层
+         ScrollView 管（12 个商品全量布局，课设规模没问题）
+    4. 底部导航
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+
+    <!-- 顶栏：品牌红底 + 标题 + 搜索入口，风格对齐首页 -->
+    <LinearLayout
+        android:id="@+id/top_bar"
+        style="@style/Widget.Toutiao.TopBar"
+        android:paddingHorizontal="@dimen/page_padding"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tv_title"
+            style="@style/Widget.Toutiao.TopBarTitle"
+            android:text="商城"/>
+
+        <!-- 只是搜索入口，不做真正的搜索；没有返回键——
+             这是底部导航的 tab 页，和"我的"页同级，不是二级页 -->
+        <TextView
+            android:id="@+id/tv_search_hint"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_l"
+            android:background="@drawable/bg_search"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/space_l"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="@dimen/space_s"
+            android:text="搜索你想找的商品"
+            android:textColor="@color/text_hint"
+            android:textSize="@dimen/text_body_small"/>
+    </LinearLayout>
+
+    <!-- 频道标签：可以左右滑动的那一排 -->
+    <HorizontalScrollView
+        android:id="@+id/hs_tabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:background="@color/bg_surface"
+        app:layout_constraintTop_toBottomOf="@id/top_bar">
+
+        <LinearLayout
+            android:id="@+id/ll_tabs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="@dimen/space_s"
+            android:paddingEnd="@dimen/space_s"
+            android:paddingBottom="@dimen/space_xs"/>
+    </HorizontalScrollView>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nsv_shop"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        android:background="@color/bg_page"
+        app:layout_constraintTop_toBottomOf="@id/hs_tabs"
+        app:layout_constraintBottom_toTopOf="@id/bottom_nav">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 宫格入口：白底块，横向翻页，两页商品数不同（2行/3行），
+                 往右翻时整体高度会变高一点，和淘宝一样让下面的内容顺势下移 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/bg_surface">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_entries"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"/>
+
+                <LinearLayout
+                    android:id="@+id/ll_dots"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingBottom="@dimen/space_m">
+
+                    <View
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:background="@drawable/bg_dot_active"/>
+
+                    <View
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_marginStart="@dimen/space_xs"
+                        android:background="@drawable/bg_dot_inactive"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 瀑布流：列数在 ShopActivity 里用 StaggeredGridLayoutManager(2, VERTICAL) 指定 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_shop"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:scrollbars="none"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+
+
+    <!--底部导航栏，固定在屏幕底部，不会跟着滚动-->
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_nav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:ignore="MissingConstraints" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
