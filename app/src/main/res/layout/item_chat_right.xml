@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    聊天页我方的气泡（右侧，红底白字）。
+
+    和 item_chat_left.xml 是同一套结构，只有两处不同：
+    · gravity 从 start 换成 end —— 气泡贴右边
+    · 配色反过来 —— 红底 + on_brand 白字
+    所以这两个文件不能合并成一个靠代码改属性的布局：
+    气泡底色和文字色都是写死的 drawable / 色 token，没法在 Java 里便宜地换。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="end"
+    android:paddingHorizontal="@dimen/page_padding"
+    android:paddingVertical="@dimen/space_s">
+
+    <TextView
+        android:id="@+id/tv_bubble_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="260dp"
+        android:background="@drawable/bg_bubble_right"
+        android:paddingHorizontal="@dimen/space_m"
+        android:paddingVertical="@dimen/space_s"
+        android:textColor="@color/on_brand"
+        android:textSize="@dimen/text_body"
+        android:lineSpacingExtra="2dp"/>
+</LinearLayout>

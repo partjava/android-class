@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    播放页底部的「相关视频」条目。
+
+    这里是紧凑小横排，不复用 item_video.xml —— 那个是整屏宽的大封面卡片，
+    塞到详情页底部会把简介挤没。
+
+    结构照 item_craftsman.xml：左边定宽图 + 右边一列文字。
+    封面 120×68dp 同样是 16:9，和列表页大封面保持同一比例。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_marginBottom="@dimen/space_m"
+    android:paddingVertical="@dimen/space_s"
+    android:background="?attr/selectableItemBackground">
+
+    <RelativeLayout
+        android:layout_width="120dp"
+        android:layout_height="68dp">
+
+        <ImageView
+            android:id="@+id/iv_related_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="相关视频封面"/>
+
+        <!-- 小封面上的播放键。用同一个 ic_play_circle，只是缩到 28dp，
+             和列表页大封面上的 48dp 是同一种视觉语言 -->
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_play_circle"
+            android:contentDescription="播放"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/space_m"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_related_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_body"/>
+
+        <TextView
+            android:id="@+id/tv_related_source"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_caption"/>
+    </LinearLayout>
+</LinearLayout>

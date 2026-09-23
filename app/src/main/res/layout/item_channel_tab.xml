@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 商城顶部的单个频道标签：文字 + 选中时才出现的小圆角下划线。
-     文字颜色和下划线的可见性由 ShopActivity.selectTab() 切换 -->
+<!-- 单个频道标签：文字 + 选中时才出现的小圆角下划线。
+     商城页（ShopActivity）和视频页（VideoActivity）共用这一份。
+
+     文字颜色和下划线的可见性由各页自己的 selectTab() 切换，
+     两个 id（tv_tab_label / v_tab_line）是通用的，页面之间不冲突。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

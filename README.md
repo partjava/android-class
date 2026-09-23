@@ -1,6 +1,6 @@
 # 仿今日头条 · Android 课程设计
 
-一个纯 Java + XML 布局实现的今日头条客户端复刻，覆盖登录、信息流、新闻详情、个人中心、设置、编辑资料六条完整页面链路。
+一个纯 Java + XML 布局实现的今日头条客户端复刻，覆盖登录、信息流、新闻详情、视频播放、商城、消息聊天、个人中心、设置、编辑资料等多条完整页面链路。
 
 数据全部内置在代码里，**不联网、无后台**，装上就能跑。
 
@@ -15,6 +15,8 @@
 | 新闻详情 | 我的 | 设置 | 编辑资料 |
 |---|---|---|---|
 | ![](screenshots/04_news_detail.png) | ![](screenshots/05_mine.png) | ![](screenshots/06_settings.png) | ![](screenshots/07_edit_profile.png) |
+
+> 商城、消息、聊天、视频这几个页面是后加的，截图还没补（`screenshots/` 目前只有 01~07）。
 
 ---
 
@@ -35,7 +37,7 @@
   - 三图（文下三张并排）
   - 视频（封面 + 播放键）
 - **热点**频道换的是另一套数据：`ListView` + `ArrayAdapter` 渲染的大国工匠列表，点击条目弹出人物详情弹窗
-- 底部 5 项导航：首页 / 视频 / 添加 / 商城 / 我的（商城已接通，见下文）
+- 底部 5 项导航：首页 / 视频 / 添加 / 商城 / 我的（除「添加」是提示外，其余 4 项都接上了对应页面）
 
 ### 商城
 
@@ -45,6 +47,14 @@
 - 顶栏品牌红 + 搜索入口（演示），底部导航与首页 / 我的共用同一份菜单，可互相跳转
 - 价格统一两位小数，已售过万显示成"x.x万件"
 
+### 视频
+
+- **顶部频道标签**：推荐 / 小视频 / 影视 / 音乐，复用商城页的 `item_channel_tab` 布局（同一个文件被两个页面共用），选中的带红色圆角下划线，可左右滑动
+- **单列大封面卡片流**：`RecyclerView` + `LinearLayoutManager`，卡片结构为大封面（16:9，`centerCrop`）+ 居中播放键 + 右下角时长标签 + 标题（最多两行）+ 来源 / 播放量
+- **播放页**：通栏大封面 + 居中播放键，点击在播放 / 暂停之间切换，并驱动一条**模拟进度条**——每 200ms 推进 2%，十秒走满后停在满格不循环（项目没有视频文件，也不联网，播放是模拟的）
+- **相关视频**：播放页底部的紧凑列表，点击时用 `FLAG_ACTIVITY_CLEAR_TOP | SINGLE_TOP` 复用当前实例（走 `onNewIntent` 换数据），反复点不会堆栈
+- 首页「视频」频道里的 4 条视频也接到同一个播放页。`News` 模型没有时长和播放量字段，播放页取不到时会把这两个控件**藏掉而不是编造数据**
+
 ### 我的
 
 - 头像、昵称、IP 属地标签
@@ -52,6 +62,14 @@
 - 九宫格功能入口（消息私信、浏览历史、创作中心、书架、购物/订单、收藏、客服中心、退款/售后），部分带角标
 - 头条聊天室卡片
 - 作品区：收藏 / 赞过子标签 + 全部 / 视频 / 微头条筛选胶囊
+
+### 消息与聊天
+
+- **会话列表**：8 个会话，每行是圆底头像 + 会话名 + 最后一条消息 + 时间；未读带红色角标，未读为 0 时角标置 `GONE`（不是 `INVISIBLE`），否则时间会被挤得对不齐
+- 头像用 5 个矢量圆底（蓝 / 绿 / 橙 / 紫，加一个红底白铃铛的「系统通知」），不依赖位图
+- **聊天详情**：左右两种气泡布局。输入框是真的能发的——点「发送」把气泡追加到列表底部并清空输入框，一秒后再自动补一条对方回复（本地定时器造的，不联网）
+- 全项目唯一有软键盘交互的页面：`AndroidManifest` 里配了 `windowSoftInputMode="adjustResize"`，不配置的话键盘弹出来会直接盖住底部输入栏
+- 入口有两个：我的页右上角的信封图标（改造前**完全没绑点击事件**）、九宫格「消息私信」（改造前只弹一句 Toast）
 
 ### 设置
 
@@ -74,7 +92,7 @@
 | Java 版本 | 源码兼容 8（运行 Gradle 需 JDK 11 及以上） |
 | 开发工具 | Android Studio Dolphin (2021.3.1) |
 
-依赖只有三个（无网络库、无图片加载库）：
+依赖只有两个（无网络库、无图片加载库；`RecyclerView` 由 material 传递引入）：
 
 ```gradle
 implementation 'androidx.appcompat:appcompat:1.4.1'
@@ -106,17 +124,27 @@ app/src/main/
 │   ├── HomeActivity.java           首页信息流 + 大国工匠列表
 │   │                               （内含 Craftsman / CraftsmanAdapter 内部类）
 │   ├── NewsDetailActivity.java     新闻详情
-│   ├── MineActivity.java           个人中心
+│   ├── VideoActivity.java          视频频道页（单列大封面卡片流）
+│   ├── VideoDetailActivity.java    视频播放页（模拟播放进度）
 │   ├── ShopActivity.java           商城（两列瀑布流）
-│   ├── ShopItem.java               商品数据模型
-│   ├── ShopAdapter.java            瀑布流适配器
+│   ├── MsgActivity.java            消息会话列表
+│   ├── ChatActivity.java           聊天详情（可发送 + 自动回复）
+│   ├── MineActivity.java           个人中心
 │   ├── SettingsActivity.java       设置
 │   ├── EditProfileActivity.java    编辑资料
 │   ├── News.java                   新闻数据模型
-│   └── NewsMultiAdapter.java       多布局 RecyclerView 适配器
+│   ├── NewsMultiAdapter.java       多布局 RecyclerView 适配器
+│   ├── VideoItem.java              视频数据模型
+│   ├── VideoAdapter.java           视频列表适配器
+│   ├── ShopItem.java               商品数据模型
+│   ├── ShopAdapter.java            瀑布流适配器
+│   ├── MsgItem.java                会话数据模型
+│   ├── MsgAdapter.java             会话列表适配器
+│   ├── ChatMessage.java            聊天消息模型
+│   └── ChatAdapter.java            聊天气泡适配器（左右两种布局）
 │
 └── res/
-    ├── layout/        18 个布局文件
+    ├── layout/        27 个布局文件
     ├── drawable/      矢量图标与图片资源
     ├── drawable-nodpi/  商城商品照片 + 淘宝宫格图标（按原始像素渲染，不随密度缩放）
     ├── values/        colors / dimens / styles / themes / strings
@@ -133,12 +161,12 @@ app/src/main/
 
 ### 设计变量
 
-- **`colors.xml`** —— 语义化色板，共 23 个 token。品牌红 `#E63939`、三级文字色、三级背景色、图标色、分隔线色，替代原先散落在各布局里的硬编码色值
+- **`colors.xml`** —— 语义化色板，共 28 个 token。品牌红 `#E63939`、三级文字色、三级背景色、图标色、分隔线色，替代原先散落在各布局里的硬编码色值
 - **`dimens.xml`** —— 字号收成 6 档（`text_display` / `text_headline` / `text_title` / `text_body` / `text_body_small` / `text_caption`），间距按 4dp 栅格收成 7 档
 - **`styles.xml`** —— 25 个 style，把三处高频重复抽成模板：
   - 设置项行（设置页 26 行 + 编辑资料页 9 行）
   - 分隔线（全项目曾手写 80 处）
-  - 底部导航（首页与我的页曾逐字重复 11 行）
+  - 底部导航（首页 / 商城 / 我的 / 视频 4 个页面共用；改造前是逐字重复的 11 行）
 
 ### 主题
 
@@ -152,7 +180,22 @@ app/src/main/
 2. `android:forceDarkAllowed="false"` 挡掉 Android 10 的强制反色
 3. `values-night/themes.xml` 写入与 `values/` 逐项一致的定义，避免主题属性在深色设备上缺失
 
-已在模拟器上开启系统深色模式逐页验证，与浅色模式表现一致。
+登录、首页、新闻详情、我的、设置、编辑资料几个页面已在模拟器上开启系统深色模式逐页验证，与浅色模式表现一致。后加的商城 / 消息 / 聊天 / 视频页沿用同一套颜色 token、没有引入硬编码色值，理论上表现相同，但**尚未逐页重新验证**。
+
+### 视频封面比例的一个取舍
+
+视频封面用的是标准 16:9，但项目里的图**没有一张是横构图**——`image*` 是分辨率最高的一组，却全是竖图或近方图（最方的 `image7` 是 939×925）。`centerCrop` 到 16:9 后保留的原图高度 = 宽高比 ÷ 1.778：
+
+| 素材 | 尺寸 | 16:9 保留高度 |
+|---|---|---|
+| `image1` / `image4` | 640×1386 / 1000×2166 | 26% |
+| `image3` | 960×1707 | 32% |
+| `image2` / `image5` | 1080×1447 / 960×1280 | 42% |
+| `image7` | 939×925 | 57% |
+
+所以视频页只挑裁得动的 `image7 / image2 / image5 / image8 / img4 / image6` 这几张用，并刻意避开只剩一条横带的 `image1` / `image4`。另外视频标题都写成「纪录片 / 影像 / 现场」这类与具体画面无关的措辞，避免裁切后出现图文错位。
+
+封面框高度写在 `item_video.xml`（184dp = 328dp 宽 ÷ 16 × 9），想换成 4:3 只改这一个值（改成 246dp，保留高度立刻涨到 56%）。
 
 ### 顺带修掉的问题
 
@@ -164,6 +207,9 @@ app/src/main/
 - 详情页正文用次级灰 `#333333`，与标题层级倒挂，已改为主文字色
 - 视频封面的播放键原用系统 `@android:drawable/ic_media_play`（纯黑三角），在浅色封面上几乎不可见，已重绘为半透明黑圆 + 白色三角
 - 启动图标原是 Android Studio 默认的绿色机器人，已重绘为品牌红 + 白色资讯卡片
+- **商城页底部导航整条是空的**——`activity_shop.xml` 里的 `BottomNavigationView` 漏了 `style="@style/Widget.Toutiao.BottomNav"`，而五个菜单项恰恰是挂在这个 style 的 `app:menu` 上的。连带后果比"没有图标"严重得多：`setSelectedItemId()` / `setOnItemSelectedListener()` 全部静默失效，商城页变成一个点不动的死胡同。同时补上了 `fitsSystemWindows` 和底部约束——原来用 `tools:ignore="MissingConstraints"` 把 lint 警告压掉了，而那个警告是对的，视图实际被扔在了左上角
+- **我的页跳商城漏了 flag**——全项目就这一处没加 `CLEAR_TOP | SINGLE_TOP`，反复「我的 → 商城 → 返回」会一直堆新实例
+- **商城三个频道指向同一种商品**——「飞猪 / 新风潮 / 穿搭」原本共用一条 `return`，全指向只有 1 个商品的「服饰」。而 `filterByTab()` 的兜底只在结果**为空**时才触发，1 个不算空，兜底救不了，点进去就是个孤零零的双肩包
 
 ### 一个 Material 主题的坑
 

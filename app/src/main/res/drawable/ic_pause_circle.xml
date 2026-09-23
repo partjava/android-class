@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    播放页的暂停键，和 ic_play_circle 是一对：
+    同一个半透明黑圆底，只是把白三角换成两根白色竖条。
+
+    两个图形必须共用同一套几何参数（圆一样大、底色一样），
+    否则 VideoDetailActivity 切换 setImageResource 时圆会跳一下。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- 半透明黑圆 -->
+    <path
+        android:fillColor="@color/scrim_40"
+        android:pathData="M24,4 A20,20 0 1,1 23.99,4 Z"/>
+
+    <!-- 两根白竖条。整体跨 17~31，中点仍是 24，和播放三角的视觉重心对齐 -->
+    <path
+        android:fillColor="@color/on_brand"
+        android:pathData="M17,15 L23,15 L23,33 L17,33 Z"/>
+    <path
+        android:fillColor="@color/on_brand"
+        android:pathData="M25,15 L31,15 L31,33 L25,33 Z"/>
+</vector>

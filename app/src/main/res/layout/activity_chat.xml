@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    聊天详情页：红顶栏 + 消息列表 + 底部输入栏。
+
+    这是全项目第一个有软键盘交互的页面，所以有两点和别的页不一样：
+
+    1. AndroidManifest 里这个 Activity 必须写 windowSoftInputMode="adjustResize"。
+       不写的话，键盘弹出来会直接盖住底部输入栏 —— 别的页面没有输入框，
+       所以一直没暴露出这个问题。
+
+    2. 输入栏用 0dp + 底部约束贴在父容器底边，而不是固定高度往下堆。
+       adjustResize 生效时整个窗口变矮，约束会带着输入栏一起上移，
+       上面的 RecyclerView（0dp 高）则自动缩短，气泡列表不会被挤出屏幕。
+
+    消息列表背景用 bg_page 浅灰而不是白色：左气泡是白的，
+    白气泡压在白底上边界就看不见了。
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page">
+
+    <!-- ===================== 顶栏 ===================== -->
+    <LinearLayout
+        android:id="@+id/chat_top_bar"
+        style="@style/Widget.Toutiao.TopBar"
+        android:layout_width="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_chat_back"
+            style="@style/Widget.Toutiao.NavIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+
+        <!-- 对方的名字，从 Intent 带过来，在 ChatActivity 里 setText -->
+        <TextView
+            android:id="@+id/tv_chat_title"
+            style="@style/Widget.Toutiao.TopBarTitle"/>
+    </LinearLayout>
+
+    <!-- ===================== 消息列表 ===================== -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_chat"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scrollbars="none"
+        android:clipToPadding="false"
+        android:paddingVertical="@dimen/space_s"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/chat_top_bar"
+        app:layout_constraintBottom_toTopOf="@id/chat_input_bar"/>
+
+    <!-- ===================== 底部输入栏 ===================== -->
+    <LinearLayout
+        android:id="@+id/chat_input_bar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/bg_surface"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/page_padding"
+            android:paddingVertical="@dimen/space_s">
+
+            <!-- 输入框是浅灰胶囊，压在白色的输入栏上刚好能看出来。
+                 若把两者反过来（输入栏灰、输入框白），就糊在一起了。 -->
+            <EditText
+                android:id="@+id/et_chat_input"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_input"
+                android:gravity="center_vertical"
+                android:hint="输入消息…"
+                android:paddingHorizontal="@dimen/space_l"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:textSize="@dimen/text_body_small"
+                android:maxLines="1"
+                android:inputType="text"
+                android:imeOptions="actionSend"
+                android:importantForAutofill="no"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_chat_send"
+                style="@style/Widget.Toutiao.Button.Small"
+                android:layout_marginStart="@dimen/space_s"
+                android:text="发送"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

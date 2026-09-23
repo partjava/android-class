@@ -13,7 +13,6 @@
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_surface">
@@ -133,13 +132,19 @@
 
 
 
-    <!--底部导航栏，固定在屏幕底部，不会跟着滚动-->
+    <!--底部导航栏，固定在屏幕底部，不会跟着滚动。
 
+        ⚠️ style 不能省。五个菜单项不是写在这里的，而是挂在
+        Widget.Toutiao.BottomNav 这个 style 里的（app:menu）。
+        漏掉 style 的结果是整条导航栏一个图标都没有，
+        而且 ShopActivity 里 setSelectedItemId / setOnItemSelectedListener
+        全部静默失效——商城页会变成点不动的死胡同。
+        首页和我的页一直是完整的三行写法，这里对齐它们。-->
     <com.google.android.material.bottomnavigation.BottomNavigationView
-            android:id="@+id/bottom_nav"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            tools:ignore="MissingConstraints" />
+        android:id="@+id/bottom_nav"
+        style="@style/Widget.Toutiao.BottomNav"
+        android:fitsSystemWindows="true"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

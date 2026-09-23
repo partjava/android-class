@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    会话头像（消息页会话列表用）。
+
+    和默认头像 avatar.xml 同一个画法（实心圆底 + clip-path 裁出的人形），
+    只是换成彩色圆底——会话列表里一排同样的灰头像分不出谁是谁。
+
+    做成好几份独立文件而不是给一个 vector 上 tint：
+    tint 会把整个图形的所有 path 一起染色，人形也会跟着变，
+    白人就没了。颜色只能固化在文件里。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="@color/avatar_blue"
+        android:pathData="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 Z"/>
+
+    <group>
+        <clip-path android:pathData="M12,2 A10,10 0 1,0 12,22 A10,10 0 1,0 12,2 Z"/>
+        <path
+            android:fillColor="@color/avatar_fg"
+            android:pathData="M8.5,9.4 a3.5,3.5 0 1,0 7,0 a3.5,3.5 0 1,0 -7,0 Z"/>
+        <path
+            android:fillColor="@color/avatar_fg"
+            android:pathData="M5.2,21 a6.8,6.8 0 1,0 13.6,0 a6.8,6.8 0 1,0 -13.6,0 Z"/>
+    </group>
+</vector>

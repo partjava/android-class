@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    消息页会话列表的一行：头像 + 名字/消息预览 + 时间/未读数。
+
+    结构上有个容易写错的地方：中间那一列（名字 + 预览）必须是
+    0dp + weight=1。写 wrap_content 的话，宽度由文字自己撑，
+    遇到长名字或长预览就会把右边的时间顶出屏幕外
+    —— 我的页的「图文详情滑动方式」当年就是这么坏的，
+    设置页那套 SettingLabelColumn 是同一个修法。
+
+    分隔线缩进到文字起始处（我的页那套卡片规则是"白底 + 间距，不画线"，
+    但这里是密集的行列表，和设置页一样用线更清楚）。
+    缩进量 = page_padding 16 + 头像 48 + 间距 12 = 76dp。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/page_padding"
+        android:paddingVertical="@dimen/space_m"
+        android:background="?attr/selectableItemBackground">
+
+        <!-- 头像是 avatar*.xml 那组矢量图：本身就是圆的，
+             不需要 CardView 或圆角裁剪 -->
+        <ImageView
+            android:id="@+id/iv_msg_avatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="会话头像"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_m"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_msg_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body"/>
+
+            <TextView
+                android:id="@+id/tv_msg_last"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/text_tertiary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:id="@+id/tv_msg_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_tertiary"
+                android:textSize="@dimen/text_caption"/>
+
+            <!-- 未读角标。写法抄我的页九宫格那个「3」：
+                 minWidth + 居中，1 位数和 2 位数都不会变形。
+                 未读为 0 时由 MsgAdapter 置成 GONE。 -->
+            <TextView
+                android:id="@+id/tv_msg_unread"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:background="@drawable/bg_badge"
+                android:gravity="center"
+                android:minWidth="16dp"
+                android:paddingHorizontal="4dp"
+                android:paddingVertical="1dp"
+                android:textColor="@color/on_brand"
+                android:textSize="@dimen/text_caption"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="76dp"
+        android:background="@color/divider"/>
+</LinearLayout>

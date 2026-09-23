@@ -97,8 +97,22 @@ public class HomeActivity extends AppCompatActivity {
         rvNews.setLayoutManager(new LinearLayoutManager(this));
         rvNews.setAdapter(newsAdapter);
 
-        //点击某条新闻进入详情页
+        //点击某条新闻进入详情页；视频类型的改走播放页
         newsAdapter.setOnItemClickListener(news -> {
+            if (news.getType() == News.TYPE_VIDEO) {
+                Intent intent = new Intent(HomeActivity.this, VideoDetailActivity.class);
+                intent.putExtra(VideoDetailActivity.EXTRA_TITLE, news.getTitle());
+                //来源列沿用新闻详情页的拼法："来源  时间"
+                intent.putExtra(VideoDetailActivity.EXTRA_SOURCE,
+                        news.getSource() + "  " + news.getTime());
+                intent.putExtra(VideoDetailActivity.EXTRA_DESC,
+                        news.getContent() == null ? "" : news.getContent());
+                intent.putExtra(VideoDetailActivity.EXTRA_COVER, news.getImg1());
+                //时长和播放量 News 模型里没有，不传——
+                //播放页取不到会把这两个控件藏掉，不编假数据
+                startActivity(intent);
+                return;
+            }
             Intent intent = new Intent(HomeActivity.this, NewsDetailActivity.class);
             intent.putExtra("title", news.getTitle());
             intent.putExtra("info", news.getSource() + "  " + news.getTime());
@@ -304,7 +318,10 @@ public class HomeActivity extends AppCompatActivity {
                 if(itemId == R.id.nav_home){
                     Toast.makeText(HomeActivity.this,"当前在首页",Toast.LENGTH_SHORT).show();
                 }else if(itemId == R.id.nav_video){
-                    Toast.makeText(HomeActivity.this,"点击视频",Toast.LENGTH_SHORT).show();
+                    //跳转到视频页，和其他几个 tab 用同一套栈管理策略
+                    Intent intent = new Intent(HomeActivity.this, VideoActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                 }else if(itemId == R.id.nav_add){
                     Toast.makeText(HomeActivity.this,"点击发布",Toast.LENGTH_SHORT).show();
                 }else if(itemId == R.id.nav_shop){

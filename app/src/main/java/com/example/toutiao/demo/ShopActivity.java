@@ -108,7 +108,7 @@ public class ShopActivity extends AppCompatActivity {
     private void setupTabs() {
         LayoutInflater inflater = LayoutInflater.from(this);
         for (int i = 0; i < TAB_LABELS.length; i++) {
-            View tab = inflater.inflate(R.layout.item_shop_tab, llTabs, false);
+            View tab = inflater.inflate(R.layout.item_channel_tab, llTabs, false);
             ((TextView) tab.findViewById(R.id.tv_tab_label)).setText(TAB_LABELS[i]);
             final int index = i;
             tab.setOnClickListener(v -> selectTab(index));
@@ -159,13 +159,32 @@ public class ShopActivity extends AppCompatActivity {
         return result.isEmpty() ? new ArrayList<>(allItems) : result;
     }
 
+    /**
+     * 频道 → 商品分类的映射。
+     *
+     * 7 个频道是从淘宝抄来的名字，而演示数据只有 4 个分类
+     * （家居 6 个、数码 4 个、食品 1 个、服饰 1 个），两边对不上，
+     * 所以这里的目标不是语义精确，而是**别让哪个频道点开来是空的**。
+     *
+     * 原来「飞猪 / 新风潮 / 穿搭」三个频道共用一个 return，全指向「服饰」，
+     * 而服饰只有 1 个商品——点进去就是一个孤零零的双肩包。
+     * filterByTab() 的兜底只在结果**为空**时才生效，一条不算空，兜底救不了。
+     *
+     * 现在每个频道至少 4 个商品，且五组集合互不相同（分类只有 4 个，
+     * 频道有 5 个，重叠不可避免，但不再有两组完全一样）。
+     */
     private boolean matchesTab(String tab, String category) {
         switch (tab) {
+            //7 个：食品 + 家居
             case "关注": return category.equals("食品") || category.equals("家居");
+            //4 个：数码
             case "国补": return category.equals("数码");
-            case "飞猪":
-            case "新风潮":
-            case "穿搭": return category.equals("服饰");
+            //7 个：服饰 + 家居。双肩包、保温杯、四件套这些当出行用品说得通
+            case "飞猪": return category.equals("服饰") || category.equals("家居");
+            //5 个：数码 + 食品
+            case "新风潮": return category.equals("数码") || category.equals("食品");
+            //5 个：服饰 + 数码。智能手表、无线耳机、挂脖风扇本来就是穿搭配饰
+            case "穿搭": return category.equals("服饰") || category.equals("数码");
             default:     return true;//推荐 → 全部
         }
     }
@@ -343,7 +362,10 @@ public class ShopActivity extends AppCompatActivity {
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
                 } else if (itemId == R.id.nav_video) {
-                    Toast.makeText(ShopActivity.this, "点击视频", Toast.LENGTH_SHORT).show();
+                    //跳转到视频页，和跳首页/我的用同一套栈管理策略
+                    Intent intent = new Intent(ShopActivity.this, VideoActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                 } else if (itemId == R.id.nav_add) {
                     Toast.makeText(ShopActivity.this, "点击发布", Toast.LENGTH_SHORT).show();
                 } else if (itemId == R.id.nav_shop) {

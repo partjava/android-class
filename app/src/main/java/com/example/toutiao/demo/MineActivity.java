@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MineActivity extends AppCompatActivity {
-    private ImageView ivSetting, ivAvatar;
+    private ImageView ivSetting, ivAvatar, ivMsg;
     private TextView tvApplyAuth;
     private LinearLayout llMsgPrivate, llHistory, llCreate, llBook, llShop, llCollect, llService, llRefund;
     private Button btnGoComment;
@@ -32,6 +32,7 @@ public class MineActivity extends AppCompatActivity {
     private void bindView() {
         ivSetting = findViewById(R.id.iv_setting);
         ivAvatar = findViewById(R.id.iv_avatar);
+        ivMsg = findViewById(R.id.iv_msg);
         tvApplyAuth = findViewById(R.id.tv_apply_auth);
         llMsgPrivate = findViewById(R.id.ll_msg_private);
         llHistory = findViewById(R.id.ll_history);
@@ -57,10 +58,19 @@ public class MineActivity extends AppCompatActivity {
             Intent intent = new Intent(MineActivity.this, EditProfileActivity.class);
             startActivity(intent);
         });
+        //右上角消息图标，和下面九宫格的「消息私信」进的是同一个页面。
+        //这个图标以前没有任何点击事件，点了没反应。
+        ivMsg.setOnClickListener(v -> {
+            Intent intent = new Intent(MineActivity.this, MsgActivity.class);
+            startActivity(intent);
+        });
         tvApplyAuth.setOnClickListener(v -> Toast.makeText(MineActivity.this, "申请认证", Toast.LENGTH_SHORT).show());
 
         //我的功能各个按钮
-        llMsgPrivate.setOnClickListener(v -> Toast.makeText(MineActivity.this, "消息私信", Toast.LENGTH_SHORT).show());
+        llMsgPrivate.setOnClickListener(v -> {
+            Intent intent = new Intent(MineActivity.this, MsgActivity.class);
+            startActivity(intent);
+        });
         llHistory.setOnClickListener(v -> Toast.makeText(MineActivity.this, "浏览历史", Toast.LENGTH_SHORT).show());
         llCreate.setOnClickListener(v -> Toast.makeText(MineActivity.this, "创作中心", Toast.LENGTH_SHORT).show());
         llBook.setOnClickListener(v -> Toast.makeText(MineActivity.this, "书架", Toast.LENGTH_SHORT).show());
@@ -86,12 +96,17 @@ public class MineActivity extends AppCompatActivity {
                     //这里的 finish() 是兜底：万一栈里没有 HomeActivity，不至于让"我的"留在下面
                     finish();
                 }else if(itemId == R.id.nav_video){
-                    Toast.makeText(MineActivity.this,"点击视频",Toast.LENGTH_SHORT).show();
+                    //跳转到视频页，和跳首页/商城用同一套栈管理策略
+                    Intent intent = new Intent(MineActivity.this, VideoActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
                 }else if(itemId == R.id.nav_add){
                     Toast.makeText(MineActivity.this,"点击发布",Toast.LENGTH_SHORT).show();
                 }else if(itemId == R.id.nav_shop){
-                    //跳转到商城页
+                    //跳转到商城页，和首页跳商城用同一套栈管理策略。
+                    //原来这里漏了 flag：反复"我的→商城→返回→商城"会一直堆新实例
                     Intent intent = new Intent(MineActivity.this, ShopActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                     startActivity(intent);
                 }else if(itemId == R.id.nav_mine){
                     Toast.makeText(MineActivity.this,"当前在我的页面",Toast.LENGTH_SHORT).show();

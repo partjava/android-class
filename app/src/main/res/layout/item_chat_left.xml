@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    聊天页对方的气泡（左侧，白底黑字）。
+
+    gravity="start" 是气泡左右分边的关键：外层这一行铺满宽度，
+    气泡自己是 wrap_content，靠 gravity 决定贴左还是贴右。
+    右气泡（item_chat_right.xml）只有这个值和配色不同。
+
+    maxWidth 限制气泡宽度：不限制的话，一条长消息会拉成整屏宽，
+    看不出"这是个气泡"，和对方的头像留白也没了。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="start"
+    android:paddingHorizontal="@dimen/page_padding"
+    android:paddingVertical="@dimen/space_s">
+
+    <TextView
+        android:id="@+id/tv_bubble_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="260dp"
+        android:background="@drawable/bg_bubble_left"
+        android:paddingHorizontal="@dimen/space_m"
+        android:paddingVertical="@dimen/space_s"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/text_body"
+        android:lineSpacingExtra="2dp"/>
+</LinearLayout>

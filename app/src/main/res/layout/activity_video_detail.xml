@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    视频播放页。二级页，顶栏有返回键。
+
+    从上到下：
+    1. 红顶栏（返回 + 标题）
+    2. 封面区：大封面 + 居中播放键 + 右下角时长。整块**通栏**，
+       左右不留 page_padding——视频播放器贴边才像样
+    3. 模拟进度条：压在封面正下方
+    4. 正文区（有 page_padding）：标题 / 来源·播放量 / 分隔线 / 简介 /
+       分隔线 / 「相关视频」+ 列表
+
+    进度条没用 ProgressBar：横向 ProgressBar 的 progressDrawable 自带
+    固有高度，写 layout_height="3dp" 经常不生效、量出来还是十几 dp。
+    这里用一个 FrameLayout 当轨道 + 一个 View 当已播放部分，
+    宽度由 VideoDetailActivity 按百分比设置，高度完全可控。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_surface">
+
+    <LinearLayout style="@style/Widget.Toutiao.TopBar">
+
+        <ImageView
+            android:id="@+id/iv_detail_back"
+            style="@style/Widget.Toutiao.NavIcon"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+
+        <TextView
+            style="@style/Widget.Toutiao.TopBarTitle"
+            android:text="视频"/>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 封面：通栏 16:9。360dp 宽 ÷ 16 × 9 ≈ 203dp，
+                 和列表页 item_video.xml 的封面是同一个比例 -->
+            <RelativeLayout
+                android:id="@+id/rl_detail_cover"
+                android:layout_width="match_parent"
+                android:layout_height="203dp">
+
+                <ImageView
+                    android:id="@+id/iv_detail_cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="视频封面"/>
+
+                <!-- 这个播放键有 id：Java 要在它和 ic_pause_circle 之间切换 -->
+                <ImageView
+                    android:id="@+id/iv_detail_play"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_play_circle"
+                    android:contentDescription="播放"/>
+
+                <!-- 时长。从首页视频标签进来时没有这个数据，Java 会把它藏掉 -->
+                <TextView
+                    android:id="@+id/tv_detail_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_marginEnd="@dimen/space_m"
+                    android:layout_marginBottom="@dimen/space_m"
+                    android:background="@drawable/bg_video_duration"
+                    android:paddingHorizontal="@dimen/space_s"
+                    android:paddingVertical="@dimen/space_xs"
+                    android:maxLines="1"
+                    android:textColor="@color/on_brand"
+                    android:textSize="@dimen/text_caption"/>
+            </RelativeLayout>
+
+            <FrameLayout
+                android:id="@+id/fl_detail_progress"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:background="@color/divider">
+
+                <View
+                    android:id="@+id/v_detail_progress"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:background="@color/brand_red"/>
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingTop="@dimen/space_l"
+                android:paddingBottom="@dimen/space_xl">
+
+                <TextView
+                    android:id="@+id/tv_detail_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/text_headline"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold"
+                    android:lineSpacingExtra="4dp"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_meta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:textSize="@dimen/text_body_small"
+                    android:textColor="@color/text_tertiary"/>
+
+                <View
+                    style="@style/Widget.Toutiao.Divider"
+                    android:layout_marginTop="@dimen/space_l"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_desc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:textSize="@dimen/text_body"
+                    android:textColor="@color/text_primary"
+                    android:lineSpacingExtra="8dp"/>
+
+                <View
+                    style="@style/Widget.Toutiao.Divider"
+                    android:layout_marginTop="@dimen/space_l"/>
+
+                <TextView
+                    style="@style/Widget.Toutiao.SectionTitle"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="相关视频"/>
+
+                <!-- 固定 3 条、不滚动，由 VideoDetailActivity 动态 addView 填充。
+                     这种情况再起一个 RecyclerView 是杀鸡用牛刀 -->
+                <LinearLayout
+                    android:id="@+id/ll_related"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

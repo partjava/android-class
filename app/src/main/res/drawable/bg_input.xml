@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 聊天页底部输入框的底：浅灰圆角胶囊。
+     输入栏本身是白底（bg_surface），浅灰输入框压在白底上刚好能看出来；
+     反过来把输入栏做成浅灰、输入框做成白的话，两者就糊在一起了。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/bg_subtle"/>
+    <corners android:radius="18dp"/>
+</shape>

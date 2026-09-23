@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 聊天页我方的气泡：品牌红底 + 白字，和对方的白底气泡左右分开。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/brand_red"/>
+    <corners android:radius="12dp"/>
+</shape>

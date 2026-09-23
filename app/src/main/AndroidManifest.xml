@@ -22,8 +22,16 @@
         <activity android:name=".NewsDetailActivity"/>
         <activity android:name=".MineActivity"/>
         <activity android:name=".ShopActivity"/>
+        <activity android:name=".VideoActivity"/>
+        <activity android:name=".VideoDetailActivity"/>
         <activity android:name=".EditProfileActivity"/>
         <activity android:name=".SettingsActivity"/>
+        <activity android:name=".MsgActivity"/>
+        <!-- 全项目唯一一个带软键盘交互的页面：
+             不写 adjustResize 的话，键盘弹出来会直接盖住底部输入栏 -->
+        <activity
+            android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustResize"/>
     </application>
 
 </manifest>

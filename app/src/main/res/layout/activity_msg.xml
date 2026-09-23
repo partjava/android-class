@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    消息页。
+
+    三段：顶栏 → 四宫格功能入口 → 会话列表。
+
+    这是从「我的」点进来的二级页，所以顶栏是白底带返回键
+    （红底顶栏是给首页那种一级页用的），也没有底部导航
+    —— 头条真机的消息页同样是这个形态。
+
+    ⚠️ 顶栏的 Divider 和 RecyclerView 在 ConstraintLayout 里用的是
+       0dp + 左右约束，而不是 match_parent：ConstraintLayout 下
+       match_parent 的语义和普通 ViewGroup 不一样，写 0dp 更稳。
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+
+    <!-- ===================== 顶栏 ===================== -->
+    <LinearLayout
+        android:id="@+id/msg_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/space_s"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_msg_back"
+            style="@style/Widget.Toutiao.NavIcon.Dark"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+
+        <TextView
+            style="@style/Widget.Toutiao.PageTitle"
+            android:text="消息"/>
+
+        <!-- 0dp + weight=1 把标题挤到左边、搜索图标推到右边 -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+
+        <ImageView
+            android:id="@+id/iv_msg_search"
+            style="@style/Widget.Toutiao.NavIcon.Dark"
+            android:src="@drawable/ic_search"
+            android:contentDescription="搜索"/>
+    </LinearLayout>
+
+    <!-- ===================== 四宫格功能入口 ===================== -->
+    <LinearLayout
+        android:id="@+id/ll_msg_entries"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="@dimen/space_m"
+        android:paddingBottom="@dimen/space_m"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/msg_top_bar">
+
+        <!-- 私信 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_private"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingVertical="@dimen/space_s"
+            android:background="?attr/selectableItemBackground">
+
+            <RelativeLayout
+                android:layout_width="@dimen/icon_feature"
+                android:layout_height="@dimen/icon_feature">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_feature"
+                    android:layout_height="@dimen/icon_feature"
+                    android:src="@drawable/ic_msg_private"
+                    android:contentDescription="私信"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/bg_badge"
+                    android:gravity="center"
+                    android:minWidth="16dp"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:text="3"
+                    android:textColor="@color/on_brand"
+                    android:textSize="@dimen/text_caption"/>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="私信"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!-- 赞和评论 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_like"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingVertical="@dimen/space_s"
+            android:background="?attr/selectableItemBackground">
+
+            <RelativeLayout
+                android:layout_width="@dimen/icon_feature"
+                android:layout_height="@dimen/icon_feature">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_feature"
+                    android:layout_height="@dimen/icon_feature"
+                    android:src="@drawable/ic_like"
+                    android:contentDescription="赞和评论"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/bg_badge"
+                    android:gravity="center"
+                    android:minWidth="16dp"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:text="12"
+                    android:textColor="@color/on_brand"
+                    android:textSize="@dimen/text_caption"/>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="赞和评论"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!-- 粉丝 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_fans"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingVertical="@dimen/space_s"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="@dimen/icon_feature"
+                android:layout_height="@dimen/icon_feature"
+                android:src="@drawable/ic_friend"
+                android:contentDescription="粉丝"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="粉丝"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <!-- 系统通知 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_system"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingVertical="@dimen/space_s"
+            android:background="?attr/selectableItemBackground">
+
+            <RelativeLayout
+                android:layout_width="@dimen/icon_feature"
+                android:layout_height="@dimen/icon_feature">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_feature"
+                    android:layout_height="@dimen/icon_feature"
+                    android:src="@drawable/ic_notify"
+                    android:contentDescription="系统通知"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:background="@drawable/bg_badge"
+                    android:gravity="center"
+                    android:minWidth="16dp"
+                    android:paddingHorizontal="4dp"
+                    android:paddingVertical="1dp"
+                    android:text="2"
+                    android:textColor="@color/on_brand"
+                    android:textSize="@dimen/text_caption"/>
+            </RelativeLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="系统通知"
+                android:textColor="@color/text_primary"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/divider_msg"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ll_msg_entries"/>
+
+    <!-- ===================== 会话列表 ===================== -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_msg"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scrollbars="none"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider_msg"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

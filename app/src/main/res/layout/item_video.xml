@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    视频页的单个视频卡片：大封面 + 标题 + 来源/播放量。
+
+    卡片规则和 4 个新闻 item 一致：白底 + 下方 8dp 间距，
+    父容器是灰底，靠间距自然分隔，不画分隔线。
+
+    ⚠️ 封面框的比例是 16:9 —— 高度 184dp 是算出来的，不是随手写的：
+       360dp 屏 − 左右各 16dp page_padding = 328dp 可用宽，
+       328 × 9 ÷ 16 ≈ 184dp。
+
+       这是全页唯一需要调的魔数。项目里的图**没有一张是横构图**
+       （image* 全是竖图或方图），centerCrop 到 16:9 会裁掉不少：
+       image2 / image5 只保留中间约 42% 的高度，image7 最好、约 57%。
+       如果裁出来主体没了不好看，把下面这个 184dp 改成 246dp 就是 4:3
+       （保留高度立刻涨到 56%），只改这一行。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/bg_surface"
+    android:layout_marginBottom="@dimen/space_s"
+    android:padding="@dimen/page_padding">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="184dp">
+
+        <ImageView
+            android:id="@+id/iv_video_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="视频封面"/>
+
+        <!-- 播放键只是装饰，整张卡片才是点击区域，所以不给 id -->
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_play_circle"
+            android:contentDescription="播放"/>
+
+        <!-- 时长标签压在封面右下角，和播放键同一套遮罩色 -->
+        <TextView
+            android:id="@+id/tv_video_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="@dimen/space_s"
+            android:layout_marginBottom="@dimen/space_s"
+            android:background="@drawable/bg_video_duration"
+            android:paddingHorizontal="@dimen/space_s"
+            android:paddingVertical="@dimen/space_xs"
+            android:maxLines="1"
+            android:textColor="@color/on_brand"
+            android:textSize="@dimen/text_caption"/>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_video_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_m"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textSize="@dimen/text_title"
+        android:textColor="@color/text_primary"/>
+
+    <!-- 来源用 0dp + weight=1 吃掉剩余宽度，右边的播放量就永远挤不出去 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_s"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_video_source"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+
+        <TextView
+            android:id="@+id/tv_video_play"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_l"
+            android:maxLines="1"
+            android:textSize="@dimen/text_caption"
+            android:textColor="@color/text_tertiary"/>
+    </LinearLayout>
+</LinearLayout>
