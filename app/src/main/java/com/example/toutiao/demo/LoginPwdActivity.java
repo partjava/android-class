@@ -1,8 +1,9 @@
 package com.example.toutiao.demo;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -40,43 +41,68 @@ public class LoginPwdActivity extends AppCompatActivity {
     }
 
     private void bindEvent() {
-        // 返回
-        ivBack.setOnClickListener(v -> finish());
+        if (ivBack != null) {
+            ivBack.setOnClickListener(v -> finish());
+        }
 
-        // 立即登录
         btnLogin.setOnClickListener(v -> {
-            if (!cbAgree.isChecked()) {
-                Toast.makeText(LoginPwdActivity.this, "请勾选同意用户协议与隐私政策", Toast.LENGTH_SHORT).show();
-                return;
-            }
             String account = etAccount.getText().toString().trim();
             String pwd = etPwd.getText().toString().trim();
-            if(account.isEmpty()){
-                Toast.makeText(LoginPwdActivity.this, "请输入手机号/邮箱", Toast.LENGTH_SHORT).show();
+
+            if (TextUtils.isEmpty(account)) {
+                Toast.makeText(LoginPwdActivity.this, "请输入手机号或账号", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if(pwd.isEmpty()){
+            if (TextUtils.isEmpty(pwd)) {
                 Toast.makeText(LoginPwdActivity.this, "请输入密码", Toast.LENGTH_SHORT).show();
                 return;
             }
-            //模拟登录成功，进入首页（和一键登录保持一致）
-            Toast.makeText(LoginPwdActivity.this, "账号密码登录模拟成功", Toast.LENGTH_SHORT).show();
+            if (!cbAgree.isChecked()) {
+                Toast.makeText(LoginPwdActivity.this, "请勾选同意《用户协议》和《隐私政策》", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            getSharedPreferences("session", MODE_PRIVATE).edit().putBoolean("logged_in", true).apply();
+            Toast.makeText(LoginPwdActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(LoginPwdActivity.this, HomeActivity.class);
-            //清掉登录页所在的整个任务栈，否则登录后按返回键又退回登录界面
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
         });
 
-        //找回密码
-        tvForgetPwd.setOnClickListener(v -> Toast.makeText(LoginPwdActivity.this, "打开找回密码页面", Toast.LENGTH_SHORT).show());
-        //用户协议
-        tvUserAgreement.setOnClickListener(v -> Toast.makeText(LoginPwdActivity.this, "打开用户协议", Toast.LENGTH_SHORT).show());
-        //隐私政策
-        tvPrivacy.setOnClickListener(v -> Toast.makeText(LoginPwdActivity.this, "打开隐私政策", Toast.LENGTH_SHORT).show());
-        //应用设置
-        tvAppSetting.setOnClickListener(v -> Toast.makeText(LoginPwdActivity.this, "打开应用设置", Toast.LENGTH_SHORT).show());
-        //遇到问题
-        tvProblem.setOnClickListener(v -> Toast.makeText(LoginPwdActivity.this, "打开问题反馈", Toast.LENGTH_SHORT).show());
+        // 找回密码
+        tvForgetPwd.setOnClickListener(v -> {
+            EditText etNewPwd = new EditText(this);
+            etNewPwd.setHint("请输入新密码");
+            new AlertDialog.Builder(this)
+                    .setTitle("找回 / 重置密码")
+                    .setMessage("验证码已模拟发送至绑定的安全手机。请直接输入新密码：")
+                    .setView(etNewPwd)
+                    .setPositiveButton("重置密码", (d, w) -> {
+                        String newP = etNewPwd.getText().toString().trim();
+                        if (!newP.isEmpty()) {
+                            etPwd.setText(newP);
+                            Toast.makeText(this, "密码重置成功，已填入密码框", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(this, "密码不能为空", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+        });
+
+        // 用户协议
+        tvUserAgreement.setOnClickListener(v -> LegalDialogs.showAgreement(this));
+        
+        // 隐私政策
+        tvPrivacy.setOnClickListener(v -> LegalDialogs.showPrivacy(this));
+        
+        // 应用设置
+        tvAppSetting.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginPwdActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
+
+        // 遇到问题
+        tvProblem.setOnClickListener(v -> LegalDialogs.showHelp(this));
     }
 }

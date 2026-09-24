@@ -18,7 +18,14 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginPwdActivity"/>
-        <activity android:name=".HomeActivity"/>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"/>
+        <activity android:name=".ContentLibraryActivity"/>
+        <activity android:name=".PublishActivity"/>
+        <activity
+            android:name=".HomeActivity"
+            android:exported="true"/>
         <activity android:name=".NewsDetailActivity"/>
         <activity android:name=".MineActivity"/>
         <activity android:name=".ShopActivity"/>
@@ -32,6 +39,10 @@
         <activity
             android:name=".ChatActivity"
             android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".CartActivity" android:exported="true"/>
+        <activity android:name=".OrderConfirmActivity" android:exported="true"/>
+        <activity android:name=".OrderListActivity" android:exported="true"/>
+        <activity android:name=".OrderDetailActivity" android:exported="true"/>
     </application>
 
 </manifest>

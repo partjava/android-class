@@ -38,7 +38,7 @@
                 android:layout_weight="1"/>
             <TextView
                 style="@style/Widget.Toutiao.PageTitle"
-                android:text="设置"/>
+                android:text="设置（本地演示）"/>
             <View
                 android:layout_width="0dp"
                 android:layout_height="1dp"
@@ -100,7 +100,7 @@
                 android:text="深色模式"/>
             <TextView
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="已关闭"/>
+                android:text="暂未实现"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
@@ -123,7 +123,7 @@
                 android:text="字体大小"/>
             <TextView
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="标准"/>
+                android:text="暂未实现"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
@@ -142,7 +142,7 @@
             </LinearLayout>
             <TextView
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="一滑一个"/>
+                android:text="暂未实现"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
@@ -155,7 +155,7 @@
                     android:text="自动开启阅读模式/清爽模式"/>
                 <TextView
                     style="@style/Widget.Toutiao.SettingRowSubtitle"
-                    android:text="访问第三方站点时，更流畅的阅读体验"/>
+                    android:text="以下开关仅保存本机偏好，功能暂未实现"/>
             </LinearLayout>
             <Switch
                 android:id="@+id/switch_read_mode"
@@ -173,7 +173,7 @@
                 android:text="清理缓存"/>
             <TextView
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="33.67MB"/>
+                android:text="暂未实现"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
@@ -338,7 +338,7 @@
                 android:text="检查版本"/>
             <TextView
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="18.4.0"/>
+                android:text="课程版 1.0"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>

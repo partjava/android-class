@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_surface">
+
+    <ScrollView
+        android:id="@+id/scroll_view_mine"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_m">
+
+                <Button
+                    android:id="@+id/btn_publish"
+                    style="@style/Widget.Toutiao.Button.Small"
+                    android:text="+ 发布"/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+
+                <ImageView
+                    android:id="@+id/iv_friend"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:src="@drawable/ic_friend"
+                    android:contentDescription="好友"/>
+                <ImageView
+                    android:id="@+id/iv_msg"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_msg"
+                    android:contentDescription="消息"/>
+                <ImageView
+                    android:id="@+id/iv_setting"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:src="@drawable/ic_setting"
+                    android:contentDescription="设置"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="@dimen/page_padding">
+
+                <ImageView
+                    android:id="@+id/iv_avatar"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:src="@drawable/avatar"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="头像"/>
+
+                <LinearLayout
+                    style="@style/Widget.Toutiao.SettingLabelColumn"
+                    android:layout_marginStart="@dimen/space_l">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/tv_profile_name"
+                            android:text="凝墨"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_display"
+                            android:textStyle="bold"/>
+
+                        <ImageView
+                            android:id="@+id/iv_edit_name"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="@dimen/space_xs"
+                            android:layout_gravity="center_vertical"
+                            android:src="@drawable/ic_edit"
+                            android:contentDescription="编辑资料"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/space_s">
+
+                        <TextView
+                            android:id="@+id/tv_stat_follow"
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:text="0关注"/>
+                        <TextView
+                            android:id="@+id/tv_stat_fans"
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:layout_marginStart="@dimen/space_l"
+                            android:text="1粉丝"/>
+                        <TextView
+                            android:id="@+id/tv_stat_likes"
+                            style="@style/Widget.Toutiao.StatsItem"
+                            android:layout_marginStart="@dimen/space_l"
+                            android:text="1获赞"/>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_apply_auth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:text="编辑资料 >"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_small"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:id="@+id/tv_profile_intro"
+                        android:text="填写简介更容易获得大家的关注，点击添加 >"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body_small"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="@dimen/space_s">
+
+                        <TextView
+                            android:id="@+id/tv_tag_ip"
+                            style="@style/Widget.Toutiao.Tag"
+                            android:text="IP属地:湖北"/>
+                        <TextView
+                            android:id="@+id/tv_tag_edit"
+                            style="@style/Widget.Toutiao.Tag"
+                            android:layout_marginStart="@dimen/space_s"
+                            android:text="添加年龄、学校标签"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="我的功能"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/tv_all_func"
+                        style="@style/Widget.Toutiao.SectionMore"
+                        android:text="全部 >"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_l">
+
+                    <LinearLayout
+                        android:id="@+id/ll_msg_private"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <RelativeLayout
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature">
+                            <ImageView
+                                android:layout_width="@dimen/icon_feature"
+                                android:layout_height="@dimen/icon_feature"
+                                android:src="@drawable/ic_msg_private"
+                                android:contentDescription="消息私信"/>
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/bg_badge"
+                                android:gravity="center"
+                                android:minWidth="16dp"
+                                android:paddingHorizontal="4dp"
+                                android:paddingVertical="1dp"
+                                android:text="3"
+                                android:textColor="@color/on_brand"
+                                android:textSize="@dimen/text_caption"/>
+                        </RelativeLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="消息私信"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_history"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_history"
+                            android:contentDescription="浏览历史"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="浏览历史"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_create"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_create"
+                            android:contentDescription="创作中心"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="创作中心"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_book"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_book"
+                            android:contentDescription="书架"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="阅读记录"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_l">
+
+                    <LinearLayout
+                        android:id="@+id/ll_shop"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <RelativeLayout
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature">
+                            <ImageView
+                                android:layout_width="@dimen/icon_feature"
+                                android:layout_height="@dimen/icon_feature"
+                                android:src="@drawable/ic_shop"
+                                android:contentDescription="购物订单"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:background="@drawable/bg_badge"
+                                android:gravity="center"
+                                android:paddingHorizontal="4dp"
+                                android:paddingVertical="1dp"
+                                android:text="领现金"
+                                android:textColor="@color/on_brand"
+                                android:textSize="@dimen/text_caption"/>
+                        </RelativeLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="购物车"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_collect"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_collect"
+                            android:contentDescription="收藏"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="收藏"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_service"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_service"
+                            android:contentDescription="客服中心"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="客服中心"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_refund"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:background="?attr/selectableItemBackground">
+                        <ImageView
+                            android:layout_width="@dimen/icon_feature"
+                            android:layout_height="@dimen/icon_feature"
+                            android:src="@drawable/ic_refund"
+                            android:contentDescription="退款售后"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_s"
+                            android:text="本地订单"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingBottom="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_chatroom_title"
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="头条聊天室"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/tv_chatroom_more"
+                        style="@style/Widget.Toutiao.SectionMore"
+                        android:text="..."/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_chatroom_card"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:src="@drawable/ic_chat_room"
+                        android:contentDescription="聊天室"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="@dimen/space_m">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="每日评论 瓜分20万红包"
+                            android:textColor="@color/text_primary"
+                            android:textSize="@dimen/text_body"
+                            android:maxLines="2"
+                            android:ellipsize="end"/>
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/space_xs"
+                            android:text="头条聊天室 正在热聊中>"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="@dimen/text_body_small"
+                            android:maxLines="1"
+                            android:ellipsize="end"/>
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/btn_go_comment"
+                        style="@style/Widget.Toutiao.Button.Small"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:text="去评论"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/page_padding"
+                android:paddingVertical="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_works_title"
+                        style="@style/Widget.Toutiao.SectionTitle"
+                        android:text="作品"
+                        android:textColor="@color/brand_red"/>
+
+                    <TextView
+                        android:id="@+id/tv_collect_tab"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xl"
+                        android:text="收藏"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body"/>
+
+                    <TextView
+                        android:id="@+id/tv_like_tab"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xl"
+                        android:text="赞过"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="@dimen/text_body"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <ImageView
+                        android:id="@+id/iv_work_search"
+                        android:layout_width="@dimen/icon_nav"
+                        android:layout_height="@dimen/icon_nav"
+                        android:src="@drawable/ic_search"
+                        android:tint="@color/icon_primary"
+                        android:contentDescription="搜索"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_work_chips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="@dimen/space_m">
+
+                    <TextView
+                        android:id="@+id/btn_all_work"
+                        style="@style/Widget.Toutiao.Chip.Selected"
+                        android:text="全部"/>
+                    <TextView
+                        android:id="@+id/btn_video_work"
+                        style="@style/Widget.Toutiao.Chip"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:text="视频"/>
+                    <TextView
+                        android:id="@+id/btn_micro_work"
+                        style="@style/Widget.Toutiao.Chip"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:text="微头条"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_works_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:text="6个作品"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="@dimen/text_body_small"/>
+
+                <LinearLayout
+                    android:id="@+id/ll_works_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="@dimen/space_s"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -104,19 +104,17 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 holder = new TextViewHolder(view);
                 break;
         }
-        //4 种布局共用同一套点击处理
-        view.setOnClickListener(v -> {
-            int position = holder.getAdapterPosition();
-            if (position != RecyclerView.NO_POSITION && itemClickListener != null) {
-                itemClickListener.onItemClick(newsList.get(position));
-            }
-        });
         return holder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         News news = newsList.get(position);
+        holder.itemView.setOnClickListener(v -> {
+            if (itemClickListener != null) {
+                itemClickListener.onItemClick(news);
+            }
+        });
         int type = news.getType();
         switch (type){
             case News.TYPE_TEXT:

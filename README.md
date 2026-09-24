@@ -8,76 +8,142 @@
 
 ## 运行截图
 
-| 一键登录 | 密码登录 | 首页信息流 |
-|---|---|---|
-| ![](screenshots/01_login_onekey.png) | ![](screenshots/02_login_pwd.png) | ![](screenshots/03_home.png) |
-
-| 新闻详情 | 我的 | 设置 | 编辑资料 |
+| 一键登录 | 密码登录 | 首页信息流 | 新闻详情 |
 |---|---|---|---|
-| ![](screenshots/04_news_detail.png) | ![](screenshots/05_mine.png) | ![](screenshots/06_settings.png) | ![](screenshots/07_edit_profile.png) |
+| ![](screenshots/01_login_onekey.png) | ![](screenshots/02_login_pwd.png) | ![](screenshots/03_home.png) | ![](screenshots/04_news_detail.png) |
 
-> 商城、消息、聊天、视频这几个页面是后加的，截图还没补（`screenshots/` 目前只有 01~07）。
+| 推荐视频（全屏流） | 视频频道（双列网格） | 沉浸播放详情 | 商城瀑布流 |
+|---|---|---|---|
+| ![](screenshots/08_video.png) | ![](screenshots/08_video_grid.png) | ![](screenshots/10_video_detail.png) | ![](screenshots/09_shop.png) |
+
+| 沉浸式发布弹窗 | 全功能创作中心 | 我的作品与内容库 | 购物车管理 |
+|---|---|---|---|
+| ![](screenshots/17_publish_chooser.png) | ![](screenshots/18_publish_editor.png) | ![](screenshots/19_content_library.png) | ![](screenshots/13_cart.png) |
+
+| 结算与确认订单 | 订单详情与物流 | 订单中心管理 | 个人中心 |
+|---|---|---|---|
+| ![](screenshots/14_order_confirm.png) | ![](screenshots/15_order_detail.png) | ![](screenshots/16_order_list.png) | ![](screenshots/05_mine.png) |
+
+| 设置 | 编辑资料 | 消息列表 | 聊天详情 |
+|---|---|---|---|
+| ![](screenshots/06_settings.png) | ![](screenshots/07_edit_profile.png) | ![](screenshots/11_msg.png) | ![](screenshots/12_chat.png) |
 
 ---
 
-## 功能
+## 功能与架构
+
+### 架构改造：统一 Fragment 容器与局部更新
+
+为满足课程设计关于「主界面用 Fragment 实现界面局部更新」的核心要求，项目重构为：
+- **`MainActivity`**：作为顶层单一宿主容器，统一调度底部导航栏（`BottomNavigationView`），管理主页面回退栈（`history`）。
+- **`HomeFragment` / `VideoFragment` / `ShopFragment` / `MineFragment`**：分别承载首页、视频、商城、我的四大核心页面，继承通用基类 `PageFragment`。
+- **页面切换策略**：采用 `FragmentManager` 的 `show()` / `hide()` 结合 `setMaxLifecycle(RESUMED / STARTED)` 事务调度，只更新内容区域、不销毁重建模版，完美保留各页面滚动位置、频道状态与播放进度，避免反复切页白屏与闪烁。
+- **平滑兼容**：保留 `HomeActivity`、`VideoActivity`、`ShopActivity`、`MineActivity` 等传统入口，均继承自 `MainActivity`，老 Intent 跳转无缝衔接。
 
 ### 登录
 
-- **一键登录**：协议勾选 + 一键登录按钮 + 手机号 / Apple / 更多三个第三方入口
+- **一键登录**：协议勾选 + 一键登录按钮 + 手机号 / Apple / 更多三个第三方入口，支持本地登录状态记录（`session.xml`）
 - **密码登录**：`+86` 区号选择、账号密码输入、找回密码、跳转手机号登录
-- 两页之间可互相跳转，协议未勾选时给出提示
+- 两页之间可互相跳转，协议未勾选时给出友好的 Toast 提示
 
 ### 首页
 
-- 顶部品牌红搜索栏，7 个频道标签：推荐 / 抗疫 / 小视频 / 北京 / 视频 / 热点 / 娱乐
-- 前 6 个频道各自一套新闻数据，用 `RecyclerView` + `NewsMultiAdapter` 渲染，支持 **4 种 item 布局**：
-  - 纯文字
-  - 单图（左文右图）
-  - 三图（文下三张并排）
-  - 视频（封面 + 播放键）
-- **热点**频道换的是另一套数据：`ListView` + `ArrayAdapter` 渲染的大国工匠列表，点击条目弹出人物详情弹窗
-- 底部 5 项导航：首页 / 视频 / 添加 / 商城 / 我的（除「添加」是提示外，其余 4 项都接上了对应页面）
+- 顶部品牌红搜索栏，实时监听输入与软键盘搜索按键，支持标题/内容关键词精准过滤与空结果提示（`tv_search_empty`）
+- 7 个频道标签：推荐 / 健康 / 小视频 / 北京 / 视频 / 热点 / 娱乐
+- **海量高品质新闻内容（全站 58+ 篇真实新闻，推荐流扩充至 28 篇优质深度报道）**：
+  - 覆盖深空探索（空间站生命舱科研、中国天眼FAST脉冲星发现）、大国重器（深中通道、复兴号高寒动车组、全海深奋斗者号）、绿色低碳（300兆瓦压缩空气储能、沙漠风光大基地、白鹤滩水电站）、前沿科技（车规级主控芯片、超算量子模拟算法、AI古籍修复）、传统文化（三星堆AI三维复原、敦煌数字藏经洞）及民生福祉（跨省异地医保直接结算、数字校园、反算法杀熟、乡村普惠金融）等多元重大主题
+  - 每条新闻均配备新华社、人民日报、央视新闻、科技日报等权威主流媒体来源、逼真互动评论量及时间戳，正文配备 3~4 段专业严谨、文风优雅的深度通讯报道
+  - 丰富的高清真实摄影配图资源（`news_smart_city`、`news_space_rocket`、`news_tech_chip`、`news_train_speed`、`news_green_energy` 等 14 组专业图片）
+- 完整支持 **4 种 item 布局与交互体验**：
+  - 纯文字（快讯/深度政策解读）
+  - 单图（左文右图卡片）
+  - 三图（文下三张高清图并排展示）
+  - 视频（高清封面 + 居中半透明播放图标 + 点击直通全屏沉浸播放页）
+- **新闻图文详情页（`NewsDetailActivity`）**：
+  - 点击列表任意新闻无缝转场进入图文详情页，展示完整报道标题、来源时间元数据、大图及长篇格式化段落正文
+  - 内置本地阅读历史自动记录、一键「收藏文章 / 取消收藏」及系统原生「分享文章」功能
+- **热点**频道：`ListView` + `ArrayAdapter` 渲染的大国工匠列表，点击条目弹出人物生动事迹详情弹窗
+- 底部 5 项导航：首页 / 视频 / 添加（创作发布） / 商城 / 我的
 
-### 商城
+### 创作发布与内容库（Add 模块深度优化）
 
-- **顶部频道标签**（关注 / 推荐 / 闪购 / 国补 / 飞猪 / 新风潮 / 穿搭）：`HorizontalScrollView` 里塞一排 tab，7 个一屏放不下、可左右滑动；选中的带红色圆角下划线，并按商品分类过滤下方瀑布流的数据
-- **宫格入口**（两页，左右翻页 + 圆点指示）：横向 `RecyclerView` + `PagerSnapHelper` 实现淘宝式整页翻页，一页就是一个 5 列 `GridLayout`；25 个图标从淘宝截图裁出（`drawable-nodpi/shop_entry_01~25.png`），图标下带文字、有点击波纹
-- **两列瀑布流**：`RecyclerView` + `StaggeredGridLayoutManager`，12 个商品卡片高低错落；错落感来自图片本身——商品图统一 400px 宽但高度各不相同（300~560px），item 布局用 `adjustViewBounds` 让高度自适应
-- 顶栏品牌红 + 搜索入口（演示），底部导航与首页 / 我的共用同一份菜单，可互相跳转
-- 价格统一两位小数，已售过万显示成"x.x万件"
+- **沉浸式发布弹窗（`PublishDialog`）**：
+  - 点击底部导航中心高亮「＋」按钮或个人中心「+ 发布」，自底向上平滑唤出今日头条风格的沉浸式选择弹窗（`dialog_publish_chooser.xml`）。
+  - 提供 4 大精美创作入口：
+    - 📝 **发微头条**（随想短评、图文互动、热门话题）
+    - 📰 **写文章**（深度长文、多段落论述、正式标题）
+    - 🎬 **发小视频**（精彩短片、生活分享、视频说明）
+    - 💬 **提问题**（求助解答、社区互动、多角度讨论）
+- **独立全功能创作中心（`PublishActivity`）**：
+  - 动态多形态 Tab 切换（发微头条 / 写文章 / 发小视频 / 发起问答），智能适配标题栏显隐与字数计数器（`0 / 1000`）。
+  - **精美配图选择器与缩略图管理**：内置图库 GridView 弹窗（覆盖科技、城市、交通、自然等多张精选大图），支持添加最多 3 张配图；编辑界面支持水平滚动缩略图预览，并可一键右上角叉号移除。
+  - **热门话题快速插入**：横向话题气泡栏（`#深中通道世界奇迹#`、`#中国空间站科研突破#`、`#科技数码前沿#`、`#大国工匠的日常#` 等），点击即可自动在当前光标位置无缝注入 `#话题#` 标签。
+  - **位置与可见权限切换**：点击快速轮换属地定位（`📍 北京市·海淀区`、`📍 深圳市·南山区` 等）与权限设置（`👥 公开 · 所有人可见`、`🔒 仅自己可见` 等）。
+  - **草稿箱与提交校验**：支持未完成内容一键「存草稿」；正文内容为空时提交按钮自动置灰半透明并拦截提示。
+  - **双向数据实时同步**：用户点击「发布」后，创作内容不仅即时持久化存入本地 `ContentStore`（我的作品），同时无缝插入至 `HomeFragment` 首页推荐信息流的最顶部（`HomeFragment.addUserPost(...)`），实现发帖即时可见的沉浸闭环体验！
+- **现代化内容与作品中心（`ContentLibraryActivity`）**：
+  - 顶部三大 Tab 分类滑动切换：「我的作品」、「我的收藏」、「浏览历史」。
+  - 卡片式内容流展示，呈现作品标题、摘要正文、发布时间及属地信息。
+  - 支持单篇作品本地删除（二次确认防误触）与空状态友好占位提示，右上角配备直达「+ 发布」快捷键。
+
+### 商城与完整电商闭环
+
+- **顶部频道标签**（关注 / 推荐 / 闪购 / 国补 / 飞猪 / 新风潮 / 穿搭）：`HorizontalScrollView` 承载，选中的带红色圆角下划线，实时过滤对应品类商品
+- **宫格入口**（两页，左右翻页 + 圆点指示）：横向 `RecyclerView` + `PagerSnapHelper` 实现淘宝式整页翻页，一页就是一个 5 列 `GridLayout`；25 个图标裁剪自高清矢量素材
+- **两列瀑布流与 30 件精选商品**：`RecyclerView` + `StaggeredGridLayoutManager(2, VERTICAL)`，涵盖数码、家居、食品、服饰、美妆、百货六大类别，30 张电商棚拍实物商品图均采用高保真自适应展示
+- **独立购物车模块（`CartActivity`）**：
+  - 顶栏支持一键切换「管理」模式与商品多选
+  - 实时勾选计算：联动全选 CheckBox 与动态金额汇总
+  - 数量加减步进器（+/-）：支持最小为 1，减至 0 自动弹出二次确认移除
+  - 批量删除商品与空购物车友好占位提示
+- **结算与确认订单页（`OrderConfirmActivity`）**：
+  - 真实收件地址卡片（支持就地弹窗修改姓名、电话与收货地址）
+  - 商品明细清单、配送服务（顺丰包邮）、优惠券抵扣（-¥10.00）与淘金币抵扣（-¥5.00）明细
+  - 订单备注填写与真实应付总额核算，点击「提交订单」自动扣除购物车结算商品并生成新订单
+- **订单列表中心（`OrderListActivity`）**：
+  - 顶部五大状态 Tab 切换（全部 / 待发货 / 待收货 / 已完成 / 已退款）
+  - 订单卡片动态操作：待发货支持「提醒发货」与「申请退款」；待收货支持「查看物流」与「确认收货」；已完成支持「再次购买」（自动重加购物车）与「删除订单」
+- **订单详情页（`OrderDetailActivity`）**：
+  - 顶部状态横幅动态着色（橙/蓝/绿/灰）
+  - 模拟真实顺丰速运物流轨迹流转与运单号一键复制剪贴板
+  - 完整的订单金额明细、下单时间、支付方式与「联系客服」（无缝跳转客服聊天室）
+- **本地持久化与数据模型（`ShopStore`）**：购物车商品与订单生命周期全流程本地 SharedPreferences 离线持久化存储，重进应用状态不丢
+- 顶栏搜索框支持按商品标题与分类即时模糊搜索，顶栏右侧新增快捷购物车悬浮入口图标
 
 ### 视频
 
-- **顶部频道标签**：推荐 / 小视频 / 影视 / 音乐，复用商城页的 `item_channel_tab` 布局（同一个文件被两个页面共用），选中的带红色圆角下划线，可左右滑动
-- **双列等高网格**：`RecyclerView` + `GridLayoutManager(2)`，4 个频道共用。一格 160dp 宽、封面 16:9（`160 ÷ 16 × 9 = 90dp`，由 `layout_constraintDimensionRatio` 算出，不是写死的高度），一屏能看 4~6 条。用**等高网格**而不是商城那种瀑布流：视频封面统一 16:9，等高才排得整齐，瀑布流是给高矮不一的商品图用的
-- **播放页**：竖屏全屏沉浸页 —— 进入即隐藏状态栏、整页黑底、无红顶栏，封面铺满**上半屏**，返回键浮在左上角的半透明黑圆上。点击封面在播放 / 暂停之间切换，并驱动一条**模拟进度条**——每 200ms 推进 2%，十秒走满后停在满格不循环（项目没有视频文件，也不联网，播放是模拟的）。标题 / 来源·播放量 / 简介 / 相关视频一个不丢，全在黑底信息区里
-- **相关视频**：播放页底部的紧凑列表，点击时用 `FLAG_ACTIVITY_CLEAR_TOP | SINGLE_TOP` 复用当前实例（走 `onNewIntent` 换数据），反复点不会堆栈
-- 首页「视频」频道里的 4 条视频也接到同一个播放页。`News` 模型没有时长和播放量字段，播放页取不到时会把这两个控件**藏掉而不是编造数据**
+- **多频道承载**：`ViewPager2` 横向联动 4 个频道（推荐 / 小视频 / 影视 / 音乐），支持滑动过程联动 Chrome 顶栏透明度渐变（`OnPageChangeCallback`）
+- **推荐频道（抖音式全屏流）**：
+  - 竖向 `LinearLayoutManager` + `PagerSnapHelper` 实现一屏一条吸附翻页
+  - 集成项目本地离线课程短片（`OfflinePlayer` + `raw/course_motion_*.mp4`），离开界面或切页即时暂停并释放，兼顾节能与流畅
+  - 完整右侧操作栏：作者头像、关注、点赞、评论数、收藏、分享
+  - 手势支持：单击切换播放/暂停（`onSingleTapConfirmed`），双击点赞冒红心动画（`onDoubleTap` + `ViewPropertyAnimator`）
+  - 本地点赞持久化：点赞状态通过 `VideoStore` 存入 SharedPreferences，退出重进状态不丢
+- **双列等高网格频道**（小视频 / 影视 / 音乐）：`RecyclerView` + `GridLayoutManager(2)`，封面严格按 16:9 计算，点击直接进入独立全屏播放详情页
+- **播放详情页**（`VideoDetailActivity`）：竖屏沉浸式全屏播放页，状态栏黑底透入，底部集成紧凑型相关推荐列表
+- **视频搜索**：顶栏搜索支持在全频道视频标题中快速匹配
 
 ### 我的
 
-- 头像、昵称、IP 属地标签
-- 关注 / 粉丝 / 获赞三项数据
-- 九宫格功能入口（消息私信、浏览历史、创作中心、书架、购物/订单、收藏、客服中心、退款/售后），部分带角标
-- 头条聊天室卡片
+- 头像、昵称、个人简介、IP 属地标签
+- 关注 / 粉丝 / 获赞动态计数
+- 快捷操作区：支持直接跳转发布、好友、消息私信、应用设置
+- **九宫格功能入口**：消息私信、浏览历史、创作中心、阅读记录、购物车、收藏、客服中心、本地订单，点击进入真实本地内容库或操作弹窗
 - 作品区：收藏 / 赞过子标签 + 全部 / 视频 / 微头条筛选胶囊
+- **资料持久化**：头像、昵称、简介等修改统一写入 `ProfileStore`，返回后首页与个人中心实时更新
 
 ### 消息与聊天
 
-- **会话列表**：8 个会话，每行是圆底头像 + 会话名 + 最后一条消息 + 时间；未读带红色角标，未读为 0 时角标置 `GONE`（不是 `INVISIBLE`），否则时间会被挤得对不齐
-- 头像用 5 个矢量圆底（蓝 / 绿 / 橙 / 紫，加一个红底白铃铛的「系统通知」），不依赖位图
-- **聊天详情**：左右两种气泡布局。输入框是真的能发的——点「发送」把气泡追加到列表底部并清空输入框，一秒后再自动补一条对方回复（本地定时器造的，不联网）
-- 全项目唯一有软键盘交互的页面：`AndroidManifest` 里配了 `windowSoftInputMode="adjustResize"`，不配置的话键盘弹出来会直接盖住底部输入栏
-- 入口有两个：我的页右上角的信封图标（改造前**完全没绑点击事件**）、九宫格「消息私信」（改造前只弹一句 Toast）
+- **会话列表**：8 个预置对话，每行展示圆底头像 + 会话名 + 预览消息 + 时间 + 未读角标，点击进入会话后即时标记已读（未读清零）
+- **本地持久化聊天室**（`ChatActivity`）：
+  - 左右两种气泡布局（自己发送与对方回复）
+  - 支持发送文本消息并写入 `ChatStore`（按会话隔离持久化），退出进程后历史消息完整保留
+  - 模拟真实互动回复：发送后延迟 1 秒由本地定时器自动触发对方回应
 
-### 设置
+### 设置与编辑资料
 
-26 个设置项，覆盖账号与安全、隐私设置、深色模式、大字模式、字体大小、图文详情滑动方式等，其中 7 项是开关控件，底部为退出登录。
-
-### 编辑资料
-
-资料完成度进度、头像更换、用户名 / 简介 / 背景图 / 性别 / 生日 / 所在地等 9 项，已填与未填的值用不同颜色区分。
+- **设置页**（`SettingsActivity`）：26 个细分设置项，覆盖账号安全、隐私、深色模式、大字模式等，底部提供安全退出登录入口
+- **编辑资料**（`EditProfileActivity`）：包含资料完整度动态计算，实时保存用户名、简介、性别、生日、所在地等字段到本地存储
 
 ---
 
@@ -117,40 +183,67 @@ implementation 'com.google.android.material:material:1.5.0'
 ## 项目结构
 
 ```
-app/src/main/
-├── java/com/example/toutiao/demo/
-│   ├── LoginOneKeyActivity.java    启动页，一键登录
-│   ├── LoginPwdActivity.java       密码登录
-│   ├── HomeActivity.java           首页信息流 + 大国工匠列表
-│   │                               （内含 Craftsman / CraftsmanAdapter 内部类）
-│   ├── NewsDetailActivity.java     新闻详情
-│   ├── VideoActivity.java          视频频道页（双列 16:9 网格）
-│   ├── VideoDetailActivity.java    全屏沉浸播放页（模拟播放进度）
-│   ├── ShopActivity.java           商城（两列瀑布流）
-│   ├── MsgActivity.java            消息会话列表
-│   ├── ChatActivity.java           聊天详情（可发送 + 自动回复）
-│   ├── MineActivity.java           个人中心
-│   ├── SettingsActivity.java       设置
-│   ├── EditProfileActivity.java    编辑资料
-│   ├── News.java                   新闻数据模型
-│   ├── NewsMultiAdapter.java       多布局 RecyclerView 适配器
-│   ├── VideoItem.java              视频数据模型
-│   ├── VideoAdapter.java           视频列表适配器
-│   ├── ShopItem.java               商品数据模型
-│   ├── ShopAdapter.java            瀑布流适配器
-│   ├── MsgItem.java                会话数据模型
-│   ├── MsgAdapter.java             会话列表适配器
-│   ├── ChatMessage.java            聊天消息模型
-│   └── ChatAdapter.java            聊天气泡适配器（左右两种布局）
+app/src/
+├── androidTest/java/com/example/toutiao/demo/
+│   ├── ExampleInstrumentedTest.java         应用基础上下文测试
+│   ├── MainNavigationTest.java              四主页面 Fragment 切换、回退栈与状态恢复测试
+│   ├── HomeNewsContentTest.java             首页深度报道数量与多段落内容质量测试
+│   ├── OfflineVideoTest.java                离线短视频解码、互动状态与播放器生命周期测试
+│   ├── ProfileChatPersistenceTest.java      个人资料与聊天持久化回归测试
+│   ├── ShopCartOrderTest.java               购物车生命周期、金额核算与订单持久化测试
+│   └── PublishFlowTest.java                 创作发布、首页动态插入与内容库管理测试
 │
-└── res/
-    ├── layout/        27 个布局文件
-    ├── drawable/      矢量图标与图片资源
-    ├── drawable-nodpi/  商城商品照片 + 淘宝宫格图标（按原始像素渲染，不随密度缩放）
-    ├── values/        colors / dimens / styles / themes / strings
-    ├── values-night/  深色模式下的主题定义
-    ├── color/         状态着色表（底部导航、按钮）
-    └── menu/          底部导航菜单
+└── main/
+    ├── java/com/example/toutiao/demo/
+    │   ├── MainActivity.java                顶层宿主，单 Activity + 4 Fragment 导航调度
+    │   ├── PageFragment.java                主页面 Fragment 基类
+    │   ├── HomeFragment.java                首页 Fragment（信息流 + 搜索过滤 + 工匠列表 + 发帖同步）
+    │   ├── VideoFragment.java               视频 Fragment（ViewPager2 多频道 + 抖音式全屏流）
+    │   ├── ShopFragment.java                商城 Fragment（横向两页宫格 + 两列瀑布流）
+    │   ├── MineFragment.java                我的 Fragment（个人信息 + 九宫格 + 资料联动）
+    │   ├── HomeActivity.java                兼容入口（继承自 MainActivity）
+    │   ├── VideoActivity.java               兼容入口（继承自 MainActivity）
+    │   ├── ShopActivity.java                兼容入口（继承自 MainActivity）
+    │   ├── MineActivity.java                兼容入口（继承自 MainActivity）
+    │   ├── LoginOneKeyActivity.java         启动页，一键登录与本地登录态
+    │   ├── LoginPwdActivity.java            密码登录
+    │   ├── NewsDetailActivity.java          新闻图文详情
+    │   ├── VideoDetailActivity.java         全屏沉浸播放页（离线短片播放 + 相关推荐）
+    │   ├── CartActivity.java                独立购物车页面（数量加减、多选、批量管理）
+    │   ├── OrderConfirmActivity.java        订单确认与结算页（地址编辑、抵扣明细）
+    │   ├── OrderListActivity.java           订单管理中心（五态 Tab、发货提醒、退款、再次购买）
+    │   ├── OrderDetailActivity.java         订单详情页（物流轨迹跟踪、单号复制、联系客服）
+    │   ├── PublishDialog.java               底部沉浸式发布弹窗选择器（四大创作形态）
+    │   ├── PublishActivity.java             独立全功能创作中心（多模式、配图预览、话题、定位）
+    │   ├── ContentLibraryActivity.java      现代化内容中心（我的作品、我的收藏、浏览历史）
+    │   ├── MsgActivity.java                 消息会话列表（未读状态与已读同步）
+    │   ├── ChatActivity.java                本地聊天室（支持会话隔离持久化与自动应答）
+    │   ├── SettingsActivity.java            系统与偏好设置
+    │   ├── EditProfileActivity.java         编辑资料（持久化存储与完整度计算）
+    │   ├── OfflinePlayer.java               本地离线短视频播放控制器
+    │   ├── ProfileStore.java                用户资料 SharedPreferences 持久化封装
+    │   ├── ChatStore.java                   聊天记录持久化封装
+    │   ├── VideoStore.java                  视频点赞/收藏状态持久化封装
+    │   ├── ContentStore.java                作品、收藏与浏览历史本地持久化存储
+    │   ├── ShopStore.java                   购物车与订单全流程持久化引擎
+    │   ├── ShoppingDialogs.java             购物车与订单本地交互弹窗
+    │   ├── VideoChannelAdapter.java         视频 ViewPager2 频道适配器
+    │   ├── VideoFeedAdapter.java            推荐流全屏吸附适配器（手势与点赞动画）
+    │   ├── VideoAdapter.java                双列视频网格适配器
+    │   ├── NewsMultiAdapter.java            4 种布局新闻 RecyclerView 适配器
+    │   ├── ShopAdapter.java                 瀑布流商品适配器
+    │   ├── MsgAdapter.java                  消息会话适配器
+    │   └── ChatAdapter.java                 聊天气泡适配器
+    │
+    └── res/
+        ├── layout/          44 个布局文件（含 activity_main, fragment_*, activity_publish 等）
+        ├── raw/             3 个项目内置离线课程短片 (course_motion_1~3.mp4)
+        ├── drawable/        65 个矢量图标与图形 Shape 资源
+        ├── drawable-nodpi/  87 个高清位图（精选商品图、宫格图标、摄影大图）
+        ├── values/          colors(35 tokens) / dimens(20) / styles(27) / themes / strings
+        ├── values-night/    深色模式防御性主题定义
+        ├── color/           按钮与底部导航动态着色选择器
+        └── menu/            底部导航菜单 (bottom_menu.xml)
 ```
 
 ---
@@ -161,7 +254,7 @@ app/src/main/
 
 ### 设计变量
 
-- **`colors.xml`** —— 语义化色板，共 34 个 token。品牌红 `#E63939`、三级文字色、三级背景色、图标色、分隔线色，替代原先散落在各布局里的硬编码色值。其中 6 个（`bg_player` / `text_on_dark` / `text_on_dark_secondary` / `divider_on_dark` / `press_on_dark` / `progress_track`）是视频播放页专用的深色 token
+- **`colors.xml`** —— 语义化色板，共 35 个 token。品牌红 `#E63939`、三级文字色、三级背景色、图标色、分隔线色，替代原先散落在各布局里的硬编码色值。其中 6 个（`bg_player` / `text_on_dark` / `text_on_dark_secondary` / `divider_on_dark` / `press_on_dark` / `progress_track`）是视频播放页专用的深色 token
 - **`dimens.xml`** —— 字号收成 6 档（`text_display` / `text_headline` / `text_title` / `text_body` / `text_body_small` / `text_caption`），间距按 4dp 栅格收成 7 档
 - **`styles.xml`** —— 27 个 style，把三处高频重复抽成模板：
   - 设置项行（设置页 26 行 + 编辑资料页 9 行）
@@ -264,7 +357,16 @@ app/src/main/
 
 ---
 
-## 说明
+## 说明与自动化验证
 
-- 应用内新闻、图片、用户资料等**全部为本地内置的演示数据**，不涉及任何网络请求，也没有申请任何系统权限
-- 代码结构以课程演示为目的，未做分层架构与单元测试覆盖
+- 应用内新闻、商品、短片等**全部为项目本地内置数据**，不涉及任何外网请求，不需要申请敏感系统权限，即装即用。
+- 用户资料、聊天记录、点赞收藏等状态均持久化存储于应用沙盒私有存储中（`SharedPreferences`），关闭进程重新进入状态不丢失。
+- 项目配备完整的端到端与架构回归测试（`app/src/androidTest/`），涵盖主页面 Fragment 切换调度、生命周期联动、离线视频解码播放、资料与聊天持久化、购物车订单闭环、创作发布与内容库全链路，**共 7 大测试套件、14 项自动化测试用例，实测 100% 全部通过**：
+
+```bash
+# 执行单元测试
+./gradlew testDebugUnitTest
+
+# 在已连接设备/模拟器执行端到端仪器测试
+./gradlew connectedAndroidTest
+```

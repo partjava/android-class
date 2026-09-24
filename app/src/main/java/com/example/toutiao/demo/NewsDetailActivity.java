@@ -48,6 +48,25 @@ public class NewsDetailActivity extends AppCompatActivity {
         }
         tvContent.setText(content);
 
+        ContentStore store = new ContentStore(this);
+        org.json.JSONObject article = ContentStore.article(title, info, content, img, type);
+        store.put("history", article);
+        android.widget.LinearLayout actions = new android.widget.LinearLayout(this);
+        android.widget.Button save = new android.widget.Button(this);
+        save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+        save.setOnClickListener(v -> {
+            if (store.contains("saved", title)) store.remove("saved", title); else store.put("saved", article);
+            save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+        });
+        android.widget.Button share = new android.widget.Button(this);
+        share.setText("分享");
+        share.setOnClickListener(v -> startActivity(android.content.Intent.createChooser(
+                new android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                        .putExtra(android.content.Intent.EXTRA_TEXT, title + "\n" + tvContent.getText()), "分享文章")));
+        actions.addView(save, new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        actions.addView(share, new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        ((android.widget.LinearLayout)tvContent.getParent()).addView(actions);
+
         //左上角返回箭头关闭当前页面
         ivBack.setOnClickListener(v -> finish());
     }

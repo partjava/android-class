@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_dialog"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="24dp">
+
+    <!-- 顶部标题 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="分享你的新鲜事"
+        android:textSize="18sp"
+        android:textColor="@color/text_primary"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="20dp"/>
+
+    <!-- 2x2 或 4列 发布入口网格 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <!-- 1. 发微头条 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_micro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_edit"
+                android:background="@drawable/bg_circle_scrim"
+                android:backgroundTint="#FFF0E5"
+                android:tint="#FFFF5500"
+                android:padding="14dp"
+                android:contentDescription="发微头条"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="发微头条"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="随想短评"
+                android:textSize="11sp"
+                android:textColor="@color/text_tertiary"/>
+        </LinearLayout>
+
+        <!-- 2. 写文章 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_article"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_book"
+                android:background="@drawable/bg_circle_scrim"
+                android:backgroundTint="#EBF3FF"
+                android:tint="#FF2080FF"
+                android:padding="14dp"
+                android:contentDescription="写文章"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="写文章"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="深度长文"
+                android:textSize="11sp"
+                android:textColor="@color/text_tertiary"/>
+        </LinearLayout>
+
+        <!-- 3. 发视频 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_video"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_video"
+                android:background="@drawable/bg_circle_scrim"
+                android:backgroundTint="#F5EBFF"
+                android:tint="#FF9030FF"
+                android:padding="14dp"
+                android:contentDescription="发视频"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="发视频"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="精彩短片"
+                android:textSize="11sp"
+                android:textColor="@color/text_tertiary"/>
+        </LinearLayout>
+
+        <!-- 4. 提问问答 -->
+        <LinearLayout
+            android:id="@+id/ll_entry_qa"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp">
+
+            <ImageView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_chat_room"
+                android:background="@drawable/bg_circle_scrim"
+                android:backgroundTint="#E6F9F0"
+                android:tint="#FF00AA55"
+                android:padding="14dp"
+                android:contentDescription="提问"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="提问题"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="求助解答"
+                android:textSize="11sp"
+                android:textColor="@color/text_tertiary"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 分隔线与底部关闭按钮 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="16dp"/>
+
+    <ImageView
+        android:id="@+id/iv_close_chooser"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@drawable/ic_close"
+        android:tint="@color/text_tertiary"
+        android:padding="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="关闭"/>
+</LinearLayout>

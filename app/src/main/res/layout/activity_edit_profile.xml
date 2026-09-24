@@ -57,7 +57,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="资料完成度 40%"
+                    android:text="本机资料"
                     android:textColor="@color/brand_red"
                     android:textSize="@dimen/text_caption"/>
             </LinearLayout>
@@ -84,7 +84,7 @@
             android:gravity="center"
             android:paddingVertical="@dimen/space_m"
             android:paddingHorizontal="@dimen/space_l"
-            android:text="再填 3 项资料 得头像挂件"
+            android:text="点击资料项编辑，保存后立即生效"
             android:textColor="@color/banner_fg"
             android:textSize="@dimen/text_body_small"/>
 

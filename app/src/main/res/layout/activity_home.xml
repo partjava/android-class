@@ -84,7 +84,7 @@
                     android:id="@+id/tab_kangyi"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="抗疫"
+                    android:text="健康"
                     android:textColor="@color/tab_inactive"
                     android:textSize="@dimen/text_title"
                     android:paddingHorizontal="@dimen/space_m"/>

@@ -96,7 +96,7 @@
                     android:minWidth="16dp"
                     android:paddingHorizontal="4dp"
                     android:paddingVertical="1dp"
-                    android:text="3"
+                    android:id="@+id/badge_private" android:text="0"
                     android:textColor="@color/on_brand"
                     android:textSize="@dimen/text_caption"/>
             </RelativeLayout>
@@ -140,7 +140,7 @@
                     android:minWidth="16dp"
                     android:paddingHorizontal="4dp"
                     android:paddingVertical="1dp"
-                    android:text="12"
+                    android:visibility="gone" android:text="0"
                     android:textColor="@color/on_brand"
                     android:textSize="@dimen/text_caption"/>
             </RelativeLayout>
@@ -210,7 +210,7 @@
                     android:minWidth="16dp"
                     android:paddingHorizontal="4dp"
                     android:paddingVertical="1dp"
-                    android:text="2"
+                    android:id="@+id/badge_system" android:text="0"
                     android:textColor="@color/on_brand"
                     android:textSize="@dimen/text_caption"/>
             </RelativeLayout>

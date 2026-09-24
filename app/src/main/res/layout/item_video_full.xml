@@ -1,24 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    推荐页全屏流里的**一屏**（一个视频占满整屏）。
 
-    ⚠️ 根节点必须显式 match_parent × match_parent。
-       RecyclerView 里 match_parent 的 child，measure mode 直接取父的 EXACTLY，
-       所以 item 高度 = RV 高度。写成 wrap_content 会退化成 UNSPECIFIED(0)，
-       那才是「不等于一屏」的坏情况（PagerSnapHelper 就吸不准了）。
-
-    ⚠️ paddingBottom 是 Java 在 VideoActivity.measureChrome() 里设的
-       （= 底部导航栏的实际高度），这里**不要**写死一个「差不多」的值：
-       它取决于系统导航条 inset，不同机器不一样，写死了底部导航会压住信息区。
-       留白归 item 管的原因见 item_video_page_feed.xml 的注释。
-
-    ⚠️ 封面是 centerCrop + match_parent，**故意不按 16:9**。
-       网格页那张卡片保持 16:9 是因为它在列表里，比例是栅格的一部分；
-       这里和沉浸播放页（VideoDetailActivity）是同一个理由——素材是竖构图
-       照片，没有「必须保持的原始画幅」，铺满整屏才是这类页面的视觉语言。
-
-    视觉分三层（自下而上）：封面 → 遮罩 → 内容。
--->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -30,12 +11,9 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:contentDescription="视频封面"/>
+<com.example.toutiao.demo.OfflinePlayer android:id="@+id/player_full" android:layout_width="match_parent" android:layout_height="match_parent" />
 
-    <!-- 底部渐变遮罩。封面是 centerCrop 的任意一张图，亮的暗的都有，
-         标题直接压上去在亮封面上会糊。220dp 足以盖住「标题两行 + 元信息行」。
-
-         ⚠️ 它和顶部那块 bg_scrim_top 是一对，色值都走 scrim_heavy。
-            别用纯黑或纯白——理由见 colors.xml 里 scrim_heavy 那段。 -->
+    
     <View
         android:id="@+id/v_full_scrim_bottom"
         android:layout_width="match_parent"
@@ -43,8 +21,7 @@
         android:layout_gravity="bottom"
         android:background="@drawable/bg_scrim_bottom"/>
 
-    <!-- 播放键。**常驻显示**，和 VideoDetailActivity 一致，不做「播放中淡出」。
-         Java 在 ic_play_circle / ic_pause_circle 之间切 src。 -->
+    
     <ImageView
         android:id="@+id/iv_full_play"
         android:layout_width="48dp"
@@ -53,13 +30,7 @@
         android:src="@drawable/ic_play_circle"
         android:contentDescription="播放"/>
 
-    <!-- 进度条贴在整个 item 的下沿，而 item 的下沿已经被 paddingBottom
-         抬到「底部导航上沿」了——所以进度条正好压在底部导航上边，
-         和沉浸播放页「进度条贴播放区下沿」是同一个视觉语言。
-
-         ⚠️ 轨道色复用 progress_track 之前先看 colors.xml 里那段踩坑记录：
-            轨道压在**任意封面**上，不是压在黑底上，所以它必须是个遮罩。
-            这里的情况比播放页更极端（播放页至少上下还有黑边）。 -->
+    
     <FrameLayout
         android:id="@+id/fl_full_progress"
         android:layout_width="match_parent"
@@ -74,25 +45,7 @@
             android:background="@color/brand_red"/>
     </FrameLayout>
 
-    <!-- 信息区。paddingBottom 留出 12dp，别贴着上面那条 3dp 进度条。
-
-         ⚠️ 右边比左边宽 48dp（16 → 64），是给右侧操作栏让位：
-            4(操作栏自己的 paddingEnd) + 48(操作栏宽度)
-            + 12(净空) = 64dp。
-
-            ⚠️ 48 是**头像那个 touch_target 容器**，不是 40dp 的图标盒：
-               操作栏宽度由最宽的一项决定（实测 52.2dp = 48 + 4）。
-               哪天有人把头像改成 56dp，这个 64 也得跟着加 8。
-
-         ⚠️ 这个 64dp 和 ll_full_rail 的宽度是**耦合**的，改操作栏宽度
-            必须同步改这里，否则标题要么压到操作栏底下、要么白白少一截。
-            411.43dp 宽的屏上标题可用宽度是 411 − 16 − 64 = 331dp，
-            18sp 一行约 18 个字，最长的标题（「国风音乐盛典：传统乐器演绎
-            流行金曲」18 字）刚好还排得下，所以字号不用降。
-
-         ⚠️ 写成 paddingStart/paddingEnd 而不是 paddingHorizontal +
-            元素级 paddingEnd：同一条轴上写两遍，谁赢取决于属性在 XML 里
-            的先后，是能跑但没法读的那种代码。 -->
+    
     <LinearLayout
         android:id="@+id/ll_full_info"
         android:layout_width="match_parent"
@@ -130,8 +83,7 @@
                 android:textColor="@color/text_on_dark_secondary"
                 android:textSize="@dimen/text_body_small"/>
 
-            <!-- 时长角标。和网格卡片、播放页用的是同一个 drawable，
-                 圆底本来就是 scrim_40，天生适合压封面 -->
+            
             <TextView
                 android:id="@+id/tv_full_duration"
                 android:layout_width="wrap_content"
@@ -144,9 +96,7 @@
                 android:textColor="@color/on_brand"
                 android:textSize="@dimen/text_caption"/>
 
-            <!-- 播放量复用 text_tertiary：它在黑底 / 遮罩上的对比度是 7.4:1，
-                 比 text_on_dark_secondary 弱一档，层级正好。
-                 详见 colors.xml 里「来源 · 播放量」那段 -->
+            
             <TextView
                 android:id="@+id/tv_full_play"
                 android:layout_width="wrap_content"
@@ -158,39 +108,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- ============================================================
-         右侧操作栏（抖音那一竖列）：头像 / 点赞 / 评论 / 收藏 / 分享。
-
-         ⚠️ 声明顺序 = 层级：它排在信息区之后，所以压在渐变遮罩和信息区
-            之上；又排在大红心之前，所以双击那颗心会盖住它。
-
-         ⚠️ 每个图标都自带 bg_circle_scrim_ripple 的圆底。不是为了好看：
-            底下是 centerCrop 的**任意一张封面**，亮的暗的都有，白色图标
-            直接压上去会随封面时隐时现。给个半透明黑圆底之后，
-            五种封面（见 VideoActivity 的选图说明）上读起来都一样。
-            （圆底带按压波纹是必须的：纯 shape 点上去完全没反馈，
-             和设置页改造前是同一个问题。）
-
-         ⚠️ 但圆底只垫住了图标，**没垫住图标下面那两行数字**。数字在
-            y≈442dp，而底部渐变要到 563dp 才实心，这一段只有约 14% 黑
-            （算法见 bg_scrim_bottom.xml 的注释）。数字现在能读，靠的是
-            封面那一片恰好偏暗——真压在亮封面上会糊。留着没修是权衡过的：
-            修法要么加文字阴影（shadowRadius 是 px 浮点，绕不开全项目的
-            @dimen 纪律），要么把渐变加深（那组参数是连标题一起调过的）。
-            取舍记在 README 的「已知遗留」。
-
-         ⚠️ 只有点赞和评论带数字，收藏和分享是纯图标。这两项是数据里
-            真实存在的两个计数（VideoItem.likeCount / commentCount），
-            点了会有反应；收藏/分享点了只弹提示，摆个数字反而像能点出
-            数据来。（数字的格式见 VideoFeedAdapter.formatCount()）
-
-         ⚠️ 尺寸：头像块 48dp = 40dp 圆 + 角标往下探的 8dp
-            （底下的圆和角标必须叠在同一个 48dp 的容器里，靠
-            layout_gravity 一个 top 一个 bottom —— 容器只有 40dp 的话，
-            角标伸出去的那 8dp 会被 FrameLayout 默认的 clipChildren 剪掉）。
-            整条栏约 290dp 高，贴底再抬 16dp，在 651dp 高的一屏里
-            落在中下部，不会顶到正中那个播放键（两者横向也不重叠）。
-         ============================================================ -->
+    
     <LinearLayout
         android:id="@+id/ll_full_rail"
         android:layout_width="wrap_content"
@@ -201,9 +119,7 @@
         android:paddingEnd="@dimen/space_xs"
         android:paddingBottom="@dimen/space_l">
 
-        <!-- 作者头像：来源名的首字（VideoFeedAdapter 里 setText）。
-             source 本来就是视频号的名字，所以不用再多一个头像字段，
-             也不像消息页那样需要一整套矢量头像。 -->
+        
         <FrameLayout
             android:layout_width="@dimen/touch_target"
             android:layout_height="@dimen/touch_target">
@@ -219,8 +135,7 @@
                 android:textColor="@color/on_brand"
                 android:textSize="@dimen/text_body"/>
 
-            <!-- 「＋」关注角标。padding 3dp 是必须的：ic_add 那个加号
-                 是按 24dp 画满的，不留内边距会撑满整个 16dp 的圆 -->
+            
             <ImageView
                 android:id="@+id/iv_full_follow"
                 android:layout_width="16dp"
@@ -232,7 +147,7 @@
                 android:contentDescription="关注"/>
         </FrameLayout>
 
-        <!-- 点赞。图标和数字都由 Java 按「这条赞没赞过」重画 -->
+        
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -298,22 +213,7 @@
             android:contentDescription="分享"/>
     </LinearLayout>
 
-    <!-- 双击点赞时从屏幕正中弹出来的那颗大红心。
-
-         ⚠️ 和 ic_like 是同一个图形，只是颜色不同 —— 颜色在本项目本来就是
-            tint 管的事（右侧那颗心点亮时也是运行时改 tint），
-            没必要为「红一点」再存一份一模一样的 path。
-
-         ⚠️ alpha=0，但**不给它点击监听**：不可点的 View 根本不吃触摸，
-            所以铺在正中也不会挡掉单击/双击。这和顶栏那个
-            「alpha=0 的假搜索框仍然吃点击」（见 VideoActivity.applyChrome）
-            是相反的两件事，别混。
-
-         ⚠️ 同理，居中那个播放键 iv_full_play 现在也没有点击监听，
-            整屏才是点击区。**别给它加** —— 加了之后屏幕正中那一块双击就没反应了。
-
-         动画由 VideoFeedAdapter.playLikeBurst() 播；holder 复用时
-         由 onBindViewHolder() 复位（直接改 View 属性的动画，不复位会带着上一条的残留）。 -->
+    
     <ImageView
         android:id="@+id/iv_full_like_burst"
         android:layout_width="96dp"
