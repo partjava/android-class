@@ -1,0 +1,339 @@
+仿今日头条 · 待办事项 与 实验报告要求
+记录时间：2026-09-24
+（这份是给自己看的备忘，不是交上去的东西）
+
+
+============================================================
+一、开工前先处理两件事
+============================================================
+
+1) 提交状态
+
+   视频页那批改动（40 个文件，+2401 / -249）当时已经全部 git add 到暂存区，
+   提交命令我给过，先 git status 看一眼是不是已经提交了；没提交就直接用：
+
+   git commit -m "视频页改造：四频道分页+推荐页抖音式全屏流(操作栏/双击点赞);沉浸播放页;修复三处问题" -m "视频页由单列卡片流改为 ViewPager2 四频道分页，推荐页做成竖向全屏流(一屏一条、PagerSnapHelper 吸附)，新增 VideoChannelAdapter/VideoFeedAdapter 与 item_video_page_feed/grid、item_video_full 三个布局；推荐页补右侧操作栏(头像+关注/点赞/评论/收藏/分享，仅点赞可交互)与双击点赞，VideoItem 新增 likeCount/commentCount。播放页改为竖屏全屏沉浸。顺带修复：applyWindowInsets 内边距累加、底部导航高度量得太早导致信息行被压住、返回视频页时底部导航高亮停在商城。另将 18 张 image*/img* 移至 drawable-nodpi 统一资源约定。"
+
+   文档没同步：README 还停在上一轮（双列网格 + 沉浸播放页），
+   这一轮的内容要补，清单见下面 二、3)。
+
+2) 模拟器
+
+   上次停在：视频页「推荐」频道（一屏一条的全屏流）。
+   问题：adb 显示 emulator-5554 unauthorized —— 屏幕上还挂着
+   「Allow USB debugging?」弹窗，需要手动点「允许」（勾上
+   「Always allow from this computer」）。
+
+   注意：我试过用模拟器控制台注入触摸和按键，全部无效——
+   试过 event send 的 ABS_MT 多点触控（pixel 和 32767 两种坐标制式）、
+   单点 ABS_X/ABS_Y、event mouse（4 个参数、按下+原地松开）、
+   KEY_VOLUMEUP 按键探测，屏幕都没有任何反应。
+   控制台目前只能截图（下面这条命令可用），不能操作界面：
+
+   adb emu screenrecord screenshot "C:/Users/lixiaoh/AppData/Local/Temp/vshot"
+
+   所以下次要么手动点弹窗的「允许」，要么干脆重启模拟器
+   （AVD 的 /data 会保留，装好的 app 和登录态不受影响）。
+
+
+============================================================
+二、下次要做的事（按优先级）
+============================================================
+
+1) 【决定】Fragment 方案 —— 背景和三个选项见 三、最后一段。
+   这个决定了实验报告的「实验原理」怎么写，先定它。
+
+2) 【验证】底部导航高亮修复没有复验过。
+   代码：VideoActivity.syncNavSelection()，挂在 onResume() 里。
+   复现路径（改之前的错误表现是「回来还亮着商城」）：
+     · 进视频页 → 点底部「商城」→ 按系统返回键回视频页
+     · 在商城页点底部「视频」回来
+   预期：底部导航「视频」高亮、「商城」不亮（nav_video=true nav_shop=false）。
+   为什么必须修：走 CLEAR_TOP / 返回路径时 onCreate 不执行，
+   复用的实例会保持上一次的选中项。
+
+3) 【文档】README 补这一轮：
+   · 「视频」一节改写：四频道 ViewPager2 分页、推荐页抖音式全屏流
+     （一屏一条、上下滑切换）、右侧操作栏、双击点赞、单击有约 300ms 延迟、
+     网格三频道保持双列
+   · 新增小节：操作栏的几个取舍（为什么只有点赞/评论有数字、
+     为什么双击只赞不取消、为什么数字取 3~4 位不到万级）
+   · 项目结构树补 5 个文件：VideoChannelAdapter.java、VideoFeedAdapter.java、
+     item_video_full.xml、item_video_page_feed.xml、item_video_page_grid.xml
+   · 数字校正：colors.xml 写的是 34 个 token，实际已经是 35；
+     layout 写的是 27，实际 30（styles 27、dimens 20 是对的）
+   · 「顺带修掉的问题」补三条、「已知遗留」补四条 → 见 五、
+
+4) 【截图】screenshots/ 现在只有 01~07，缺 商城 / 视频 / 消息 / 聊天 四页。
+   做验证时我拍过几张，在临时目录 C:\Users\lixiaoh\AppData\Local\Temp\vshot\
+   （里面 10_where.png、11_rail_final.png 这些是视频页的），可以挑几张
+   整理成 08_video.png 之类补进 screenshots/。
+
+5) 【遗留功能（可选）】点赞状态不持久化（存在 adapter 内存里，杀进程即丢）；
+   点赞数上万后 +1 在显示上看不出来。这两条不修也行，写进报告当已知遗留。
+
+
+============================================================
+三、实验报告的硬要求（老师给的，原文照抄）
+============================================================
+
+【结构】六节，顺序固定：
+   一、实验目的
+   二、实验原理
+   三、实验步骤及内容
+   四、数据及表格
+   五、数据处理及结果分析
+   六、误差分析
+
+【要覆盖的四个页面】原文：
+   首页：点击后显示你问首页，首页上面有新闻搜索，频道切换，下面是列表。
+         当点击不同频道，列表显示不同频道的新闻。
+   视频：视频播放，当上下滑动是切换不同推荐的视频
+   商场：构建商场界面，需要用瀑布流显示
+   我的：个人信息汇总和菜单之类的信息。
+
+【关键要求】
+   主界面用 Fragment 实现界面的局部更新。
+
+【老师给的四种候选设计方案（四选一）】
+   · ViewPage + Fragment
+   · FragmentTabHost + Fragment
+   · TabLayout + ViewPager2 + Fragment
+   · 自定义按钮（图标）+ Fragment
+
+【项目现状对照】
+   四个页面：全都有，而且和原文描述一一对应（首页搜索栏/7 频道切换/列表，
+   视频上下滑切换推荐视频 + 模拟播放，商城 StaggeredGridLayoutManager 瀑布流，
+   我的个人信息 + 九宫格菜单）。
+   ★ 唯一缺口：项目里一个 Fragment 都没有（grep -rl Fragment app/src/main/ 为空）。
+   实际架构是 4 个 Activity（首页/视频/商城/我的）+ BottomNavigationView 切换，
+   跳转统一带 CLEAR_TOP | SINGLE_TOP 复用实例；「局部更新」是 RecyclerView 的
+   clear() + addAll() + notifyDataSetChanged() 做的。
+   四个候选方案里只有「ViewPager2」（视频页频道分页）和「图标按钮」沾边，
+   但都没跟 Fragment 结合 —— 准确说实现的是「自定义按钮（图标）+ Activity」。
+
+【Fragment 三个选项，下次挑一个】
+
+   A 全量改成 Fragment
+     工作量：4 个主页面布局要摘掉各自的 BottomNavigationView（底部约束得跟着改）、
+     4 个 Activity 变 Fragment、新建 MainActivity 做容器、约 10 处跨页 Intent
+     （new Intent(this, ShopActivity.class) 这类）改成切换页；视频页的
+     measureChrome() 现在是从底部导航量高度的，得改成从宿主 Activity 取。
+     估计 1.5~2 小时（含几轮编译修错）。
+     风险：改完这台模拟器 adb 授权还掉着，我只能保证编译通过，
+     跑起来看要自己来（黑屏、导航不亮、insets 叠两层这类问题编译期看不出来）。
+
+   B 只做页内 Fragment
+     把「我的」页作品区的子标签（收藏/赞过 + 全部/视频/微头条）改成 Fragment
+     切换，半小时左右，不碰底部导航和跨页跳转。
+     报告里可以如实写「用 Fragment 实现页内局部更新」，
+     但如果老师指的是主界面（底部导航那一层），这条不算达标。
+
+   C 不改代码
+     报告如实写 Activity + BottomNavigationView + RecyclerView 局部刷新，
+     在误差分析里说明未采用 Fragment 的原因。
+     风险：老师按方案清单查代码会对不上。
+
+
+============================================================
+四、报告六节各写什么
+============================================================
+
+一、实验目的
+   1. 掌握 Activity 的使用与返回栈管理（CLEAR_TOP | SINGLE_TOP 复用实例）
+   2. 掌握 RecyclerView 的复用机制与三种 LayoutManager 的适用场景
+   3. 掌握 ViewPager2 分页与 OnPageChangeCallback 驱动联动动画
+   4. 掌握系统栏 insets 与沉浸式页面的适配方法
+   5. 掌握基于语义化资源（colors / dimens / styles）的 UI 组织方式
+
+二、实验原理
+   ★ 只讲机制和用法，不放代码、不放图（原文草稿见本文件最后的附录）。
+   Fragment 方案定了之后，这一节要按结论改一处：如果走 A，
+   这里补「Fragment 与 Activity 的分工、FragmentManager 事务切换」；
+   如果走 B/C，照附录写。
+
+三、实验步骤及内容
+   按页面写，每页 = 文字步骤 + 关键代码位置 + 截图，位置见下面清单。
+
+四、数据及表格
+   表 1 资源与代码规模（数字都已核过）：
+     Java 源文件 24 个 · layout 30 个 · colors.xml 35 个语义 token ·
+     styles.xml 27 个样式 · dimens.xml 20 个尺寸 ·
+     drawable 60 个（矢量/形状）+ drawable-nodpi 55 个（位图）
+   表 2 功能验证表（列：功能点 / 预期 / 实测结果）
+     实测结果用这些（都是我在模拟器上看过的）：
+       一屏一条吸附、单击播放/暂停、双击点赞出红心、
+       点赞点亮/取消、滑走再滑回状态保留、点操作栏不切换播放、
+       切频道时 chrome 淡入淡出、网格三频道正常、
+       深色模式颜色一致、刘海模拟反复开关内边距不累加
+
+五、数据处理及结果分析
+   拿表 2 的结果 + 三条取舍分析（README 里有现成论证，直接抄）：
+     1. 为什么视频页用 ViewPager2 而不是照抄商城页的 RecyclerView+PagerSnapHelper
+        （要多拿 onPageScrolled 的连续偏移量）
+     2. 封面比例取舍：项目里没有一张横构图，centerCrop 保留比例 =
+        源图宽高比 / 框的宽高比，所以网格卡片用 16:9、播放页故意用半屏比例
+        （14 条素材里 image7 从 57% 提到 87%）
+     3. 进度条轨道为什么不能用 20% 白（压在封面上会糊成一片红），
+        改用 60% 黑遮罩
+
+六、误差分析
+   用 五、里的「已知遗留」四条 + 验证环境的误差（adb 授权丢失、
+   uiautomator dump 会读到过期层级、图片密度桶实测无差别这条被推翻的假设）。
+
+
+------------------------------------------------------------
+代码位置清单（贴进报告用，行号是当时核过的）
+------------------------------------------------------------
+
+【首页】
+  HomeActivity.java:97            LinearLayoutManager（单列信息流）
+  HomeActivity.java:267-284       selectTab + switchNewsTab（换频道 = clear/addAll/notifyDataSetChanged）
+  NewsMultiAdapter.java:33        getItemViewType（4 种 item 布局：纯文字/单图/三图/视频）
+  activity_home.xml               顶部品牌红搜索栏 + 7 个频道标签
+
+【视频】
+  activity_video.xml              ViewPager2（id=vp_channels）+ 悬浮 chrome + 底部导航
+  VideoActivity.java:212-246      registerOnPageChangeCallback（onPageSelected / onPageScrolled）
+  VideoActivity.java:471          applyChrome（按连续偏移量做淡出淡入）
+  VideoActivity.java:624-634      measureChrome / applyChromePadding（每遍 layout 重量一次）
+  VideoActivity.java:151          syncNavSelection（回本页时把底部导航高亮拨回来）
+  VideoChannelAdapter.java:135    两个 viewType 的 onCreateViewHolder（全屏流 / 网格）
+  VideoChannelAdapter.java:77     setGridPadding（幂等，重复调用不会把列表弹回顶部）
+  VideoFeedAdapter.java:225-255   onAttachedToRecyclerView：LinearLayoutManager(VERTICAL) + PagerSnapHelper
+  VideoFeedAdapter.java:510-539   bindGesture：onSingleTapConfirmed / onDoubleTap
+  VideoFeedAdapter.java:356-420   like / renderLike / playLikeBurst / formatCount
+  VideoFeedAdapter.java:576       onBindViewHolder（holder 复用时复位：红心 alpha、tint、数字）
+  item_video_full.xml             一屏一条：封面 + 上下渐变遮罩 + 播放键 + 进度条 + 信息区 + 右侧操作栏 + 双击红心
+  VideoDetailActivity.java:76-90  模拟播放 ticker（200ms 一跳、每跳 2%）
+  VideoDetailActivity.java:160-218 沉浸式 setupImmersive + applyWindowInsets
+  VideoDetailActivity.java:285    togglePlay
+
+【商城】
+  ShopActivity.java:96-98         StaggeredGridLayoutManager(2, VERTICAL) 两列瀑布流
+  ShopActivity.java:122           selectTab（频道标签过滤商品）
+  ShopActivity.java:241-243       宫格入口：横向 RecyclerView + PagerSnapHelper 整页翻页
+
+【我的】
+  MineActivity.java               头像/昵称/IP 属地 + 关注粉丝获赞 + 九宫格入口 + 作品区
+  activity_mine.xml               九宫格与作品区布局
+
+【公共】
+  res/menu/bottom_menu.xml        底部导航 5 个菜单项
+  styles.xml:118                  Widget.Toutiao.BottomNav（4 个页面共用一套导航样式）
+  colors.xml / dimens.xml         语义化色板与尺寸（布局里不写死色值和字号）
+
+
+------------------------------------------------------------
+截图对应关系
+------------------------------------------------------------
+
+  一、实验目的              不用图
+  二、实验原理              不用图
+  三、实验步骤
+     1 首页                  screenshots/03_home.png（现成）
+     2 视频                  ★ 缺，要补（可用临时目录里的 11_rail_final.png 之类）
+     3 商城                  ★ 缺，要补
+     4 我的                  screenshots/05_mine.png（现成）
+     附：登录                 screenshots/01_login_onekey.png、02_login_pwd.png
+         新闻详情             screenshots/04_news_detail.png
+         设置 / 编辑资料      screenshots/06_settings.png、07_edit_profile.png
+  四、数据及表格            表格用文字排版即可
+  五、数据处理及结果分析     可选：放一张改前/改后的对比图
+  六、误差分析              可选：放那张「数字压在亮封面上」的截图
+
+
+============================================================
+五、这批改动修掉的三条 + 四条已知遗留（README 和报告都要用）
+============================================================
+
+【顺带修掉的问题】
+  1. applyWindowInsets() 内边距累加
+     原来写的是 getPaddingTop() + bars.top（读-改-写），而 inset 回调会反复触发，
+     顶栏会一次比一次高。已改成绝对赋值。
+     同类问题在 VideoDetailActivity 里本来就是对的，是视频页抄漏了。
+  2. 底部导航高度量得太早（这个肉眼可见）
+     measureChrome() 原来只 post() 量一次，读到的是 147px，但 BottomNavigationView
+     自己还会因 inset 长到 210px；结果切深色 / 重建后信息行和那条 3dp 进度条
+     被底部导航压住。已改成每遍 layout 重量 + setGridPadding() 加幂等保护
+     （幂等不能省：不然会反复把用户滚到一半的列表弹回顶部）。
+  3. 返回视频页时底部导航高亮停在「商城」
+     走 CLEAR_TOP / 返回路径时 onCreate 不执行，复用的实例保持上次的选中项。
+     已在 onResume() 里加 syncNavSelection() 静默 setChecked。
+     ★ 这一条还没在模拟器上复验过（adb 授权掉了），下次补。
+
+【已知遗留（写进报告的误差分析）】
+  1. 单击播放有约 300ms 延迟：onSingleTapConfirmed 必须等双击判定窗口
+     （ViewConfiguration.getDoubleTapTimeout()）过去才回调，是区分单双击的固有代价。
+  2. 点赞状态不持久化：存在 adapter 的内存里（为了滑动回收后状态还在），
+     杀进程 / 重装就丢，没有落盘。
+  3. 点赞数上万后 +1 在显示上不可见：formatCount() 会格式化成「1.3万」，
+     所以演示数据刻意取 3~4 位数。
+  4. 数字压在很亮的封面上对比度不足：右侧操作栏的圆底只垫住图标，
+     没垫住图标下面那两行数字；那一段渐变只有约 14% 黑。
+
+【验证环境本身的误差（也可以写进误差分析）】
+  · 这台模拟器 adb 掉了授权，导致「返回视频页底部导航高亮」这一项未能复验
+  · uiautomator dump 失败时会留下上一次的 ui.xml，读到的是过期层级，
+    会把同一个界面描述成两种状态（这次就被误导过一次）
+  · adb shell input 的延迟很大（偶尔报 Can't find service: input，
+    那一次 tap 是完全没生效）；input swipe 太快会被当成 fling，不翻页
+  · 「图片放 drawable/ 会按设备密度放大解码」这个常见说法被实测推翻：
+    同一页同路径冷启动，drawable/ 与 drawable-nodpi/ 的 Native Heap
+    是 46.2 vs 46.4 MB，无差别（targetSdk >= 28 时保持原始像素解码）。
+    所以那 18 张图挪进 nodpi 只是统一资源约定，不是省内存的优化。
+
+
+============================================================
+附录：实验原理正文草稿（8 条，只讲机制和用法，无代码无图）
+============================================================
+
+1. 页面组织与列表局部更新
+   项目用 Activity 承载每个页面，底部导航 5 个入口切换到 4 个主页面
+   （首页 / 视频 / 商城 / 我的，「添加」只弹提示）。为了让反复切换不堆叠
+   返回栈，跳转统一带 CLEAR_TOP | SINGLE_TOP：目标页若已在栈中，系统复用
+   原实例并回调 onNewIntent 换数据，而不是新建一个。列表的「局部更新」由
+   RecyclerView 承担——切换频道时只换数据源（clear() + addAll() +
+   notifyDataSetChanged()），页面本身不重建。同一个列表里要放多种样式的
+   条目（纯文字 / 单图 / 三图 / 视频）时，重写 getItemViewType() 返回不同
+   类型，onCreateViewHolder 再按类型加载对应布局。
+
+2. 三种 LayoutManager 的选用
+   首页信息流是单列 LinearLayoutManager；视频频道是双列等高网格
+   GridLayoutManager(2)；商城是两列瀑布流 StaggeredGridLayoutManager(2,
+   VERTICAL)。等高还是错落取决于数据：视频封面统一 16:9，等高才排得整齐；
+   商品图本身高矮不一，瀑布流才用得上。网格卡片的封面高度不写死，用约束
+   比例按实际列宽算出，换屏幕宽度才不会变形。
+
+3. 一屏一条的整屏吸附
+   视频页用 ViewPager2 横向分 4 个频道页，推荐页内部再用竖向
+   LinearLayoutManager + PagerSnapHelper，松手后自动吸附到最近一整条，
+   实现「上下滑切换视频」。
+
+4. 分页与联动动画
+   ViewPager2 通过 registerOnPageChangeCallback 回调两个不同粒度的信息：
+   onPageSelected 给切换完成的离散位置（用于切高亮），onPageScrolled 给
+   0~1 的连续偏移量（用于需要跟着手指走的淡出淡入、配色过渡）。
+   前者负责「结果」，后者负责「过程」。
+
+5. 单击与双击的区分
+   用 GestureDetector：单击走 onSingleTapConfirmed，双击走 onDoubleTap。
+   onSingleTapConfirmed 必须等一个双击判定窗口（系统值约 300ms）过去才会
+   回调，这是区分单双击的固有代价。
+
+6. 沉浸式与 insets 适配
+   先 setDecorFitsSystemWindows(false) 让内容铺到系统栏底下，再用
+   setOnApplyWindowInsetsListener 取 systemBars | displayCutout 的内边距
+   补到根视图上；必须用绝对值赋值而不是累加，因为系统栏状态一变这个回调
+   就会反复触发。低版本统一走 androidx 的 compat 类，避免用到高版本才有的
+   平台 API。
+
+7. 资源体系
+   颜色、字号、间距、重复样式都收敛成语义化 token（colors / dimens /
+   styles），布局里不写死色值和字号；主题固定浅色并关掉强制反色，保证
+   深色设备上表现一致。
+
+8. 模拟播放与动画
+   项目不含视频文件也不联网，播放用 Handler.postDelayed 每 200ms 推进 2%
+   的进度来模拟；双击点赞的红心用 ViewPropertyAnimator 做放大 + 淡出。
+   所有定时器在页面销毁时移除，避免持有页面引用造成泄漏。
