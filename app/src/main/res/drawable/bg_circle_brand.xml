@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    品牌红圆底。视频页全屏流右侧操作栏里，作者头像下方那颗「＋」关注角标。
+
+    ⚠️ 不复用 bg_badge：那个是 8dp 圆角的**矩形**，语义是「角标」
+       （消息页的未读数、"领现金"）。它的圆角一旦被人改小，这里的圆
+       就会跟着变成圆角方块——看着像谁不小心改坏了这里的样式。
+       同一个红底、不同的形状，就该是两个 drawable，这和 colors.xml 里
+       「press_on_dark 和 divider_on_dark 同值但不同义」是同一条理由。
+
+    ⚠️ 白描边不是装饰：角标压在头像的深色圆底上，没有这一圈白边，
+       红底和头像的边界会糊在一起（抖音那颗加号角标也是这么处理的）。
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/brand_red"/>
+    <stroke
+        android:width="1.5dp"
+        android:color="@color/on_brand"/>
+</shape>

@@ -1,56 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    视频播放页。二级页，顶栏有返回键。
+    视频播放页。全屏沉浸：没有红顶栏，状态栏在 Java 里隐藏（见
+    VideoDetailActivity.setupImmersive()），整页黑底。
 
     从上到下：
-    1. 红顶栏（返回 + 标题）
-    2. 封面区：大封面 + 居中播放键 + 右下角时长。整块**通栏**，
-       左右不留 page_padding——视频播放器贴边才像样
-    3. 模拟进度条：压在封面正下方
-    4. 正文区（有 page_padding）：标题 / 来源·播放量 / 分隔线 / 简介 /
+    1. 播放区（上半屏）：封面铺满 + 贴下沿的 3dp 模拟进度条
+    2. 返回键：浮在屏幕左上角，压在播放区之上
+    3. 信息区（下半屏，黑底白字）：标题 / 来源·播放量 / 分隔线 / 简介 /
        分隔线 / 「相关视频」+ 列表
 
-    进度条没用 ProgressBar：横向 ProgressBar 的 progressDrawable 自带
-    固有高度，写 layout_height="3dp" 经常不生效、量出来还是十几 dp。
-    这里用一个 FrameLayout 当轨道 + 一个 View 当已播放部分，
-    宽度由 VideoDetailActivity 按百分比设置，高度完全可控。
+    ⚠️ 播放区用 0dp + weight=1，和信息区**各占一半**——不写 400dp 这类
+       魔数，任何屏幕高度上都正好是「上半屏」。
+
+    ⚠️ 播放区的封面框**故意不是 16:9**，这和列表页网格卡片不一样，
+       不是漏改：这一页的画面是竖构图的照片而不是真视频，没有「必须保持
+       的原始画幅」，所以按上半屏的形状铺满最合适。按 16:9 铺的话
+       360 ÷ 16 × 9 = 203dp，在半屏里要上下留黑边；而半屏框更接近方图，
+       裁切更轻——保留高度 = 源图宽高比 ÷ 框宽高比，框宽高比 = 屏宽 ÷ 半屏高
+       （本机 411.43 ÷ 353.52 ≈ 1.16），image2 因此从 42% 提到 64%、
+       image7 从 57% 提到 87%。
+
+       ⚠️ 这里写过一次错数：最初按「半屏 = 360×400，比例 0.9」估成
+           image2 能保留 83%、image7 几乎不裁。那个 0.9 是想当然——
+           手机屏幕比 360×800 高得多，真实的半屏框是 1.16 左右（偏横），
+           所以改善是真的但没那么夸张。比例一栏的数字都按实测重算过。
+
+    ⚠️ 进度条没用 ProgressBar：横向 ProgressBar 的 progressDrawable 自带
+       固有高度，写 layout_height="3dp" 经常不生效、量出来还是十几 dp。
+       这里用一个 FrameLayout 当轨道 + 一个 View 当已播放部分，
+       宽度由 VideoDetailActivity 按百分比设置，高度完全可控。
+
+    ⚠️ 轨道色是 progress_track（60% 黑的遮罩）而不是 @color/divider：
+       进度条压在封面下沿上，轨道色要保证红色填充条在任何封面上都看得清，
+       不能按"底下是黑底"来选。改这个值之前先看 colors.xml 里那段说明。
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_detail"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_surface">
+    android:background="@color/bg_player">
 
-    <LinearLayout style="@style/Widget.Toutiao.TopBar">
-
-        <ImageView
-            android:id="@+id/iv_detail_back"
-            style="@style/Widget.Toutiao.NavIcon"
-            android:src="@drawable/ic_back"
-            android:contentDescription="返回"/>
-
-        <TextView
-            style="@style/Widget.Toutiao.TopBarTitle"
-            android:text="视频"/>
-    </LinearLayout>
-
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scrollbars="none">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <!-- 播放区。封面取不到时 Java 会把整块藏掉（连同进度条一起），
+             否则会剩一个半屏的黑框和一条孤零零的进度条 -->
+        <FrameLayout
+            android:id="@+id/fl_detail_media"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-            <!-- 封面：通栏 16:9。360dp 宽 ÷ 16 × 9 ≈ 203dp，
-                 和列表页 item_video.xml 的封面是同一个比例 -->
             <RelativeLayout
                 android:id="@+id/rl_detail_cover"
                 android:layout_width="match_parent"
-                android:layout_height="203dp">
+                android:layout_height="match_parent">
 
                 <ImageView
                     android:id="@+id/iv_detail_cover"
@@ -85,11 +91,15 @@
                     android:textSize="@dimen/text_caption"/>
             </RelativeLayout>
 
+            <!-- 进度条贴播放区**下沿**，不是紧贴封面：
+                 真实播放器都贴播放区边缘，顺便把播放区和下面的信息区
+                 在视觉上分开 -->
             <FrameLayout
                 android:id="@+id/fl_detail_progress"
                 android:layout_width="match_parent"
                 android:layout_height="3dp"
-                android:background="@color/divider">
+                android:layout_gravity="bottom"
+                android:background="@color/progress_track">
 
                 <View
                     android:id="@+id/v_detail_progress"
@@ -97,6 +107,13 @@
                     android:layout_height="match_parent"
                     android:background="@color/brand_red"/>
             </FrameLayout>
+        </FrameLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="none">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -111,10 +128,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/text_headline"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/text_on_dark"
                     android:textStyle="bold"
                     android:lineSpacingExtra="4dp"/>
 
+                <!-- 「来源 · 播放量」。这里复用浅色页面的 text_tertiary 而不是
+                     新开一个 token：#999999 在黑底上对比度 7.4:1 够看，
+                     而且黑底上的灰阶顺序（白 > #CCCCCC > #999999）
+                     和浅色底上是同一条层级线 -->
                 <TextView
                     android:id="@+id/tv_detail_meta"
                     android:layout_width="match_parent"
@@ -124,7 +145,7 @@
                     android:textColor="@color/text_tertiary"/>
 
                 <View
-                    style="@style/Widget.Toutiao.Divider"
+                    style="@style/Widget.Toutiao.Divider.OnDark"
                     android:layout_marginTop="@dimen/space_l"/>
 
                 <TextView
@@ -133,19 +154,19 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_l"
                     android:textSize="@dimen/text_body"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/text_on_dark_secondary"
                     android:lineSpacingExtra="8dp"/>
 
                 <View
-                    style="@style/Widget.Toutiao.Divider"
+                    style="@style/Widget.Toutiao.Divider.OnDark"
                     android:layout_marginTop="@dimen/space_l"/>
 
                 <TextView
-                    style="@style/Widget.Toutiao.SectionTitle"
+                    style="@style/Widget.Toutiao.SectionTitle.OnDark"
                     android:layout_marginTop="@dimen/space_l"
                     android:text="相关视频"/>
 
-                <!-- 固定 3 条、不滚动，由 VideoDetailActivity 动态 addView 填充。
+                <!-- 固定 3~4 条、不滚动，由 VideoDetailActivity 动态 addView 填充。
                      这种情况再起一个 RecyclerView 是杀鸡用牛刀 -->
                 <LinearLayout
                     android:id="@+id/ll_related"
@@ -154,7 +175,31 @@
                     android:layout_marginTop="@dimen/space_m"
                     android:orientation="vertical"/>
             </LinearLayout>
-        </LinearLayout>
-    </ScrollView>
+        </ScrollView>
+    </LinearLayout>
 
-</LinearLayout>
+    <!-- 返回键。放在根布局上（而不是播放区里）有两个原因：
+         1. 它是浮层，要压在整个页面之上，不该受播放区高度调整的影响
+         2. bindData() 在拿不到封面时会把播放区整块藏掉，
+            藏在里面的返回键会跟着一起消失
+
+         40dp 的盒子（Widget.Toutiao.NavIcon，箭头是白色 tint）+ 半透明黑圆底：
+         封面可能是浅色的，白箭头直接压上去看不见。
+         外边距用固定的 space_xs：顶部让出来的刘海/状态栏高度由
+         VideoDetailActivity.applyWindowInsets() 给根布局加 padding 实现 -->
+    <FrameLayout
+        android:id="@+id/fl_detail_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginTop="@dimen/space_xs">
+
+        <ImageView
+            android:id="@+id/iv_detail_back"
+            style="@style/Widget.Toutiao.NavIcon"
+            android:background="@drawable/bg_circle_scrim"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+    </FrameLayout>
+</FrameLayout>

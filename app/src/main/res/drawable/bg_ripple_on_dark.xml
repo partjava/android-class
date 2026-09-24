@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 黑底页面上的点击波纹（播放页「相关视频」整行）。
+
+     ⚠️ 这里不能再用 ?attr/selectableItemBackground：
+        它的波纹色取自 Light 主题的 colorControlHighlight（12% 黑），
+        压在黑底上完全看不见，点上去像没反应。
+        这和设置页改造前"点上去完全没有反馈"是同一类问题，
+        在黑底上更容易漏掉——因为白底时它本来是好的。
+
+     mask 里的白色只用来定义波纹的形状（矩形），不是设计色值，
+     所以直接写 @android:color/white，不进色板。 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/press_on_dark">
+    <item android:id="@android:id/mask">
+        <color android:color="@android:color/white"/>
+    </item>
+</ripple>

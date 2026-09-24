@@ -41,6 +41,20 @@
         <item name="android:background">@color/divider</item>
     </style>
 
+    <!-- 黑底页面上的分隔线（视频播放页）。
+         只写差异项，宽高从父样式隐式继承——和 Chip.Selected /
+         SettingValue.Strong / Button.Small 是同一套写法。
+
+         ⚠️ 为什么做成变体、而不是在布局里写裸 View + 元素级 background：
+            裸 View 要把 match_parent + 1dp 重写一遍，而上面这个 style
+            存在的唯一理由就是收掉全项目 80 处手写的分隔线；
+            写成「style + 元素级 background」覆盖更糟，元素级会静默盖掉
+            style——正是本文件头部第 1 条禁止的坑（那条拿 textColor 举例，
+            background 同理）。只剩变体这条路。 -->
+    <style name="Widget.Toutiao.Divider.OnDark">
+        <item name="android:background">@color/divider_on_dark</item>
+    </style>
+
 
     <!-- ================================================================
          顶栏（红底）
@@ -297,6 +311,15 @@
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">@dimen/text_headline</item>
         <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- 黑底页面上的小节标题（视频播放页的「相关视频」）。
+         只覆盖颜色，字号字重从父样式继承。
+
+         ⚠️ 这个变体是必须的，不是"顺手加一个"：父样式的 textColor 是
+            text_primary(#222222)，照搬到黑底上这四个字直接看不见。 -->
+    <style name="Widget.Toutiao.SectionTitle.OnDark">
+        <item name="android:textColor">@color/text_on_dark</item>
     </style>
 
     <!-- 小节标题右侧的"全部 >"、"..." -->

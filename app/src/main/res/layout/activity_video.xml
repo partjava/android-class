@@ -1,89 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    视频页，从上到下四段：
+    视频页。四层叠在一起（FrameLayout，不是从上到下排的 LinearLayout）：
 
-    1. 红色顶栏：标题 + 搜索入口。这里没有返回键——它是底部导航的 tab 页，
-       和首页/商城/我的同级，不是二级页
-    2. 频道标签：一排 tab（推荐/小视频/影视/音乐），选中带红下划线，
-       由 VideoActivity 动态 inflate item_channel_tab 塞进去
-    3. 视频列表：单列大封面卡片流
-    4. 底部导航
+    1. ViewPager2        —— 4 个频道各占一页，左右滑动切换（也可能点标签跳）
+    2. v_feed_scrim      —— 顶部渐变遮罩，只在「推荐」全屏流那一页露出来
+    3. ll_chrome         —— 红顶栏 + 频道标签，浮在最上面。推荐页上它会淡出
+    4. bottom_nav        —— 底部导航，永远不动
+
+    ⚠️ 第 2 层必须在第 3 层**之前**声明。FrameLayout 按声明顺序叠，
+       后声明的盖在上面；写反了渐变遮罩会盖住红顶栏和频道标签。
+
+    ⚠️ 根布局没有 background。整页的底色由 ViewPager2 里每一页自己带
+       （推荐页 bg_player 黑、网格页 bg_page 灰），根节点画什么都不对。
 -->
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_video"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/bg_surface">
+    android:layout_height="match_parent">
 
-    <!-- 顶栏：品牌红底 + 标题 + 搜索入口，和商城页同款 -->
+    <!-- 内容层。整页铺满，包括状态栏和系统导航条底下——
+         改造前这里是从顶栏下面开始的，现在靠每一页自己的 padding
+         把内容让开 chrome（见 VideoActivity.measureChrome()）。
+
+         ⚠️ 每一页的根布局必须显式 match_parent × match_parent。
+            ViewPager2 的 enforceChildFillListener 会校验，不填满直接抛
+            IllegalStateException("Pages must fill the whole ViewPager2")。 -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vp_channels"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <!-- 顶部渐变遮罩。alpha 由 VideoActivity 按滑动进度驱动：
+         在网格页恒为 0（完全不显示），滑向推荐页时以 2 倍速淡入。
+
+         ⚠️ 高度 160dp 是定值，不跟着 chrome 高度算。它压在封面上，
+            作用是让状态栏白图标和浮在封面上的频道标签都读得清，
+            和顶栏多高没有关系。 -->
+    <View
+        android:id="@+id/v_feed_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_gravity="top"
+        android:background="@drawable/bg_scrim_top"
+        android:alpha="0"/>
+
+    <!-- 顶栏 + 频道标签，整块浮在内容层之上。
+         本身不设 background、不设 padding——两边都由子视图各自负责，
+         这样推荐页淡出时不会留下一块底色。
+
+         ⚠️ 这块是 wrap_content 高度、没有背景，所以除标签本身以外的地方
+            （比如 tv_title）**不拦截触摸**，横滑照样能翻页。 -->
     <LinearLayout
-        android:id="@+id/top_bar"
-        style="@style/Widget.Toutiao.TopBar"
-        android:paddingHorizontal="@dimen/page_padding"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/tv_title"
-            style="@style/Widget.Toutiao.TopBarTitle"
-            android:text="视频"/>
-
-        <TextView
-            android:id="@+id/tv_search_hint"
-            android:layout_width="0dp"
-            android:layout_height="36dp"
-            android:layout_weight="1"
-            android:layout_marginStart="@dimen/space_l"
-            android:background="@drawable/bg_search"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="@dimen/space_l"
-            android:drawableStart="@drawable/ic_search"
-            android:drawablePadding="@dimen/space_s"
-            android:text="搜索你感兴趣的视频"
-            android:textColor="@color/text_hint"
-            android:textSize="@dimen/text_body_small"/>
-    </LinearLayout>
-
-    <HorizontalScrollView
-        android:id="@+id/hs_video_tabs"
+        android:id="@+id/ll_chrome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:background="@color/bg_surface"
-        app:layout_constraintTop_toBottomOf="@id/top_bar">
+        android:layout_gravity="top"
+        android:orientation="vertical">
 
+        <!-- 顶栏：品牌红底 + 标题 + 搜索入口，和商城页同款。
+             状态栏那一段的内边距是 VideoActivity 在 Java 里补的，
+             红底要铺进状态栏区域。 -->
         <LinearLayout
-            android:id="@+id/ll_video_tabs"
-            android:layout_width="wrap_content"
+            android:id="@+id/top_bar"
+            style="@style/Widget.Toutiao.TopBar"
+            android:paddingHorizontal="@dimen/page_padding">
+
+            <TextView
+                android:id="@+id/tv_title"
+                style="@style/Widget.Toutiao.TopBarTitle"
+                android:text="视频"/>
+
+            <TextView
+                android:id="@+id/tv_search_hint"
+                android:layout_width="0dp"
+                android:layout_height="36dp"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_l"
+                android:background="@drawable/bg_search"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="@dimen/space_l"
+                android:drawableStart="@drawable/ic_search"
+                android:drawablePadding="@dimen/space_s"
+                android:text="搜索你感兴趣的视频"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/text_body_small"/>
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:id="@+id/hs_video_tabs"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingStart="@dimen/space_s"
-            android:paddingEnd="@dimen/space_s"
-            android:paddingBottom="@dimen/space_xs"/>
-    </HorizontalScrollView>
+            android:scrollbars="none"
+            android:background="@color/bg_surface">
 
-    <!-- 高度 0dp，上下都约束住，中间这一段自己滚 -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_video"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/bg_page"
-        android:paddingTop="@dimen/space_s"
-        android:clipToPadding="false"
-        android:scrollbars="none"
-        app:layout_constraintTop_toBottomOf="@id/hs_video_tabs"
-        app:layout_constraintBottom_toTopOf="@id/bottom_nav"/>
+            <LinearLayout
+                android:id="@+id/ll_video_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="@dimen/space_s"
+                android:paddingEnd="@dimen/space_s"
+                android:paddingBottom="@dimen/space_xs"/>
+        </HorizontalScrollView>
+    </LinearLayout>
 
-    <!-- 底部导航栏，固定在屏幕底部，不会跟着列表滚。
+    <!-- 底部导航栏，固定在屏幕底部，不跟着内容滚。
 
          ⚠️ style 不能省。五个菜单项不是写在这里的，而是挂在
          Widget.Toutiao.BottomNav 这个 style 里的（app:menu）。
          漏掉 style 的结果是整条导航栏一个图标都没有，而且
          VideoActivity 里 setSelectedItemId / setOnItemSelectedListener
-         全部静默失效——商城页之前就是这么坏的，这里一次写全。 -->
+         全部静默失效——商城页之前就是这么坏的，这里一次写全。
+
+         ⚠️ 这里**没有** android:fitsSystemWindows="true"，是故意删掉的。
+            改造前那一行写了也从来没生效过（页面走系统默认的
+            decorFitsSystemWindows=true，inset 早被外层吃掉了），
+            现在页面改成 setDecorFitsSystemWindows(false) 之后更不能用它：
+            BottomNavigationView 这个组件在构造器里自己装了一个 insets
+            监听器，只听 bottom/start/end、永远不碰 top，而且会盖掉
+            XML 里这个属性。留下它既没用又误导人。
+            底部内边距由组件自己和 VideoActivity 的 inset 监听器配合补上，
+            这里**不要**手动 setPadding，会被冲掉。 -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         style="@style/Widget.Toutiao.BottomNav"
-        android:fitsSystemWindows="true"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        android:layout_gravity="bottom"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</FrameLayout>

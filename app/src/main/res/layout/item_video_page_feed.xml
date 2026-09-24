@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    推荐页（page 0）的页容器：一个竖向 RecyclerView，一屏一个视频。
+
+    ⚠️ 这里**不能有任何 padding**，上下左右都不行，这是硬约束不是风格：
+       PagerSnapHelper 按 (getEnd() - getStart()) / 2 取中点吸附，而
+       item 的高度是 match_parent 量出来的 =「RV 高度 − RV 的竖向 padding」。
+       一旦 RV 有 paddingTop/paddingBottom，item 就比 RV 矮，
+       每次 settle 都会在底部露出一条相邻页的边。
+       底部留白只能做成 item 根节点的 paddingBottom，见 item_video_full.xml。
+
+       同理不要 clipToPadding=false —— 那是给网格页用的，这里没有 padding
+       可 clip，加上只是徒增困惑。
+
+    ⚠️ 根布局必须显式 match_parent × match_parent（和网格页同一条）：
+       ViewPager2 的 enforceChildFillListener 会校验，不填满直接抛
+       IllegalStateException("Pages must fill the whole ViewPager2")。
+
+    ⚠️ 也不能用 android:animateLayoutChanges="true"（ViewPager2 1.0.0 的
+       ScrollEventAdapter 收到 layout 变化会抛异常）。
+
+    background 用 bg_player（纯黑）而不是 bg_page（灰）：这一页是播放器，
+    滑到两条之间的一瞬间露出来的底色应该是黑边，不是灰底。
+-->
+<androidx.recyclerview.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rv_page_feed"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_player"
+    android:overScrollMode="never"
+    android:scrollbars="none"/>

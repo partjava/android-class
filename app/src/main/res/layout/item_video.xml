@@ -1,80 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    视频页的单个视频卡片：大封面 + 标题 + 来源/播放量。
+    视频页的单个视频卡片（双列网格里的一格）：封面 + 标题 + 来源/播放量。
 
-    卡片规则和 4 个新闻 item 一致：白底 + 下方 8dp 间距，
+    卡片规则和 4 个新闻 item 一致：白底 + 下方间距，
     父容器是灰底，靠间距自然分隔，不画分隔线。
 
-    ⚠️ 封面框的比例是 16:9 —— 高度 184dp 是算出来的，不是随手写的：
-       360dp 屏 − 左右各 16dp page_padding = 328dp 可用宽，
-       328 × 9 ÷ 16 ≈ 184dp。
+    ⚠️ 为什么根布局是 ConstraintLayout 而不是 LinearLayout：
+       封面要的是 **16:9 这个比例**，而一格的宽度是 GridLayoutManager
+       平分出来的、随屏幕宽度变（360dp 屏上是 160dp，411dp 屏上是 185dp）。
+       LinearLayout 里只能给封面写死一个高度，那只在一种屏宽上等于 16:9：
+       写死 90dp 在 360dp 屏上是 16:9，到了 411dp 屏上就变成 2.06:1，
+       裁掉的原图比设计意图更多；窄屏（320dp）上反过来比 16:9 还高、会裁掉两边。
+       用 ConstraintLayout 的 0dp + layout_constraintDimensionRatio 让高度
+       由实际宽度算出来，任何屏宽上都是真 16:9。
 
-       这是全页唯一需要调的魔数。项目里的图**没有一张是横构图**
-       （image* 全是竖图或方图），centerCrop 到 16:9 会裁掉不少：
-       image2 / image5 只保留中间约 42% 的高度，image7 最好、约 57%。
-       如果裁出来主体没了不好看，把下面这个 184dp 改成 246dp 就是 4:3
-       （保留高度立刻涨到 56%），只改这一行。
+    ⚠️ 尺寸推导（以 360dp 屏为参照，实际值由比例算出）：
+         360dp 屏 − RecyclerView 左右各 space_m(12dp) = 336dp
+         336 ÷ 2 = 168dp 一格，再减掉下面 layout_marginHorizontal 的两边 4dp
+         = 160dp 卡片宽 → 封面高 = 160 × 9 ÷ 16 = 90dp。
+       于是：卡片左边缘 = 12 + 4 = 16dp = page_padding（和顶栏标题对齐），
+             两列之间 = 4 + 4 = 8dp = space_s。
+
+    ⚠️ 左右留白必须拆成两段：RecyclerView 的 paddingHorizontal 写在
+       activity_video.xml，4dp 的外边距写在这里。原因是 GridLayoutManager
+       只平分「父容器去掉 padding 之后」的宽度。两边相加必须等于
+       page_padding，否则第一列会和上面的频道标签对不齐。
+
+    ⚠️ 封面**出血**（顶到卡片上沿、左右不留内边距）：160dp 一格再留 8dp
+       内边距，封面就只剩 144dp 宽了，小得看不清。
+       卡片是方角，出血的封面也不会从圆角里戳出来
+       （所以这里没有用商城卡片的 bg_shop_card 圆角）。
+
+    选图说明见 VideoActivity 的「各频道的数据」注释。
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:background="@color/bg_surface"
-    android:layout_marginBottom="@dimen/space_s"
-    android:padding="@dimen/page_padding">
+    android:layout_marginHorizontal="@dimen/space_xs"
+    android:layout_marginBottom="@dimen/space_s">
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="184dp">
+    <!-- 封面。0dp × 0dp + H,16:9 = 宽度撑满卡片、高度按宽度算
+         （H 表示被比例约束的是高度那一维） -->
+    <ImageView
+        android:id="@+id/iv_video_cover"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:contentDescription="视频封面"
+        app:layout_constraintDimensionRatio="H,16:9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
 
-        <ImageView
-            android:id="@+id/iv_video_cover"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:contentDescription="视频封面"/>
+    <!-- 播放键只是装饰，整张卡片才是点击区域，所以不给 id。
+         28dp 而不是单列时的 48dp：卡片只有半屏宽，
+         48dp 会盖掉封面近一半的高度；
+         28dp 和播放页「相关视频」小封面上那个是同一档视觉语言 -->
+    <ImageView
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/ic_play_circle"
+        android:contentDescription="播放"
+        app:layout_constraintStart_toStartOf="@id/iv_video_cover"
+        app:layout_constraintEnd_toEndOf="@id/iv_video_cover"
+        app:layout_constraintTop_toTopOf="@id/iv_video_cover"
+        app:layout_constraintBottom_toBottomOf="@id/iv_video_cover"/>
 
-        <!-- 播放键只是装饰，整张卡片才是点击区域，所以不给 id -->
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerInParent="true"
-            android:src="@drawable/ic_play_circle"
-            android:contentDescription="播放"/>
+    <!-- 时长标签压在封面右下角，和播放键同一套遮罩色。
+         位置和内边距都比单列时收了一档（space_s → space_xs）：
+         小封面上原来那套 8dp 边距会占掉右下角一大块 -->
+    <TextView
+        android:id="@+id/tv_video_duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/space_xs"
+        android:layout_marginBottom="@dimen/space_xs"
+        android:background="@drawable/bg_video_duration"
+        android:paddingHorizontal="@dimen/space_xs"
+        android:paddingVertical="@dimen/space_xs"
+        android:maxLines="1"
+        android:textColor="@color/on_brand"
+        android:textSize="@dimen/text_caption"
+        app:layout_constraintEnd_toEndOf="@id/iv_video_cover"
+        app:layout_constraintBottom_toBottomOf="@id/iv_video_cover"/>
 
-        <!-- 时长标签压在封面右下角，和播放键同一套遮罩色 -->
-        <TextView
-            android:id="@+id/tv_video_duration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginEnd="@dimen/space_s"
-            android:layout_marginBottom="@dimen/space_s"
-            android:background="@drawable/bg_video_duration"
-            android:paddingHorizontal="@dimen/space_s"
-            android:paddingVertical="@dimen/space_xs"
-            android:maxLines="1"
-            android:textColor="@color/on_brand"
-            android:textSize="@dimen/text_caption"/>
-    </RelativeLayout>
+    <!-- 封面出血了，下面的文字要自己留左右内边距。
 
+         ⚠️ 字号从单列时的 text_title(18sp) 降到 text_body_small(14sp)：
+            360dp 屏上文字可用宽只有 160 − 8 − 8 = 144dp，
+            18sp 一行只放得下 8 个中文字，而最长的标题有 17 个字
+            （「街头采访：你理想中的生活是什么样的」），两行必然被截断。
+            14sp 一行约 10 个字、两行 20 个字，全部标题都放得下。
+            商城页双列卡片的标题也是 text_body_small，两列布局的标题档位
+            应该一致。 -->
     <TextView
         android:id="@+id/tv_video_title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_m"
+        android:layout_marginHorizontal="@dimen/space_s"
+        android:layout_marginTop="@dimen/space_s"
         android:maxLines="2"
         android:ellipsize="end"
-        android:textSize="@dimen/text_title"
-        android:textColor="@color/text_primary"/>
+        android:textSize="@dimen/text_body_small"
+        android:textColor="@color/text_primary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_video_cover"/>
 
-    <!-- 来源用 0dp + weight=1 吃掉剩余宽度，右边的播放量就永远挤不出去 -->
+    <!-- 来源用 0dp + weight=1 吃掉剩余宽度，右边的播放量就永远挤不出去。
+         360dp 屏上 144dp 里「128万次播放」占 72dp，留给来源的还有 60dp，
+         3~5 个字的来源都放得下（只有 "livehouse" 会被截断） -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/space_s"
-        android:orientation="horizontal">
+        android:layout_marginHorizontal="@dimen/space_s"
+        android:layout_marginTop="@dimen/space_xs"
+        android:layout_marginBottom="@dimen/space_s"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_video_title"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <TextView
             android:id="@+id/tv_video_source"
@@ -90,9 +139,9 @@
             android:id="@+id/tv_video_play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/space_l"
+            android:layout_marginStart="@dimen/space_s"
             android:maxLines="1"
             android:textSize="@dimen/text_caption"
             android:textColor="@color/text_tertiary"/>
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

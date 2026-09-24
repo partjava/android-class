@@ -2,11 +2,17 @@
 <!--
     播放页底部的「相关视频」条目。
 
-    这里是紧凑小横排，不复用 item_video.xml —— 那个是整屏宽的大封面卡片，
-    塞到详情页底部会把简介挤没。
+    这里是紧凑小横排，不复用 item_video.xml —— 那个是双列网格里的一格，
+    塞到播放页底部会把简介挤没。
 
     结构照 item_craftsman.xml：左边定宽图 + 右边一列文字。
-    封面 120×68dp 同样是 16:9，和列表页大封面保持同一比例。
+    封面 120×68dp 同样是 16:9，和列表页网格卡片保持同一比例。
+
+    ⚠️ 这个布局目前**只被视频播放页一个地方** inflate（VideoDetailActivity），
+       而播放页整页黑底，所以标题直接写成黑底专用的 text_on_dark、
+       背景直接换成白波纹。
+       将来若有**白底**页面要复用它，这两处必须先抽成 style 或参数，
+       不能直接套用——白底上的白字等于看不见。
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -14,7 +20,7 @@
     android:orientation="horizontal"
     android:layout_marginBottom="@dimen/space_m"
     android:paddingVertical="@dimen/space_s"
-    android:background="?attr/selectableItemBackground">
+    android:background="@drawable/bg_ripple_on_dark">
 
     <RelativeLayout
         android:layout_width="120dp"
@@ -50,7 +56,7 @@
             android:layout_height="wrap_content"
             android:maxLines="2"
             android:ellipsize="end"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/text_on_dark"
             android:textSize="@dimen/text_body"/>
 
         <TextView

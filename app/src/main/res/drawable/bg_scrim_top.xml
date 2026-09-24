@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏流顶部的渐变遮罩，整整一条压在封面上。
+     它同时干两件事：
+     1. 让状态栏的白色图标、浮在封面上的频道标签在任何一张封面上都看得清
+     2. 在推荐页顶出一条"header 带"，红顶栏淡出之后上面那块不至于空着
+
+     ⚠️ 这个是全项目第一个 gradient —— 之前 40 多个 drawable 全是纯色 shape。
+        写之前先看 colors.xml 里 scrim_heavy 那段：70% 是算出来的，
+        白字压在 70% 黑上约 8:1，压 50% 黑只有 3.9:1。
+
+     ⚠️ 为什么是"先实心一段再淡出"而不是从头淡到尾：
+        这块遮罩的高度是 160dp，但频道标签落在 y≈66~106dp 那一段
+        （状态栏 24dp + 顶栏高度）。纯线性 70%→0 的渐变在这一段只剩
+        30%~35% 黑，白字直接糊掉。所以用 centerColor 把实心段撑到 55%，
+        剩下的才淡出——标签正好落在还没开始淡的地方。
+
+     ⚠️ android:angle 的取值容易记反（0 = 左→右，90 = 下→上，270 = 上→下，
+        必须是 45 的倍数）。这里要的是"顶上深、往下淡出"，所以用 270，
+        startColor 落在**上边**。写成 90 会变成顶上透明、底下一条黑，
+        标签反而更看不清。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="@color/scrim_heavy"
+        android:centerColor="@color/scrim_heavy"
+        android:centerY="0.55"
+        android:endColor="#00000000"/>
+</shape>

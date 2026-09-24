@@ -1,6 +1,7 @@
 package com.example.toutiao.demo;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,6 +13,11 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +36,13 @@ import java.util.List;
  *
  * 播放是模拟的：点播放键每 200ms 推进 2%，十秒走满，走满停在 100% 不循环。
  * 没有接 MediaPlayer，全项目本来就不联网、也没有视频文件。
+ *
+ * 页面是全屏沉浸的：进入就隐藏状态栏，整页黑底（bg_player），
+ * 返回键浮在左上角的半透明黑圆上，封面铺满上半屏的播放区。
+ *
+ * 沉浸式能在 API 29（minSdk）上跑，全靠 androidx.core 的 compat 类——
+ * 平台自己的 WindowInsetsController 是 API 30 才有的，直接用会崩。
+ * 具体原理和两个坑见 setupImmersive() / applyWindowInsets() 的注释。
  */
 public class VideoDetailActivity extends AppCompatActivity {
 
@@ -79,9 +92,13 @@ public class VideoDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //沉浸式必须在 setContentView 之前做：晚一步的话第一帧会先画出
+        //主题里的红色状态栏再收起来，肉眼能看到闪一下
+        setupImmersive();
         setContentView(R.layout.activity_video_detail);
         bindView();
         bindData();
+        applyWindowInsets();
 
         //整个封面区都是播放/暂停的点击区，不是只有中间那个 48dp 的键——
         //和真实播放器一致，点起来也不用瞄准
@@ -119,6 +136,87 @@ public class VideoDetailActivity extends AppCompatActivity {
         llRelated = findViewById(R.id.ll_related);
     }
 
+    //==== 全屏沉浸 ====
+
+    /**
+     * 隐藏状态栏 + 让内容铺满整个窗口。
+     *
+     * ⚠️ 只用 androidx.core 的 compat 类，**不能**用平台的
+     *    WindowInsetsController —— 那是 API 30 才有的，minSdk 29 直接用会崩。
+     *
+     *    compat 类在 API 29 上的落地是老的 systemUiVisibility
+     *    （构造器分派 Impl30 → Impl26 → Impl23 → Impl20）：
+     *
+     *      setDecorFitsSystemWindows(false) → decorView 加
+     *          LAYOUT_STABLE | LAYOUT_HIDE_NAVIGATION | LAYOUT_FULLSCREEN
+     *      hide(statusBars)                 → decorView 加 SYSTEM_UI_FLAG_FULLSCREEN
+     *      BEHAVIOR_..._BY_SWIPE            → decorView 加 IMMERSIVE_STICKY
+     *
+     *    所以这一段不需要任何 Build.VERSION 判断。
+     *
+     * 只在 onCreate 里调一次就够：这些窗口标志挂在 decorView 上，走
+     * onNewIntent（点「相关视频」复用实例）时不会丢，也不需要重设。
+     */
+    private void setupImmersive() {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+        //返回值是 @Nullable：API 30+ 那条分支里系统可能给不出 controller，
+        //所以判空不能省
+        WindowInsetsControllerCompat controller =
+                WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            controller.hide(WindowInsetsCompat.Type.statusBars());
+            //边缘下滑临时露出状态栏、松手自动收回。不设这个行为的话，
+            //状态栏被划出来一次就永久留在屏幕上了
+            controller.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            //临时露出的状态栏是浮在内容上的。主题是 Light 主题，默认给的是
+            //深色图标，压在这一页的黑底上等于看不见，强制成白色
+            //（API 29 也支持，走 Impl23 的 SYSTEM_UI_FLAG_LIGHT_STATUS_BAR）
+            controller.setAppearanceLightStatusBars(false);
+        }
+
+        //状态栏底色调透明：隐藏期间无所谓，但边缘下滑临时唤出时它是浮在
+        //内容上的——留着主题里的品牌红，黑页顶部会横一条红带
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+
+        //窗口底色换黑。主题里是 @color/bg_surface（白），任何"没被我们视图
+        //盖住"的地方露出来都是白的：刘海让位的缝、转场动画的第一帧、
+        //临时唤出状态栏时后面那一层
+        getWindow().setBackgroundDrawableResource(R.color.bg_player);
+    }
+
+    /**
+     * 沉浸之后内容会铺到状态栏和导航栏底下，这两块地方要自己让出来。
+     *
+     * ⚠️ 必须用监听器，不能在 onCreate 里读一次 ViewCompat.getRootWindowInsets()：
+     *    那一刻视图还没 attach、第一次 traversal 也还没发生，读回来是 null。
+     *    「先读一次 inset 再 hide」这条捷径在 onCreate 里根本不成立。
+     *
+     * ⚠️ 必须连**导航栏**一起处理：setDecorFitsSystemWindows(false) 在 API 29 上
+     *    加的是 LAYOUT_STABLE | LAYOUT_HIDE_NAVIGATION | LAYOUT_FULLSCREEN，
+     *    导航栏那条 flag 也在里面。只处理顶部的话，滚到最底下时
+     *    最后一条「相关视频」会被导航栏压住，而且滚不出来。
+     *
+     * ⚠️ statusBars 要带上 displayCutout：状态栏被隐藏之后 statusBars 的 top
+     *    归零，有刘海/挖孔的机器上真正会挡住返回键的是那块挖孔本身。
+     *    返回键的呼吸空间由 fl_detail_back 自己的外边距给（固定值，
+     *    不参与这里的计算，也就不会被反复回调影响）。
+     *
+     * ⚠️ 用绝对值 setPadding，**不要**写 += ：系统栏状态变化时这个回调会
+     *    反复触发，累加的话 padding 会一次比一次大。这是这套 API 最经典的坑。
+     */
+    private void applyWindowInsets() {
+        final View root = findViewById(R.id.root_detail);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(0, bars.top, 0, bars.bottom);
+            //原样返回、不消费：以后要是有子视图需要 insets，还能拿到自己那份
+            return insets;
+        });
+    }
+
     //把当前 Intent 里的数据铺到页面上。onCreate 和 onNewIntent 都走这里
     private void bindData() {
         //换视频时先把播放状态归零，否则新视频一进来进度条就是满的
@@ -135,12 +233,15 @@ public class VideoDetailActivity extends AppCompatActivity {
         //兜底：万一没带标题进来，页面也不至于是空的
         tvTitle.setText(title == null || title.isEmpty() ? "视频" : title);
 
-        //封面。取不到就把整块（含播放键）藏掉，不留一块 203dp 的空白
+        //封面。取不到就把整个播放区藏掉（含播放键、时长、进度条），
+        //不留半屏的黑框和一条孤零零的进度条
         if (cover != 0) {
+            findViewById(R.id.fl_detail_media).setVisibility(View.VISIBLE);
             rlCover.setVisibility(View.VISIBLE);
             ivCover.setImageResource(cover);
         } else {
             rlCover.setVisibility(View.GONE);
+            findViewById(R.id.fl_detail_media).setVisibility(View.GONE);
         }
 
         //时长。首页视频标签进来的没有这个数据，藏掉而不是编一个
@@ -235,21 +336,25 @@ public class VideoDetailActivity extends AppCompatActivity {
      *
      * 封面仍然只在 16:9 裁得动的那几张里选（见 VideoActivity 里的选图说明），
      * 4 条互不重复。
+     *
+     * 这 4 条和 VideoActivity 里同名的那 4 条**是同一个视频**，所以末尾的
+     * 点赞数/评论数照抄了那边同一组值：同一个视频在两处显示的数字不一致，
+     * 比数字本身是多少更扎眼。（这一页不显示这两个数，但将来要用时不该对不上。）
      */
     private List<VideoItem> buildRelated() {
         List<VideoItem> list = new ArrayList<>();
         list.add(new VideoItem("延时摄影记录城市从黎明到黄昏", "影像志", "04:12", "56万次播放",
                 "摄影师在城市最高处架设机位，连续拍摄十二个小时。整座城市的一天被压缩进短短几分钟。",
-                R.drawable.image7));
+                R.drawable.image7, 3200, 168));
         list.add(new VideoItem("航拍中国：从空中俯瞰大好河山", "航拍视角", "08:45", "92万次播放",
                 "镜头掠过奔腾的江河、金黄的麦田和错落的村落，山川河流呈现出与地面完全不同的壮阔面貌。",
-                R.drawable.image5));
+                R.drawable.image5, 5400, 271));
         list.add(new VideoItem("街头采访：你理想中的生活是什么样的", "城市观察", "09:28", "34万次播放",
                 "记者在街头随机采访了二十位路人。答案各不相同，但大多朴素而具体。",
-                R.drawable.image8));
+                R.drawable.image8, 2100, 486));
         list.add(new VideoItem("民谣现场：一把吉他唱完整个夏天", "livehouse", "05:37", "51万次播放",
                 "小小的场地里挤满了人，唱到副歌时全场跟着一起哼。",
-                R.drawable.image6));
+                R.drawable.image6, 2900, 174));
         return list;
     }
 

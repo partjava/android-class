@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏流底部的渐变遮罩：标题 / 来源·播放量 / 进度条都压在它上面。
+
+     ⚠️ 和 bg_scrim_top 是镜像关系，但 centerY 不是 0.45 而是 0.6：
+        底部这一条要盖住的是三行信息（标题最多两行 + 元信息一行），
+        实心段得再往上顶一点。调的时候连着 item_video_full.xml 一起看。
+
+     ⚠️ 和 bg_scrim_top 用的是**同一个角** 270（= 上→下，见那个文件里的说明），
+        startColor 落在上边。区别只在于这里 start 是透明的、end 是 scrim_heavy。
+        所以两个文件长得像但"哪一头是深的"正好相反，改的时候别照抄。
+
+     ⚠️ 这一条**铺到底部导航底下**（底部导航是不透明的白底，会把它盖掉一截），
+        所以在屏幕上实际看到的渐变会比 220dp 矮。这不是 bug。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#00000000"
+        android:centerColor="@color/scrim_heavy"
+        android:centerY="0.6"
+        android:endColor="@color/scrim_heavy"/>
+</shape>

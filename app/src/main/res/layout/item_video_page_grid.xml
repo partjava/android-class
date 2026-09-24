@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ViewPager2 里「小视频 / 影视 / 音乐」三个频道的页容器：
+    一个双列等高网格。
+
+    改造前这一坨直接写在 activity_video.xml 里，现在拆出来当一页的内容，
+    所以上下那圈内边距不能写死在这里了——它得等于「chrome 有多高」和
+    「底部导航有多高」，两个高度都取决于状态栏 / 系统导航条的 inset，
+    只有运行时量得到。全部在 VideoActivity.measureChrome() 里 setPadding。
+
+    ⚠️ 根布局必须显式 match_parent × match_parent。ViewPager2 的
+        enforceChildFillListener 校验页根是否填满，不填满抛
+        IllegalStateException("Pages must fill the whole ViewPager2")。
+        写 wrap_content 一样会抛。
+
+    ⚠️ 这里不能用 android:animateLayoutChanges="true"。
+        ViewPager2 1.0.0 的 ScrollEventAdapter 收到 layout 变化会抛异常。
+
+    ⚠️ 不要在这里加 android:paddingTop 之类的兜底值。第一次 layout 之前
+        padding 是 0，会有一帧内容顶到状态栏底下；但那正是
+        clipToPadding=false + 默认页是推荐页的组合下看不到的情况，
+        VideoActivity 里 notifyDataSetChanged() 会立刻纠正。
+        加个「差不多」的兜底值反而会让量出来的结果和实际错开。
+-->
+<androidx.recyclerview.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rv_page_grid"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:clipToPadding="false"
+    android:scrollbars="none"/>

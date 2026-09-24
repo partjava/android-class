@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏流右侧操作栏那五个圆底的带按压反馈版 = bg_circle_scrim + 波纹。
+
+     ⚠️ 不能改用 ?attr/selectableItemBackground：它的波纹色取自 Light 主题的
+        colorControlHighlight（12% 黑），压在这几个半透明黑圆上等于看不见。
+        和 bg_ripple_on_dark 是同一个坑——设置页改造前"点上去完全没反馈"
+        就是它，README 记过。
+
+     ⚠️ 圆底（scrim_40）必须原样保留，理由见 bg_circle_scrim：
+        图标压在 centerCrop 的任意封面上，亮的暗的都有。
+
+     mask 里的白色只用来定义波纹的形状（圆），不是设计色值，
+     所以直接写 @android:color/white，不进色板——同 bg_ripple_on_dark。 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="@color/press_on_dark">
+    <item android:id="@android:id/mask">
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white"/>
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/scrim_40"/>
+        </shape>
+    </item>
+</ripple>
