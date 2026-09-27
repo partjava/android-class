@@ -557,7 +557,7 @@
                         android:layout_width="@dimen/icon_nav"
                         android:layout_height="@dimen/icon_nav"
                         android:src="@drawable/ic_search"
-                        android:tint="@color/icon_primary"
+                        app:tint="@color/icon_primary"
                         android:contentDescription="搜索"/>
                 </LinearLayout>
 
@@ -607,6 +607,8 @@
         android:id="@+id/bottom_nav"
         style="@style/Widget.Toutiao.BottomNav"
         android:fitsSystemWindows="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

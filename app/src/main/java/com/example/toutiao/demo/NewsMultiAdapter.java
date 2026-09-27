@@ -128,7 +128,12 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 singleHolder.tvTitle.setText(news.getTitle());
                 singleHolder.tvSource.setText(news.getSource());
                 singleHolder.tvTime.setText(news.getTime());
-                singleHolder.ivSingle.setImageResource(news.getImg1());
+                //接口头条带远程封面 URL，本地文章走 drawable 资源
+                if (news.getImageUrl() != null) {
+                    RemoteImage.load(singleHolder.ivSingle, news.getImageUrl());
+                } else {
+                    singleHolder.ivSingle.setImageResource(news.getImg1());
+                }
                 break;
             case News.TYPE_THREE_IMG:
                 ThreeImgViewHolder threeHolder = (ThreeImgViewHolder) holder;

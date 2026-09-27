@@ -534,7 +534,7 @@
                         android:layout_width="@dimen/icon_nav"
                         android:layout_height="@dimen/icon_nav"
                         android:src="@drawable/ic_search"
-                        android:tint="@color/icon_primary"
+                        app:tint="@color/icon_primary"
                         android:contentDescription="搜索"/>
                 </LinearLayout>
 

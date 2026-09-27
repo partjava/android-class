@@ -283,8 +283,9 @@ public class OrderDetailActivity extends AppCompatActivity {
 
         btnContactService.setOnClickListener(v -> {
             Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("user_name", "商城官方客服");
-            intent.putExtra("chat_type", "private");
+            //⚠️ ChatActivity 只认 EXTRA_PEER_NAME 这一个 key（此前传的
+            //   "user_name"/"chat_type" 会被忽略，永远打开头条小助手会话）
+            intent.putExtra(ChatActivity.EXTRA_PEER_NAME, "商城官方客服");
             startActivity(intent);
         });
     }

@@ -134,6 +134,10 @@ public class VideoDetailActivity extends AppCompatActivity {
         String duration = intent.getStringExtra(EXTRA_DURATION);
         String playCount = intent.getStringExtra(EXTRA_PLAY_COUNT);
         String desc = intent.getStringExtra(EXTRA_DESC);
+        //与 NewsDetailActivity 一致：列表页不携带正文，进详情页才按标题查询
+        if (desc == null || desc.isEmpty()) {
+            desc = NewsContentStore.contentOf(title);
+        }
         int cover = intent.getIntExtra(EXTRA_COVER, 0);
 
         tvTitle.setText(title == null || title.isEmpty() ? "视频" : title);

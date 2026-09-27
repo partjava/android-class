@@ -15,6 +15,11 @@
     <!-- 选中态胶囊的底色（我的页「全部」）。红主色的浅色版本，
          不能直接用 brand_red，那样文字会糊在底色里。 -->
     <color name="brand_red_light">#FDECEC</color>
+    <!-- 商品详情页底部「加入购物车」按钮的橙色，和 brand_red 拼成
+         一条双段胶囊（电商页的惯用配色：橙加购、红购买）。
+         不复用 avatar_orange——那是会话头像圆底色板的一员，语义不同；
+         同值不同义必须分 token（与 divider_on_dark / press_on_dark 同一条理由）。 -->
+    <color name="brand_orange">#FF7A00</color>
 
     <!-- ============================================================
          文字

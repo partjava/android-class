@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    商品详情画廊第 1 页：商品实拍图。
+
+    ⚠️ 页面根必须 match_parent × match_parent：ViewPager2 的每个 page
+       按页根的 layout 参数定尺寸，写 wrap_content 会量成 0 高。
+       inflate 时 attachToRoot 必须为 false，尺寸由 ViewPager2 自己贴。
+-->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scaleType="centerCrop"
+    android:contentDescription="商品图"/>

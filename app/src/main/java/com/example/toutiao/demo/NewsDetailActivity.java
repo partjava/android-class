@@ -8,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * 新闻详情页。
- * 首页列表点击某条新闻后跳到这里，标题、来源、配图、正文都由 Intent 传过来。
+ * 列表页只传标题/来源/配图这些摘要字段；正文在这里才按需查询：
+ * 用户自己发布的动态随 extra 带过来，站内文章从 NewsContentStore
+ * 按标题拉取全文——对应“列表接口给摘要、详情接口给全文”的两段式加载。
  */
 public class NewsDetailActivity extends AppCompatActivity {
 
@@ -17,28 +19,48 @@ public class NewsDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_news_detail);
 
-        //取出首页传过来的数据
+        //取出列表页传过来的摘要数据
         String title = getIntent().getStringExtra("title");
         String info = getIntent().getStringExtra("info");
         String content = getIntent().getStringExtra("content");
         int img = getIntent().getIntExtra("img", 0);
         int type = getIntent().getIntExtra("type", News.TYPE_TEXT);
+        String imgUrl = getIntent().getStringExtra("img_url");
+        String linkUrl = getIntent().getStringExtra("link");
+
+        //正文三级来源：用户发布的动态 extra 里就有；接口头条在运行时层；
+        //站内文章在静态文章库——都是进详情页这一刻才查询
+        if (content == null || content.isEmpty()) {
+            content = NewsContentStore.contentOf(title);
+        }
 
         TextView tvTitle = findViewById(R.id.tv_news_title);
         TextView tvInfo = findViewById(R.id.tv_news_info);
         TextView tvContent = findViewById(R.id.tv_news_content);
+        TextView tvReadOriginal = findViewById(R.id.tv_news_read_original);
         ImageView ivPic = findViewById(R.id.iv_news_pic);
         ImageView ivBack = findViewById(R.id.iv_news_back);
 
         tvTitle.setText(title);
         tvInfo.setText(info);
 
-        //纯文字新闻没有配图，这时候隐藏 ImageView
-        if (type != News.TYPE_TEXT && img != 0) {
+        //配图三级：接口头条的远程封面 → 本地文章的 drawable → 纯文字无图
+        if (imgUrl != null && !imgUrl.isEmpty()) {
+            RemoteImage.load(ivPic, imgUrl);
+            ivPic.setVisibility(View.VISIBLE);
+        } else if (type != News.TYPE_TEXT && img != 0) {
             ivPic.setImageResource(img);
             ivPic.setVisibility(View.VISIBLE);
         } else {
             ivPic.setVisibility(View.GONE);
+        }
+
+        //接口头条提供原文链接时显示「阅读原文」，跳系统浏览器看全文
+        if (linkUrl != null && !linkUrl.isEmpty()) {
+            tvReadOriginal.setVisibility(View.VISIBLE);
+            tvReadOriginal.setOnClickListener(v -> startActivity(
+                    new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                            android.net.Uri.parse(linkUrl))));
         }
 
         //万一哪条数据没写正文，这里兜个底，免得详情页空着

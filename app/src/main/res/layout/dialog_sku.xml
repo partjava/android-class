@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    商品详情页的规格选择底部弹层（SKU panel）。
+
+    用普通 Dialog + Gravity.BOTTOM 承载（不能用 AlertDialog——它会把自己的
+    面板垫在内容下面，bg_sheet_dialog 的圆角外会露出一圈默认底色）。
+    窗口三件套在 Java 侧：transparent 背景 + MATCH_PARENT×WRAP_CONTENT +
+    Gravity.BOTTOM。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_sheet_dialog"
+    android:paddingBottom="@dimen/space_2xl">
+
+    <!-- 拖拽条 -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@color/bg_subtle"/>
+
+    <!-- 商品行：缩略图 + 价格 + 已选规格 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/page_padding"
+        android:paddingTop="@dimen/space_m">
+
+        <ImageView
+            android:id="@+id/iv_sku_thumb"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/bg_search"
+            android:contentDescription="商品图"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_m"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_sku_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/text_title"
+                android:textStyle="bold"
+                android:textColor="@color/brand_red"/>
+
+            <TextView
+                android:id="@+id/tv_sku_spec"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_xs"
+                android:textSize="@dimen/text_body_small"
+                android:textColor="@color/text_secondary"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        style="@style/Widget.Toutiao.Divider"
+        android:layout_marginTop="@dimen/space_m"/>
+
+    <!-- 规格胶囊：选项由 Java 按品类注入，选中态切 Chip / Chip.Selected -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/page_padding"
+        android:paddingTop="@dimen/space_m">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="规格"
+            android:textSize="@dimen/text_body"
+            android:textColor="@color/text_primary"/>
+
+        <LinearLayout
+            android:id="@+id/ll_sku_specs"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_l"
+            android:orientation="horizontal"/>
+    </LinearLayout>
+
+    <!-- 数量步进器：外观对齐购物车行的加减按钮（28dp 灰底方块） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="@dimen/page_padding"
+        android:paddingTop="@dimen/space_m">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="购买数量"
+            android:textSize="@dimen/text_body"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/btn_sku_minus"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:background="@color/bg_subtle"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:text="-"/>
+
+        <TextView
+            android:id="@+id/tv_sku_qty"
+            android:layout_width="40dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:textSize="@dimen/text_body_small"
+            android:textColor="@color/text_primary"
+            android:text="1"/>
+
+        <TextView
+            android:id="@+id/btn_sku_plus"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:background="@color/bg_subtle"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:text="+"/>
+    </LinearLayout>
+
+    <!-- 全宽确认键：底色 Java 按「加入购物车 / 立即购买」两种模式染色 -->
+    <TextView
+        android:id="@+id/tv_sku_confirm"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/touch_target"
+        android:layout_marginHorizontal="@dimen/page_padding"
+        android:layout_marginTop="@dimen/space_l"
+        android:gravity="center"
+        android:background="@drawable/bg_btn_pill_confirm"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        android:textColor="@color/on_brand"/>
+</LinearLayout>

@@ -1,5 +1,6 @@
 package com.example.toutiao.demo;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -152,6 +153,11 @@ public class VideoChannelAdapter extends RecyclerView.Adapter<VideoChannelAdapte
     }
 
     @Override
+    //position 全部在本次绑定时立即使用，不存在延迟到回调里再取的问题。
+    //boundChannel 缓存的是「上一次绑定的位置」，作用只是下次绑定时与新
+    //position 比较来防串页，每次读取的时机都在新的绑定周期内——这是标准
+    //的防串页惯用法，Lint 的 RecyclerView 检查在这里是误报，故压制。
+    @SuppressLint("RecyclerView")
     public void onBindViewHolder(@NonNull PageHolder holder, int position) {
         //推荐页整页由 VideoFeedAdapter 自己画，这里什么都不做。
         //⚠️ 尤其是**不能**调 rv.setPadding()：全屏流的 item 高度必须正好

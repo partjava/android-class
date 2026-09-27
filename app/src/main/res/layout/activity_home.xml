@@ -166,6 +166,8 @@
         android:id="@+id/bottom_nav"
         style="@style/Widget.Toutiao.BottomNav"
         android:fitsSystemWindows="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

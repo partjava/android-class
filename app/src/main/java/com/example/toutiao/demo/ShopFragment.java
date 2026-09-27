@@ -63,37 +63,7 @@ public class ShopFragment extends PageFragment {
     }
 
     private void initShopData() {
-        allItems = new ArrayList<>();
-        allItems.add(new ShopItem("无线蓝牙耳机 半入耳式 超长续航 通话降噪", 129.00, 8632, R.drawable.shop_1, "数码"));
-        allItems.add(new ShopItem("316不锈钢保温杯 大容量便携车载水杯", 59.90, 24310, R.drawable.shop_2, "家居"));
-        allItems.add(new ShopItem("静音机械键盘 87键 背光游戏电竞机械键盘", 219.00, 1531, R.drawable.shop_3, "数码"));
-        allItems.add(new ShopItem("天然植物精油香薰蜡烛 舒缓安睡玻璃杯香氛", 49.90, 2418, R.drawable.shop_4, "家居"));
-        allItems.add(new ShopItem("纯棉舒适四件套 亲肤透气全棉双人床上用品", 189.00, 7612, R.drawable.shop_5, "家居"));
-        allItems.add(new ShopItem("智能运动手表 心率睡眠健康监测 多功能手环", 299.00, 11586, R.drawable.shop_6, "数码"));
-        allItems.add(new ShopItem("香脆经典原味薯片 休闲膨化零食小吃大礼包", 19.90, 15821, R.drawable.shop_7, "食品"));
-        allItems.add(new ShopItem("复古护眼台灯 墨绿复古银行灯 桌面床头阅读灯", 89.00, 954, R.drawable.shop_8, "家居"));
-        allItems.add(new ShopItem("日式精致便当盒 营养健康便当分格餐盒", 29.90, 6534, R.drawable.shop_9, "食品"));
-        allItems.add(new ShopItem("轻奢商务双肩包 男女同款 大容量通勤电脑背包", 159.00, 2078, R.drawable.shop_10, "服饰"));
-        allItems.add(new ShopItem("便携手持小风扇 USB充电静音桌面风扇", 39.90, 8296, R.drawable.shop_11, "数码"));
-        allItems.add(new ShopItem("趣味变色马克杯 创意陶瓷咖啡杯 情侣水杯", 35.00, 1476, R.drawable.shop_12, "家居"));
-        allItems.add(new ShopItem("10000mAh双向快充移动电源 便携超薄充电宝", 79.00, 18450, R.drawable.shop_13, "数码"));
-        allItems.add(new ShopItem("人体工学无线鼠标 静音办公笔记本台式鼠标", 49.00, 12690, R.drawable.shop_14, "数码"));
-        allItems.add(new ShopItem("铝合金桌面手机支架 升降折叠便携平板底座", 29.90, 9380, R.drawable.shop_15, "数码"));
-        allItems.add(new ShopItem("家用静音空气加湿器 卧室大雾量香薰氛围机", 69.00, 5210, R.drawable.shop_16, "家居"));
-        allItems.add(new ShopItem("日式复古陶瓷餐具碗碟套组 家用耐热饭碗", 45.00, 3120, R.drawable.shop_17, "家居"));
-        allItems.add(new ShopItem("超轻全自动晴雨两用伞 防晒防紫外线太阳伞", 39.90, 14500, R.drawable.shop_18, "服饰"));
-        allItems.add(new ShopItem("慢回弹记忆棉U型枕 差旅午睡透气便携颈枕", 38.00, 7860, R.drawable.shop_19, "家居"));
-        allItems.add(new ShopItem("植萃滋养修护护手霜 补水保湿清爽不油腻", 25.00, 21900, R.drawable.shop_20, "美妆"));
-        allItems.add(new ShopItem("深层水润保湿滋养面霜 清爽修护肌底保湿霜", 88.00, 6340, R.drawable.shop_21, "美妆"));
-        allItems.add(new ShopItem("每日混合坚果大礼包 孕妇健康休闲零食干果", 69.90, 26800, R.drawable.shop_22, "食品"));
-        allItems.add(new ShopItem("意式烘焙新鲜纯黑咖啡豆 浓郁醇香手冲咖啡", 58.00, 4890, R.drawable.shop_23, "食品"));
-        allItems.add(new ShopItem("高钙纯牛奶 营养早餐全脂鲜奶 250ml整箱装", 49.90, 38200, R.drawable.shop_24, "食品"));
-        allItems.add(new ShopItem("220g重磅纯棉纯白短袖T恤 男女百搭打底衫", 49.00, 16700, R.drawable.shop_25, "服饰"));
-        allItems.add(new ShopItem("超轻透气减震运动跑步鞋 防滑耐磨软底休闲鞋", 199.00, 5840, R.drawable.shop_26, "服饰"));
-        allItems.add(new ShopItem("户外防晒遮阳渔夫帽 抽绳可折叠大檐太阳帽", 32.00, 8930, R.drawable.shop_27, "服饰"));
-        allItems.add(new ShopItem("美式复古连帽卫衣 男女同款 加绒保暖宽松外套", 139.00, 4710, R.drawable.shop_28, "服饰"));
-        allItems.add(new ShopItem("Type-C八合一多功能扩展坞 4K高清高速读卡器", 109.00, 3420, R.drawable.shop_29, "数码"));
-        allItems.add(new ShopItem("户外便携折叠露营椅 超轻钓鱼写生野营靠背椅", 79.00, 5130, R.drawable.shop_30, "家居"));
+        allItems = buildCatalog();
 
         productList = new ArrayList<>();
         shopAdapter = new ShopAdapter(productList);
@@ -103,7 +73,49 @@ public class ShopFragment extends PageFragment {
         rvShop.setLayoutManager(layoutManager);
         rvShop.setAdapter(shopAdapter);
 
-        shopAdapter.setOnItemClickListener(item -> ShoppingDialogs.detail(requireContext(), item));
+        shopAdapter.setOnItemClickListener(item ->
+                startActivity(ProductDetailActivity.intent(requireContext(), item)));
+    }
+
+    /**
+     * 全部商品的目录数据。抽成 static 是因为商品详情页的
+     * 「你可能还会喜欢」也要拿同一份目录来挑推荐位——
+     * 详情页拿到的是目录里的同一个 ShopItem 实例（走 Intent 序列化
+     * 会在另一侧还原出内容相等的对象，引用比较在详情页内不做）。
+     */
+    static List<ShopItem> buildCatalog() {
+        List<ShopItem> items = new ArrayList<>();
+        items.add(new ShopItem("无线蓝牙耳机 半入耳式 超长续航 通话降噪", 129.00, 8632, R.drawable.shop_1, "数码"));
+        items.add(new ShopItem("316不锈钢保温杯 大容量便携车载水杯", 59.90, 24310, R.drawable.shop_2, "家居"));
+        items.add(new ShopItem("静音机械键盘 87键 背光游戏电竞机械键盘", 219.00, 1531, R.drawable.shop_3, "数码"));
+        items.add(new ShopItem("天然植物精油香薰蜡烛 舒缓安睡玻璃杯香氛", 49.90, 2418, R.drawable.shop_4, "家居"));
+        items.add(new ShopItem("纯棉舒适四件套 亲肤透气全棉双人床上用品", 189.00, 7612, R.drawable.shop_5, "家居"));
+        items.add(new ShopItem("智能运动手表 心率睡眠健康监测 多功能手环", 299.00, 11586, R.drawable.shop_6, "数码"));
+        items.add(new ShopItem("香脆经典原味薯片 休闲膨化零食小吃大礼包", 19.90, 15821, R.drawable.shop_7, "食品"));
+        items.add(new ShopItem("复古护眼台灯 墨绿复古银行灯 桌面床头阅读灯", 89.00, 954, R.drawable.shop_8, "家居"));
+        items.add(new ShopItem("日式精致便当盒 营养健康便当分格餐盒", 29.90, 6534, R.drawable.shop_9, "食品"));
+        items.add(new ShopItem("轻奢商务双肩包 男女同款 大容量通勤电脑背包", 159.00, 2078, R.drawable.shop_10, "服饰"));
+        items.add(new ShopItem("便携手持小风扇 USB充电静音桌面风扇", 39.90, 8296, R.drawable.shop_11, "数码"));
+        items.add(new ShopItem("趣味变色马克杯 创意陶瓷咖啡杯 情侣水杯", 35.00, 1476, R.drawable.shop_12, "家居"));
+        items.add(new ShopItem("10000mAh双向快充移动电源 便携超薄充电宝", 79.00, 18450, R.drawable.shop_13, "数码"));
+        items.add(new ShopItem("人体工学无线鼠标 静音办公笔记本台式鼠标", 49.00, 12690, R.drawable.shop_14, "数码"));
+        items.add(new ShopItem("铝合金桌面手机支架 升降折叠便携平板底座", 29.90, 9380, R.drawable.shop_15, "数码"));
+        items.add(new ShopItem("家用静音空气加湿器 卧室大雾量香薰氛围机", 69.00, 5210, R.drawable.shop_16, "家居"));
+        items.add(new ShopItem("日式复古陶瓷餐具碗碟套组 家用耐热饭碗", 45.00, 3120, R.drawable.shop_17, "家居"));
+        items.add(new ShopItem("超轻全自动晴雨两用伞 防晒防紫外线太阳伞", 39.90, 14500, R.drawable.shop_18, "服饰"));
+        items.add(new ShopItem("慢回弹记忆棉U型枕 差旅午睡透气便携颈枕", 38.00, 7860, R.drawable.shop_19, "家居"));
+        items.add(new ShopItem("植萃滋养修护护手霜 补水保湿清爽不油腻", 25.00, 21900, R.drawable.shop_20, "美妆"));
+        items.add(new ShopItem("深层水润保湿滋养面霜 清爽修护肌底保湿霜", 88.00, 6340, R.drawable.shop_21, "美妆"));
+        items.add(new ShopItem("每日混合坚果大礼包 孕妇健康休闲零食干果", 69.90, 26800, R.drawable.shop_22, "食品"));
+        items.add(new ShopItem("意式烘焙新鲜纯黑咖啡豆 浓郁醇香手冲咖啡", 58.00, 4890, R.drawable.shop_23, "食品"));
+        items.add(new ShopItem("高钙纯牛奶 营养早餐全脂鲜奶 250ml整箱装", 49.90, 38200, R.drawable.shop_24, "食品"));
+        items.add(new ShopItem("220g重磅纯棉纯白短袖T恤 男女百搭打底衫", 49.00, 16700, R.drawable.shop_25, "服饰"));
+        items.add(new ShopItem("超轻透气减震运动跑步鞋 防滑耐磨软底休闲鞋", 199.00, 5840, R.drawable.shop_26, "服饰"));
+        items.add(new ShopItem("户外防晒遮阳渔夫帽 抽绳可折叠大檐太阳帽", 32.00, 8930, R.drawable.shop_27, "服饰"));
+        items.add(new ShopItem("美式复古连帽卫衣 男女同款 加绒保暖宽松外套", 139.00, 4710, R.drawable.shop_28, "服饰"));
+        items.add(new ShopItem("Type-C八合一多功能扩展坞 4K高清高速读卡器", 109.00, 3420, R.drawable.shop_29, "数码"));
+        items.add(new ShopItem("户外便携折叠露营椅 超轻钓鱼写生野营靠背椅", 79.00, 5130, R.drawable.shop_30, "家居"));
+        return items;
     }
 
     private void setupTabs() {

@@ -74,8 +74,9 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
         holder.tvSales.setText(formatSales(item.getSales()));
     }
 
-    //已售件数：过万就换算成"x.x万"，和淘宝的展示习惯一致
-    private String formatSales(int sales) {
+    //已售件数：过万就换算成"x.x万"，和淘宝的展示习惯一致。
+    //static 是给商品详情页复用的（价格卡的「已售」同一段展示逻辑）
+    static String formatSales(int sales) {
         if (sales >= 10000) {
             return String.format(Locale.CHINA, "已售%.1f万件", sales / 10000.0);
         }

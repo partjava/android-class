@@ -22,6 +22,8 @@
         android:id="@+id/top_bar"
         style="@style/Widget.Toutiao.TopBar"
         android:paddingHorizontal="@dimen/page_padding"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -144,6 +146,8 @@
         android:id="@+id/bottom_nav"
         style="@style/Widget.Toutiao.BottomNav"
         android:fitsSystemWindows="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 

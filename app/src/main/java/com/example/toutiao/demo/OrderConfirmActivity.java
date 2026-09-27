@@ -24,6 +24,8 @@ public class OrderConfirmActivity extends AppCompatActivity {
     public static final String EXTRA_DIRECT_PRICE = "extra_direct_price";
     public static final String EXTRA_DIRECT_IMG = "extra_direct_img";
     public static final String EXTRA_DIRECT_CAT = "extra_direct_cat";
+    //直接购买时的数量，商品详情页的 SKU 面板带过来；默认 1 兼容旧调用方
+    public static final String EXTRA_DIRECT_QTY = "extra_direct_qty";
 
     private ImageView btnBack;
     private TextView tvReceiverName;
@@ -73,7 +75,8 @@ public class OrderConfirmActivity extends AppCompatActivity {
             double price = getIntent().getDoubleExtra(EXTRA_DIRECT_PRICE, 99.0);
             int img = getIntent().getIntExtra(EXTRA_DIRECT_IMG, R.drawable.shop_1);
             String cat = getIntent().getStringExtra(EXTRA_DIRECT_CAT);
-            buyItems.add(new ShopStore.CartItem(directTitle, Math.round(price * 100), 1, img, cat != null ? cat : "精选", true));
+            int qty = getIntent().getIntExtra(EXTRA_DIRECT_QTY, 1);
+            buyItems.add(new ShopStore.CartItem(directTitle, Math.round(price * 100), qty, img, cat != null ? cat : "精选", true));
         } else {
             for (ShopStore.CartItem ci : store.getCartItems()) {
                 if (ci.selected) {

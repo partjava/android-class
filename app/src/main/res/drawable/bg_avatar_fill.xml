@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 评价头像的纯色圆底。
+     项目里现成的 avatar_*.xml 是「彩色圆 + 白色人形剪影」，走的是
+     会话列表那套语义；评价头像要的是「彩底 + 昵称首字」（淘宝评价样式），
+     所以开一个纯净的椭圆，颜色由 Java 侧 setBackgroundTintList
+     从 avatar_blue/green/orange/purple 色板里取，不再新增颜色。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/avatar_bg"/>
+</shape>

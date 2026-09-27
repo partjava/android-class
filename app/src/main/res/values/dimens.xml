@@ -53,4 +53,12 @@
     <dimen name="row_height_multi">72dp</dimen>
     <!-- 主按钮 -->
     <dimen name="button_height">52dp</dimen>
+    <!-- 商品详情页顶部图片轮播区的高度。
+
+         ⚠️ 必须写死具体值，不能 wrap_content：ViewPager2 内部是
+            RecyclerView 包着 RecyclerView，嵌在 NestedScrollView 里量高度时
+            拿到的是 UNSPECIFIED spec，wrap_content 会量成 0（页面直接消失）。
+         360dp 在 360dp 宽的屏上正好 1:1 方形，抖音/淘宝详情头图同款比例；
+         更宽的屏幕上略扁，centerCrop 兜底不变形。 -->
+    <dimen name="detail_gallery_height">360dp</dimen>
 </resources>

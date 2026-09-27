@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    商品详情画廊第 2/3 页：营销海报页。
+
+    每个商品只有一张实拍图（shop_N.jpg），轮播的另外两页用「纯色底 +
+    大字卖点」的海报来补——这样既不冒充别家商品的照片造成图文错位，
+    又能让轮播真的能滑。底色和文案由 ProductDetailActivity 按品类注入
+    （底色取 brand_red_light / banner_bg 这类现成浅色 token，Java 里染色）。
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingHorizontal="@dimen/space_2xl">
+
+        <TextView
+            android:id="@+id/tv_poster_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="@dimen/text_display"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"/>
+
+        <TextView
+            android:id="@+id/tv_poster_caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_l"
+            android:gravity="center"
+            android:textSize="@dimen/text_body"
+            android:textColor="@color/text_secondary"/>
+
+        <TextView
+            android:id="@+id/tv_poster_footer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_2xl"
+            android:gravity="center"
+            android:textSize="@dimen/text_body_small"
+            android:textColor="@color/text_tertiary"/>
+    </LinearLayout>
+</FrameLayout>

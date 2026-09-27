@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    商品详情页。
+
+    结构：根 LinearLayout = [NestedScrollView(weight=1)：画廊 + 锚点 tab 行 +
+    各内容卡片 + 推荐流] + [底部操作栏]。底栏不参与滚动，整页滚到底时
+    最后一张卡片也不会被底栏压住。
+
+    所有内容卡片统一用 bg_shop_card（白底 8dp 圆角）压在 bg_page 浅灰上，
+    和商城瀑布流卡片同一套质感。
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_page">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nsv_detail"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/ll_detail_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/space_l">
+
+            <!-- ============================================================
+                 画廊：ViewPager2 + 浮层按钮 + 页码角标
+                 ⚠️ vp_gallery 的高度写死 @dimen/detail_gallery_height：
+                    ViewPager2 嵌在 NestedScrollView 里，wrap_content 会量成 0。
+                 ⚠️ nestedScrollingEnabled 必须 false：页面内没有内滚内容，
+                    关掉它竖向滑动才不会被内部 RecyclerView 抢走；横向翻页不受影响。
+                 ============================================================ -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vp_gallery"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/detail_gallery_height"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- 装饰播放键，呼应参照页的「视频封面」。clickable 必须 false，
+                     否则它会拦掉这半屏的横向滑动手势 -->
+                <ImageView
+                    android:id="@+id/iv_gallery_play"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_play_circle"
+                    android:alpha="0.85"
+                    android:clickable="false"
+                    android:importantForAccessibility="no"/>
+
+                <!-- 返回：40dp 圆底 + 8dp 内边距 = 24dp 图形，同 NavIcon 的比例 -->
+                <ImageView
+                    android:id="@+id/btn_gallery_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="@dimen/space_m"
+                    android:background="@drawable/bg_circle_scrim"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/on_brand"
+                    android:padding="@dimen/space_s"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="返回"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="@dimen/space_m"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:id="@+id/btn_gallery_share"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_circle_scrim"
+                        android:src="@drawable/ic_share"
+                        app:tint="@color/on_brand"
+                        android:padding="@dimen/space_s"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="分享"/>
+
+                    <ImageView
+                        android:id="@+id/btn_gallery_more"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:background="@drawable/bg_circle_scrim"
+                        android:src="@drawable/ic_more"
+                        app:tint="@color/on_brand"
+                        android:padding="@dimen/space_s"
+                        android:scaleType="fitCenter"
+                        android:contentDescription="更多"/>
+                </LinearLayout>
+
+                <!-- 页码角标，复用视频时长标签的半透明黑小圆角底 -->
+                <TextView
+                    android:id="@+id/tv_gallery_index"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="@dimen/space_m"
+                    android:background="@drawable/bg_video_duration"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:textSize="@dimen/text_caption"
+                    android:textColor="@color/on_brand"/>
+            </FrameLayout>
+
+            <!-- ============================================================
+                 锚点 tab 行：商品 / 评价 / 详情 / 推荐。
+                 结构仿 item_channel_tab（文字 + 选中红下划线），但四个格子
+                 平分宽度（weight=1），点击 smoothScrollTo 对应卡片。
+                 不做滚动跟随高亮（scroll-spy）——那需要监听滚动再反算锚点，
+                 代码翻倍，演示页收益配不上。
+                 ============================================================ -->
+            <LinearLayout
+                android:id="@+id/ll_detail_tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/bg_surface">
+
+                <LinearLayout
+                    android:id="@+id/ll_tab_product"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingTop="@dimen/space_s"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tv_tab_product"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:text="商品"/>
+
+                    <View
+                        android:id="@+id/v_tab_product_line"
+                        android:layout_width="20dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/bg_tab_indicator"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_tab_review"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingTop="@dimen/space_s"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tv_tab_review"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:text="评价"/>
+
+                    <View
+                        android:id="@+id/v_tab_review_line"
+                        android:layout_width="20dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/bg_tab_indicator"
+                        android:visibility="invisible"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_tab_desc"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingTop="@dimen/space_s"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tv_tab_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:text="详情"/>
+
+                    <View
+                        android:id="@+id/v_tab_desc_line"
+                        android:layout_width="20dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/bg_tab_indicator"
+                        android:visibility="invisible"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_tab_recommend"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingTop="@dimen/space_s"
+                    android:paddingBottom="@dimen/space_xs"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tv_tab_recommend"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:text="推荐"/>
+
+                    <View
+                        android:id="@+id/v_tab_recommend_line"
+                        android:layout_width="20dp"
+                        android:layout_height="2dp"
+                        android:layout_marginTop="3dp"
+                        android:background="@drawable/bg_tab_indicator"
+                        android:visibility="invisible"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/Widget.Toutiao.Divider"/>
+
+            <!-- ==================== 卡片 1：价格 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_price_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_price_main"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_display"
+                        android:textStyle="bold"
+                        android:textColor="@color/brand_red"/>
+
+                    <!-- 划线价：文字和删除线都在 Java 侧设 -->
+                    <TextView
+                        android:id="@+id/tv_price_origin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_m"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_tertiary"/>
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/tv_stock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:textStyle="bold"
+                        android:textColor="@color/brand_red"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_price_sales"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:textSize="@dimen/text_body_small"
+                    android:textColor="@color/text_tertiary"/>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 2：标题 + 标签 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_title_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="@dimen/space_l">
+
+                <TextView
+                    android:id="@+id/tv_detail_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/text_title"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:lineSpacingExtra="3dp"
+                    android:maxLines="2"
+                    android:ellipsize="end"/>
+
+                <LinearLayout
+                    android:id="@+id/ll_detail_tags"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_tag_1"
+                        style="@style/Widget.Toutiao.Tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/tv_tag_2"
+                        style="@style/Widget.Toutiao.Tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"/>
+
+                    <TextView
+                        android:id="@+id/tv_tag_3"
+                        style="@style/Widget.Toutiao.Tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 3：服务 / 规格 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_service_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:paddingHorizontal="@dimen/space_l"
+                android:paddingVertical="@dimen/space_s">
+
+                <!-- 行 1：运费险 / 退货承诺（纯信息行，不带箭头） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_service_ship"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+
+                <View style="@style/Widget.Toutiao.Divider"/>
+
+                <!-- 行 2：送达预计 / 发货地 / 运费（纯信息行） -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_service_delivery"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+
+                <View style="@style/Widget.Toutiao.Divider"/>
+
+                <!-- 行 3：规格选择，唯一的可点行 → 弹出 SKU 面板 -->
+                <LinearLayout
+                    android:id="@+id/ll_service_spec"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="?attr/selectableItemBackground">
+
+                    <TextView
+                        android:id="@+id/tv_service_spec"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_primary"/>
+
+                    <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 4：商品评价 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_review_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="@dimen/space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_review_header"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="@dimen/text_title"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:id="@+id/tv_review_rate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/brand_red"/>
+                </LinearLayout>
+
+                <!-- 两行评价由 Java inflate 进来 -->
+                <LinearLayout
+                    android:id="@+id/ll_review_rows"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 5：店铺 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_shop_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="@dimen/space_l">
+
+                <TextView
+                    android:id="@+id/tv_store_avatar"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:gravity="center"
+                    android:background="@drawable/bg_avatar_fill"
+                    android:textSize="@dimen/text_title"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_brand"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="@dimen/space_m"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_store_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_body"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"/>
+
+                    <TextView
+                        android:id="@+id/tv_store_score"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_tertiary"/>
+                </LinearLayout>
+
+                <!-- 进店：小号红胶囊，复用发布按钮的 bg_btn_publish（ripple + 红 + 18dp 圆角） -->
+                <TextView
+                    android:id="@+id/btn_enter_store"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:background="@drawable/bg_btn_publish"
+                    android:paddingHorizontal="@dimen/space_l"
+                    android:textSize="@dimen/text_body_small"
+                    android:textStyle="bold"
+                    android:textColor="@color/on_brand"
+                    android:text="进店"/>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 6：商品详情 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_desc_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="@dimen/space_l">
+
+                <TextView
+                    style="@style/Widget.Toutiao.SectionTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="商品详情"/>
+
+                <ImageView
+                    android:id="@+id/iv_desc_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="商品详情图"/>
+
+                <TextView
+                    android:id="@+id/tv_desc_body1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:textSize="@dimen/text_body_small"
+                    android:textColor="@color/text_secondary"
+                    android:lineSpacingExtra="3dp"/>
+
+                <TextView
+                    android:id="@+id/tv_desc_body2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:textSize="@dimen/text_body_small"
+                    android:textColor="@color/text_secondary"
+                    android:lineSpacingExtra="3dp"/>
+
+                <TextView
+                    android:id="@+id/tv_desc_body3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:textSize="@dimen/text_body_small"
+                    android:textColor="@color/text_secondary"
+                    android:lineSpacingExtra="3dp"/>
+
+                <!-- 参数表：行和分隔线由 Java 生成 -->
+                <LinearLayout
+                    android:id="@+id/ll_desc_params"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+
+            <!-- ==================== 卡片 7：推荐流 ==================== -->
+            <LinearLayout
+                android:id="@+id/ll_recommend_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/space_s"
+                android:layout_marginTop="@dimen/space_s"
+                android:background="@drawable/bg_shop_card"
+                android:orientation="vertical"
+                android:padding="@dimen/space_l">
+
+                <TextView
+                    style="@style/Widget.Toutiao.SectionTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="你可能还会喜欢"/>
+
+                <!-- 复用商城瀑布流的 ShopAdapter + item_shop.xml。
+                     ⚠️ 嵌在 NestedScrollView 里必须 wrap_content +
+                        nestedScrollingEnabled=false（先例 fragment_shop.xml 的 rv_shop），
+                        否则它会和外层抢竖向滚动 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_recommend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_m"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- ============================================================
+         底部操作栏：三个图标入口 + 双段胶囊按钮。
+         加购（橙）/ 立即购买（红）各自 0dp+weight，圆角画在各自 drawable
+         的对应角上拼成一条胶囊；中间不留缝——参照页就是连体的。
+         ⚠️ 按钮一律用 TextView：Material 主题里 <Button> 会被换成
+            MaterialButton 并丢弃 android:background（styles.xml 头部有记）。
+         ============================================================ -->
+    <View style="@style/Widget.Toutiao.Divider"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/bg_surface"
+        android:paddingHorizontal="@dimen/space_s"
+        android:paddingVertical="@dimen/space_s">
+
+        <!-- 进店 -->
+        <LinearLayout
+            android:id="@+id/ll_nav_store"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="@dimen/icon_nav"
+                android:layout_height="@dimen/icon_nav"
+                android:src="@drawable/ic_location"
+                app:tint="@color/icon_primary"
+                android:contentDescription="进店"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_secondary"
+                android:text="进店"/>
+        </LinearLayout>
+
+        <!-- 客服：跳商城官方客服会话 -->
+        <LinearLayout
+            android:id="@+id/ll_nav_service"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="?attr/selectableItemBackground">
+
+            <ImageView
+                android:layout_width="@dimen/icon_nav"
+                android:layout_height="@dimen/icon_nav"
+                android:src="@drawable/ic_service"
+                app:tint="@color/icon_primary"
+                android:contentDescription="客服"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/text_secondary"
+                android:text="客服"/>
+        </LinearLayout>
+
+        <!-- 购物车：FrameLayout 是为了把未读角标钉在图标右上角 -->
+        <FrameLayout
+            android:id="@+id/fl_nav_cart"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackground">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical"
+                android:gravity="center_horizontal">
+
+                <ImageView
+                    android:layout_width="@dimen/icon_nav"
+                    android:layout_height="@dimen/icon_nav"
+                    android:src="@drawable/ic_shop"
+                    app:tint="@color/icon_primary"
+                    android:contentDescription="购物车"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="@dimen/text_caption"
+                    android:textColor="@color/text_secondary"
+                    android:text="购物车"/>
+            </LinearLayout>
+
+            <!-- 数量角标：样式对齐消息页的未读角标（bg_badge + caption 字号）。
+                 数量为 0 时 Java 置 GONE，空购物车不显示「0」 -->
+            <TextView
+                android:id="@+id/tv_cart_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="16dp"
+                android:layout_gravity="end|top"
+                android:minWidth="16dp"
+                android:background="@drawable/bg_badge"
+                android:gravity="center"
+                android:paddingHorizontal="4dp"
+                android:textSize="@dimen/text_caption"
+                android:textColor="@color/on_brand"/>
+        </FrameLayout>
+
+        <!-- 加入购物车：双段胶囊左半（橙） -->
+        <TextView
+            android:id="@+id/btn_add_cart"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/touch_target"
+            android:layout_weight="1.2"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_cart"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:textColor="@color/on_brand"
+            android:text="加入购物车"/>
+
+        <!-- 立即购买：双段胶囊右半（红） -->
+        <TextView
+            android:id="@+id/btn_buy_now"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/touch_target"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="@drawable/bg_btn_buy"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:textColor="@color/on_brand"
+            android:text="立即购买"/>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SKU 弹窗的全宽胶囊确认键。
+     底色故意留白色（bg_surface），Java 侧按弹窗模式用
+     setBackgroundTintList 染色：加购模式染 brand_orange、
+     购买模式染 brand_red——一个 drawable 服务两种模式。
+     （ripple 套 shape 的写法同 bg_btn_publish。） -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="24dp"/>
+            <solid android:color="@color/bg_surface"/>
+        </shape>
+    </item>
+</ripple>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 详情页底部「加入购物车」：双段胶囊的左半颗。
+     只有左侧两个角是圆的（24dp = touch_target 48dp 的一半，拼成整胶囊），
+     右侧两个角必须写死 0dp——不写的话四角全圆，和右边那颗红按钮
+     拼起来中间会凹进去一块。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/brand_orange"/>
+    <corners
+        android:topLeftRadius="24dp"
+        android:bottomLeftRadius="24dp"
+        android:topRightRadius="0dp"
+        android:bottomRightRadius="0dp"/>
+</shape>

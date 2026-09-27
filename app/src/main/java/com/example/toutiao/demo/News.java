@@ -14,7 +14,23 @@ public class News {
     private int img1;
     private int img2;
     private int img3;
-    private String content; //详情页正文
+    private String content; //正文：仅用户发布的动态在内存里携带；站内文章正文统一在 NewsContentStore，详情页按需查询
+    private String imageUrl; //远程封面 URL（接口拉回的文章才有）；本地文章为 null，走 img1 资源
+    private String linkUrl; //原文网页链接（接口文章才有），详情页「阅读原文」用
+
+    public News withRemote(String imageUrl, String linkUrl) {
+        this.imageUrl = imageUrl;
+        this.linkUrl = linkUrl;
+        return this;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public String getLinkUrl() {
+        return linkUrl;
+    }
 
     public News(int type, String title, String source, String time, int img1, int img2, int img3) {
         this.type = type;
@@ -26,7 +42,8 @@ public class News {
         this.img3 = img3;
     }
 
-    //链式设置正文，构造数据时可以直接跟在 new News(...) 后面
+    //链式设置正文。站内文章不再走这里（正文在 NewsContentStore 按需查询），
+    //只有发布页的用户动态还在用
     public News withContent(String content) {
         this.content = content;
         return this;
