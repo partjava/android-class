@@ -29,7 +29,7 @@ import java.util.List;
 public final class CampusNewsStore {
 
     /** 模拟器默认访问宿主机 Flask 服务的地址 (10.0.2.2 映射到电脑 localhost) */
-    private static String serverUrl = "http://10.0.2.2:5000/api/news";
+    private static String serverBaseUrl = "http://10.0.2.2:5000";
     private static final int TIMEOUT_MS = 5000;
 
     /** 最近一次从 Flask 查询拉取成功的校园新闻缓存 */
@@ -43,7 +43,7 @@ public final class CampusNewsStore {
     }
 
     public interface PageCallback {
-        void onSuccess(List<News> items, String queryTime, String school, int page, int totalPages, boolean hasMore);
+        void onSuccess(List<News> items, String queryTime, String school, int currentPage, int pageCount, int newsCount, int perPage, boolean hasMore);
         void onFailure(String reason);
     }
 
@@ -51,12 +51,12 @@ public final class CampusNewsStore {
 
     public static void setServerUrl(String url) {
         if (url != null && !url.trim().isEmpty()) {
-            serverUrl = url.trim();
+            serverBaseUrl = url.trim();
         }
     }
 
     public static String getServerUrl() {
-        return serverUrl;
+        return serverBaseUrl;
     }
 
     public static List<News> getCachedNews() {
@@ -75,9 +75,9 @@ public final class CampusNewsStore {
      * 兼容方法：默认拉取第一页
      */
     public static void fetchCampusNews(final Callback callback) {
-        fetchCampusNews(1, 6, new PageCallback() {
+        fetchCampusNews(1, 15, new PageCallback() {
             @Override
-            public void onSuccess(List<News> items, String queryTime, String school, int page, int totalPages, boolean hasMore) {
+            public void onSuccess(List<News> items, String queryTime, String school, int currentPage, int pageCount, int newsCount, int perPage, boolean hasMore) {
                 if (callback != null) {
                     callback.onSuccess(items, queryTime, school);
                 }
@@ -93,9 +93,10 @@ public final class CampusNewsStore {
     }
 
     /**
-     * 分页向后读取核心方法：实现“刷新就一直读取后面的”校园要闻
+     * 分页向后读取核心方法：实现“触底手势无线刷新，自动追加接上去”
+     * 符合教师规范：/xiaoyuan/page/<page>，返回 newscount, pagecount, currentpage, perpage
      * @param page 页码（从 1 开始累加）
-     * @param size 每批读取数量（默认 5~6 条）
+     * @param size 每批读取数量（默认 15 条）
      * @param callback 成功/失败回调
      */
     public static void fetchCampusNews(final int page, final int size, final PageCallback callback) {
@@ -103,7 +104,17 @@ public final class CampusNewsStore {
             HttpURLConnection conn = null;
             BufferedReader reader = null;
             try {
-                String reqUrl = serverUrl + (serverUrl.contains("?") ? "&" : "?") + "page=" + page + "&size=" + size;
+                String reqUrl;
+                if (serverBaseUrl.contains("/xiaoyuan/page/")) {
+                    reqUrl = serverBaseUrl + page;
+                } else if (serverBaseUrl.contains("/api/news")) {
+                    reqUrl = serverBaseUrl.replace("/api/news", "/xiaoyuan/page/" + page);
+                } else if (serverBaseUrl.endsWith("/")) {
+                    reqUrl = serverBaseUrl + "xiaoyuan/page/" + page;
+                } else {
+                    reqUrl = serverBaseUrl + "/xiaoyuan/page/" + page;
+                }
+
                 URL url = new URL(reqUrl);
                 conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
@@ -131,9 +142,12 @@ public final class CampusNewsStore {
 
                 String queryTime = root.optString("query_time", "刚刚");
                 String school = root.optString("school", "武汉晴川学院");
-                int respPage = root.optInt("page", page);
-                int totalPages = root.optInt("total_pages", 1);
-                boolean hasMore = root.optBoolean("has_more", false);
+                // 老师指定的标准接口参数解析:
+                int currentPage = root.optInt("currentpage", root.optInt("page", page));
+                int pageCount = root.optInt("pagecount", root.optInt("total_pages", 1));
+                int newsCount = root.optInt("newscount", pageCount * 15);
+                int perPage = root.optInt("perpage", size);
+                boolean hasMore = root.optBoolean("has_more", currentPage < pageCount);
 
                 JSONArray array = root.optJSONArray("newslist");
                 if (array == null) {
@@ -142,7 +156,7 @@ public final class CampusNewsStore {
 
                 List<News> parsedList = parseArray(array);
 
-                if (respPage <= 1) {
+                if (currentPage <= 1) {
                     CACHED_CAMPUS_NEWS.clear();
                 }
                 CACHED_CAMPUS_NEWS.addAll(parsedList);
@@ -151,7 +165,7 @@ public final class CampusNewsStore {
 
                 post(() -> {
                     if (callback != null) {
-                        callback.onSuccess(parsedList, queryTime, school, respPage, totalPages, hasMore);
+                        callback.onSuccess(parsedList, queryTime, school, currentPage, pageCount, newsCount, perPage, hasMore);
                     }
                 });
 

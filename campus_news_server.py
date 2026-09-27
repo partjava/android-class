@@ -232,15 +232,20 @@ def crawl_qcu_page(page_num, host):
     print(f"[实时爬虫] 详情抓取完成！本页共 {len(detailed_items)} 篇官方新闻全部包含真实排版与实拍图片！")
     return detailed_items, total_pages
 
+@app.route("/xiaoyuan/page/<int:page_num>", methods=["GET"])
 @app.route("/api/news", methods=["GET"])
 @app.route("/api/campus/news", methods=["GET"])
 @app.route("/api/crawl", methods=["GET", "POST"])
-def get_campus_news():
+def get_campus_news(page_num=None):
     now_str = datetime.datetime.now().strftime("%H:%M:%S")
     client_ip = request.remote_addr
     host = request.host
 
-    page = request.args.get("page", default=1, type=int)
+    if page_num is not None:
+        page = page_num
+    else:
+        page = request.args.get("page", default=1, type=int)
+
     print(f"\n[Flask 校园服务] [{now_str}] 收到来自 {client_ip} 的【实时爬取】请求：指定抓取官网第 {page} 页！")
 
     try:
@@ -253,6 +258,10 @@ def get_campus_news():
             "school": SCHOOL_NAME,
             "url": OFFICIAL_NEWS_URL,
             "query_time": now_str,
+            "currentpage": page,
+            "pagecount": 0,
+            "newscount": 0,
+            "perpage": 0,
             "newslist": []
         }), 500
 
@@ -263,6 +272,12 @@ def get_campus_news():
         "url": OFFICIAL_NEWS_URL,
         "query_time": now_str,
         "crawled_live": True,
+        # 老师要求的专属接口字段规范:
+        "currentpage": page,
+        "pagecount": total_pages,
+        "newscount": total_pages * 15,
+        "perpage": len(news_items),
+        # 兼容原有字段:
         "page": page,
         "size": len(news_items),
         "total": total_pages * 15,
@@ -271,7 +286,7 @@ def get_campus_news():
         "newslist": news_items
     }
 
-    print(f"[Flask 校园服务] [{now_str}] 爬取成功！已向客户端返回官网第 {page}/{total_pages} 页真实新闻 {len(news_items)} 条。")
+    print(f"[Flask 校园服务] [{now_str}] 爬取成功！已向客户端返回官网第 {page}/{total_pages} 页真实新闻 {len(news_items)} 条 (累计总数 {total_pages * 15})。")
     return jsonify(response_data)
 
 @app.route("/api/image_proxy", methods=["GET"])
