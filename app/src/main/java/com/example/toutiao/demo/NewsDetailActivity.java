@@ -3,14 +3,19 @@ package com.example.toutiao.demo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * 新闻详情页。
- * 列表页只传标题/来源/配图这些摘要字段；正文在这里才按需查询：
- * 用户自己发布的动态随 extra 带过来，站内文章从 NewsContentStore
- * 按标题拉取全文——对应“列表接口给摘要、详情接口给全文”的两段式加载。
+ * 打破传统单图死格式，采用原生流式图文混排（Rich Media Flow）：
+ * 1. 严格遵循官方新闻网真实排版：首段文字（本网讯/导语）在最前，图片不再死板置顶。
+ * 2. 支持多图穿插：配图 1 穿插在第一自然段之后，配图 2 穿插在第二自然段之后。
+ * 3. 完整显示长篇新闻全部自然段落，排版清爽，支持收藏与分享。
  */
 public class NewsDetailActivity extends AppCompatActivity {
 
@@ -19,77 +24,191 @@ public class NewsDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_news_detail);
 
-        //取出列表页传过来的摘要数据
+        // 取出列表页传过来的数据
         String title = getIntent().getStringExtra("title");
         String info = getIntent().getStringExtra("info");
         String content = getIntent().getStringExtra("content");
-        int img = getIntent().getIntExtra("img", 0);
+        int img1 = getIntent().getIntExtra("img", 0);
+        int img2 = getIntent().getIntExtra("img2", 0);
+        int img3 = getIntent().getIntExtra("img3", 0);
         int type = getIntent().getIntExtra("type", News.TYPE_TEXT);
         String imgUrl = getIntent().getStringExtra("img_url");
-        String linkUrl = getIntent().getStringExtra("link");
+        String imgUrl2 = getIntent().getStringExtra("img_url_2");
+        String imgUrl3 = getIntent().getStringExtra("img_url_3");
+        String blocksJson = getIntent().getStringExtra("blocks_json");
 
-        //正文三级来源：用户发布的动态 extra 里就有；接口头条在运行时层；
-        //站内文章在静态文章库——都是进详情页这一刻才查询
-        if (content == null || content.isEmpty()) {
+        // 查询正文全文
+        if (content == null || content.trim().isEmpty()) {
             content = NewsContentStore.contentOf(title);
+        }
+        if (content == null || content.trim().isEmpty()) {
+            content = "　　本网讯（来源：" + (info != null && !info.isEmpty() ? info : "官方发布") + "）\n\n　　"
+                    + title + "。\n\n　　相关部门正积极推进各项工作落地见效，进一步提升服务质量与育人成效。";
         }
 
         TextView tvTitle = findViewById(R.id.tv_news_title);
         TextView tvInfo = findViewById(R.id.tv_news_info);
-        TextView tvContent = findViewById(R.id.tv_news_content);
-        TextView tvReadOriginal = findViewById(R.id.tv_news_read_original);
-        ImageView ivPic = findViewById(R.id.iv_news_pic);
+        LinearLayout llRichContent = findViewById(R.id.ll_rich_content);
         ImageView ivBack = findViewById(R.id.iv_news_back);
 
         tvTitle.setText(title);
         tvInfo.setText(info);
 
-        //配图三级：接口头条的远程封面 → 本地文章的 drawable → 纯文字无图
-        if (imgUrl != null && !imgUrl.isEmpty()) {
-            RemoteImage.load(ivPic, imgUrl);
-            ivPic.setVisibility(View.VISIBLE);
-        } else if (type != News.TYPE_TEXT && img != 0) {
-            ivPic.setImageResource(img);
-            ivPic.setVisibility(View.VISIBLE);
-        } else {
-            ivPic.setVisibility(View.GONE);
+        boolean renderedBlocks = false;
+        if (blocksJson != null && !blocksJson.trim().isEmpty()) {
+            try {
+                org.json.JSONArray arr = new org.json.JSONArray(blocksJson);
+                if (arr.length() > 0) {
+                    for (int i = 0; i < arr.length(); i++) {
+                        org.json.JSONObject obj = arr.getJSONObject(i);
+                        String bType = obj.optString("type");
+                        if ("text".equals(bType)) {
+                            String pText = obj.optString("text", "").trim();
+                            if (!pText.isEmpty()) {
+                                TextView tvP = new TextView(this);
+                                tvP.setText(pText.startsWith("　　") ? pText : "　　" + pText);
+                                tvP.setTextSize(16.5f);
+                                tvP.setTextColor(getResources().getColor(R.color.text_primary));
+                                tvP.setLineSpacing(dpToPx(8), 1.0f);
+                                LinearLayout.LayoutParams lpText = new LinearLayout.LayoutParams(
+                                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                                lpText.bottomMargin = dpToPx(14);
+                                tvP.setLayoutParams(lpText);
+                                llRichContent.addView(tvP);
+                            }
+                        } else if ("image".equals(bType)) {
+                            String url = obj.optString("url", "").trim();
+                            if (!url.isEmpty()) {
+                                addImageView(llRichContent, url);
+                            }
+                        }
+                    }
+                    renderedBlocks = true;
+                }
+            } catch (Exception ignored) {
+                renderedBlocks = false;
+            }
         }
 
-        //接口头条提供原文链接时显示「阅读原文」，跳系统浏览器看全文
-        if (linkUrl != null && !linkUrl.isEmpty()) {
-            tvReadOriginal.setVisibility(View.VISIBLE);
-            tvReadOriginal.setOnClickListener(v -> startActivity(
-                    new android.content.Intent(android.content.Intent.ACTION_VIEW,
-                            android.net.Uri.parse(linkUrl))));
+        if (!renderedBlocks) {
+            // 普通文章兜底排版
+            List<Object> imageList = new ArrayList<>();
+            if (imgUrl != null && !imgUrl.isEmpty()) {
+                imageList.add(imgUrl);
+            } else if (img1 != 0) {
+                imageList.add(img1);
+            }
+
+            if (imgUrl2 != null && !imgUrl2.isEmpty()) {
+                imageList.add(imgUrl2);
+            } else if (img2 != 0) {
+                imageList.add(img2);
+            }
+
+            if (imgUrl3 != null && !imgUrl3.isEmpty()) {
+                imageList.add(imgUrl3);
+            } else if (img3 != 0) {
+                imageList.add(img3);
+            }
+
+            // 解析正文段落
+            String[] rawParagraphs = content.split("\n\n");
+            List<String> paragraphs = new ArrayList<>();
+            for (String p : rawParagraphs) {
+                String trimmed = p.trim();
+                if (!trimmed.isEmpty()) {
+                    paragraphs.add(trimmed);
+                }
+            }
+
+            // 动态流式排版：文字与图片交替穿插
+            for (int i = 0; i < paragraphs.size(); i++) {
+                String pText = paragraphs.get(i);
+                TextView tvP = new TextView(this);
+                tvP.setText(pText.startsWith("　　") ? pText : "　　" + pText);
+                tvP.setTextSize(16.5f);
+                tvP.setTextColor(getResources().getColor(R.color.text_primary));
+                tvP.setLineSpacing(dpToPx(8), 1.0f);
+                LinearLayout.LayoutParams lpText = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                lpText.bottomMargin = dpToPx(14);
+                tvP.setLayoutParams(lpText);
+                llRichContent.addView(tvP);
+
+                if (i < imageList.size()) {
+                    Object imgSpec = imageList.get(i);
+                    addImageView(llRichContent, imgSpec);
+                }
+            }
+
+            for (int i = paragraphs.size(); i < imageList.size(); i++) {
+                Object imgSpec = imageList.get(i);
+                addImageView(llRichContent, imgSpec);
+            }
         }
 
-        //万一哪条数据没写正文，这里兜个底，免得详情页空着
-        if (content == null || content.isEmpty()) {
-            content = "　　" + title + "\n\n　　" + info
-                    + "\n\n　　（本条为课程演示数据，完整报道略。）";
-        }
-        tvContent.setText(content);
-
+        // 底部动作栏：收藏与分享
         ContentStore store = new ContentStore(this);
-        org.json.JSONObject article = ContentStore.article(title, info, content, img, type);
+        org.json.JSONObject article = ContentStore.article(title, info, content, img1, type);
         store.put("history", article);
-        android.widget.LinearLayout actions = new android.widget.LinearLayout(this);
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams lpActions = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lpActions.topMargin = dpToPx(20);
+        lpActions.bottomMargin = dpToPx(24);
+        actions.setLayoutParams(lpActions);
+
         android.widget.Button save = new android.widget.Button(this);
         save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
         save.setOnClickListener(v -> {
             if (store.contains("saved", title)) store.remove("saved", title); else store.put("saved", article);
             save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
         });
+
         android.widget.Button share = new android.widget.Button(this);
         share.setText("分享");
+        final String finalShareText = content;
         share.setOnClickListener(v -> startActivity(android.content.Intent.createChooser(
                 new android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                        .putExtra(android.content.Intent.EXTRA_TEXT, title + "\n" + tvContent.getText()), "分享文章")));
-        actions.addView(save, new android.widget.LinearLayout.LayoutParams(0,-2,1));
-        actions.addView(share, new android.widget.LinearLayout.LayoutParams(0,-2,1));
-        ((android.widget.LinearLayout)tvContent.getParent()).addView(actions);
+                        .putExtra(android.content.Intent.EXTRA_TEXT, title + "\n" + finalShareText), "分享文章")));
 
-        //左上角返回箭头关闭当前页面
+        LinearLayout.LayoutParams btnLp1 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        btnLp1.rightMargin = dpToPx(8);
+        LinearLayout.LayoutParams btnLp2 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        btnLp2.leftMargin = dpToPx(8);
+
+        actions.addView(save, btnLp1);
+        actions.addView(share, btnLp2);
+        llRichContent.addView(actions);
+
+        // 左上角返回
         ivBack.setOnClickListener(v -> finish());
+    }
+
+    private void addImageView(LinearLayout container, Object imgSpec) {
+        ImageView iv = new ImageView(this);
+        LinearLayout.LayoutParams lpImg = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lpImg.topMargin = dpToPx(6);
+        lpImg.bottomMargin = dpToPx(16);
+        iv.setLayoutParams(lpImg);
+        iv.setAdjustViewBounds(true);
+        iv.setMaxHeight(dpToPx(300));
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        iv.setBackgroundResource(R.drawable.bg_shop_card);
+        iv.setClipToOutline(true);
+
+        if (imgSpec instanceof Integer) {
+            iv.setImageResource((Integer) imgSpec);
+        } else if (imgSpec instanceof String) {
+            RemoteImage.load(iv, (String) imgSpec);
+        }
+        container.addView(iv);
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

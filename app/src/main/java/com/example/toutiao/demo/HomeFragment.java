@@ -46,18 +46,25 @@ public class HomeFragment extends PageFragment {
     private NewsMultiAdapter newsAdapter;
 
     private List<News> recommendList;//推荐
-    private List<News> kangyiList;//健康/抗疫
+    private List<News> campusList;//校园 (对接 Flask 本地服务)
     private List<News> videoSmallList;//小视频
     private List<News> beijingList;//北京
-    private List<News> videoList;//视频
     private List<News> entertainList;//娱乐
 
     private List<Craftsman> craftsmanList;
     private CraftsmanAdapter craftAdapter;
 
-    private TextView tabRecommend, tabKangyi, tabVideoSmall, tabBeijing, tabVideo, tabHot, tabEntertain;
+    private TextView tabRecommend, tabCampus, tabVideoSmall, tabBeijing, tabHot, tabEntertain;
+    private TextView tvHomeTitle;
+    private View llCampusBanner;
+    private TextView tvCampusBannerText, btnCampusSync;
+    private View llCampusPagination;
+    private TextView btnPagePrev, tvPageIndicator, btnPageNext;
 
     private TextView[] allTabs;
+    private int campusCurrentPage = 1;
+    private int campusTotalPages = 153;
+    private static final int CAMPUS_PAGE_SIZE = 15; // 与晴川学院官网完全一致：每页15条真实要闻
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -69,7 +76,12 @@ public class HomeFragment extends PageFragment {
         bindEvent();
         int restoreTab = savedInstanceState == null ? selectedTab : savedInstanceState.getInt("tab", selectedTab);
         String query = savedInstanceState == null ? savedQuery : savedInstanceState.getString("query", "");
-        findViewById(restoreTab).performClick();
+        View targetTab = findViewById(restoreTab);
+        if (targetTab != null) {
+            targetTab.performClick();
+        } else {
+            findViewById(R.id.tab_recommend).performClick();
+        }
         etSearch.setText(query);
     }
 
@@ -95,24 +107,35 @@ public class HomeFragment extends PageFragment {
         rvNews = findViewById(R.id.rv_news);
         lvCraft = findViewById(R.id.lv_craft);
 
+        tvHomeTitle = findViewById(R.id.tv_home_title);
+        llCampusBanner = findViewById(R.id.ll_campus_banner);
+        tvCampusBannerText = findViewById(R.id.tv_campus_banner_text);
+        btnCampusSync = findViewById(R.id.btn_campus_sync);
+
+        llCampusPagination = findViewById(R.id.ll_campus_pagination);
+        btnPagePrev = findViewById(R.id.btn_page_prev);
+        tvPageIndicator = findViewById(R.id.tv_page_indicator);
+        btnPageNext = findViewById(R.id.btn_page_next);
+
         tabRecommend = findViewById(R.id.tab_recommend);
-        tabKangyi = findViewById(R.id.tab_kangyi);
+        tabCampus = findViewById(R.id.tab_campus);
         tabVideoSmall = findViewById(R.id.tab_video_small);
         tabBeijing = findViewById(R.id.tab_beijing);
-        tabVideo = findViewById(R.id.tab_video);
         tabHot = findViewById(R.id.tab_hot);
         tabEntertain = findViewById(R.id.tab_entertain);
 
-        allTabs = new TextView[]{tabRecommend, tabKangyi, tabVideoSmall,
-                tabBeijing, tabVideo, tabHot, tabEntertain};
+        allTabs = new TextView[]{tabRecommend, tabCampus, tabVideoSmall,
+                tabBeijing, tabHot, tabEntertain};
     }
 
     private void initNewsData(){
         recommendList = buildRecommend();
-        kangyiList = buildKangyi();
+        List<News> fullCampus = NewsContentStore.campus();
+        campusList = new ArrayList<>(fullCampus.subList(0, Math.min(CAMPUS_PAGE_SIZE, fullCampus.size())));
+        campusCurrentPage = 1;
+        campusTotalPages = (fullCampus.size() + CAMPUS_PAGE_SIZE - 1) / CAMPUS_PAGE_SIZE;
         videoSmallList = buildVideoSmall();
         beijingList = buildBeijing();
-        videoList = buildVideo();
         entertainList = buildEntertain();
 
         newsList = new ArrayList<>(recommendList);
@@ -159,11 +182,18 @@ public class HomeFragment extends PageFragment {
             intent.putExtra("title", news.getTitle());
             intent.putExtra("info", news.getSource() + "  " + news.getTime());
             intent.putExtra("img", news.getImg1());
+            intent.putExtra("img2", news.getImg2());
+            intent.putExtra("img3", news.getImg3());
             intent.putExtra("type", news.getType());
-            intent.putExtra("content", news.getContent() == null ? "" : news.getContent());
-            //接口头条的远程封面与原文链接；本地文章这两个字段是 null
+            String body = news.getContent();
+            if (body == null || body.trim().isEmpty()) {
+                body = NewsContentStore.contentOf(news.getTitle());
+            }
+            intent.putExtra("content", body == null ? "" : body);
             intent.putExtra("img_url", news.getImageUrl() == null ? "" : news.getImageUrl());
-            intent.putExtra("link", news.getLinkUrl() == null ? "" : news.getLinkUrl());
+            intent.putExtra("img_url_2", news.getImageUrl2() == null ? "" : news.getImageUrl2());
+            intent.putExtra("img_url_3", news.getImageUrl3() == null ? "" : news.getImageUrl3());
+            intent.putExtra("blocks_json", news.getBlocksJson() == null ? "" : news.getBlocksJson());
             startActivity(intent);
         });
     }
@@ -178,8 +208,8 @@ public class HomeFragment extends PageFragment {
         return list;
     }
 
-    private List<News> buildKangyi(){
-        return NewsContentStore.kangyi();
+    private List<News> buildCampus(){
+        return NewsContentStore.campus();
     }
 
     private List<News> buildVideoSmall(){
@@ -188,10 +218,6 @@ public class HomeFragment extends PageFragment {
 
     private List<News> buildBeijing(){
         return NewsContentStore.beijing();
-    }
-
-    private List<News> buildVideo(){
-        return NewsContentStore.video();
     }
 
     private List<News> buildEntertain(){
@@ -251,6 +277,16 @@ public class HomeFragment extends PageFragment {
         selectedTab = activeTab.getId();
         resetTabColor();
         activeTab.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_red));
+        boolean isCampus = selectedTab == R.id.tab_campus;
+        if (llCampusBanner != null) {
+            llCampusBanner.setVisibility(isCampus ? View.VISIBLE : View.GONE);
+        }
+        if (llCampusPagination != null) {
+            llCampusPagination.setVisibility(isCampus ? View.VISIBLE : View.GONE);
+            if (isCampus) {
+                updateCampusPaginationUI("武汉晴川学院");
+            }
+        }
     }
 
     private void bindNewsTab(TextView tab, List<News> data){
@@ -296,16 +332,161 @@ public class HomeFragment extends PageFragment {
         });
 
         bindNewsTab(tabRecommend, recommendList);
-        bindNewsTab(tabKangyi, kangyiList);
+
+        //点击顶部大标题【仿今日头条】：在校园频道时重新爬取刷新当前页
+        if (tvHomeTitle != null) {
+            tvHomeTitle.setOnClickListener(v -> {
+                if (selectedTab == R.id.tab_campus) {
+                    loadCampusPage(campusCurrentPage, true);
+                } else {
+                    tabCampus.performClick();
+                }
+            });
+        }
+
+        //点击【校园】频道，切换列表
+        tabCampus.setOnClickListener(v -> {
+            switchNewsTab(campusList, tabCampus);
+            updateCampusPaginationUI("武汉晴川学院");
+            if (campusList.isEmpty()) {
+                loadCampusPage(1, false);
+            }
+        });
+
+        //点击同步条文本或按钮，爬取刷新当前页
+        if (tvCampusBannerText != null) {
+            tvCampusBannerText.setOnClickListener(v -> loadCampusPage(campusCurrentPage, true));
+        }
+        if (btnCampusSync != null) {
+            btnCampusSync.setOnClickListener(v -> loadCampusPage(campusCurrentPage, true));
+        }
+
+        //官网分页条：上一页、下一页、点击中间指示器弹框跳页
+        if (btnPagePrev != null) {
+            btnPagePrev.setOnClickListener(v -> {
+                if (campusCurrentPage > 1) {
+                    loadCampusPage(campusCurrentPage - 1, true);
+                }
+            });
+        }
+        if (btnPageNext != null) {
+            btnPageNext.setOnClickListener(v -> {
+                if (campusCurrentPage < campusTotalPages) {
+                    loadCampusPage(campusCurrentPage + 1, true);
+                }
+            });
+        }
+        if (tvPageIndicator != null) {
+            tvPageIndicator.setOnClickListener(v -> showPageJumpDialog());
+        }
+
         bindNewsTab(tabVideoSmall, videoSmallList);
         bindNewsTab(tabBeijing, beijingList);
-        bindNewsTab(tabVideo, videoList);
         bindNewsTab(tabEntertain, entertainList);
 
         tabHot.setOnClickListener(v -> {
             selectTab(tabHot);
             filterNews(etSearch.getText().toString());
         });
+    }
+
+    /**
+     * 严格按官网要闻设计：
+     * 每页固定 9 篇新闻（与官网每页条数完全一致），点击上一页/下一页/指定页数时，爬取刷新该页并替换展示
+     */
+    private void loadCampusPage(final int page, final boolean userInitiated) {
+        if (!isAdded()) {
+            return;
+        }
+        if (btnCampusSync != null) {
+            btnCampusSync.setEnabled(false);
+            btnCampusSync.setText("爬取中...");
+        }
+        if (btnPagePrev != null) btnPagePrev.setEnabled(false);
+        if (btnPageNext != null) btnPageNext.setEnabled(false);
+
+        if (userInitiated) {
+            Toast.makeText(requireContext(), "正在爬取晴川官网第 " + page + " 页要闻...", Toast.LENGTH_SHORT).show();
+        }
+
+        CampusNewsStore.fetchCampusNews(page, CAMPUS_PAGE_SIZE, new CampusNewsStore.PageCallback() {
+            @Override
+            public void onSuccess(List<News> items, String queryTime, String school, int respPage, int totalPages, boolean hasMore) {
+                if (!isAdded()) {
+                    return;
+                }
+                campusCurrentPage = respPage;
+                campusTotalPages = Math.max(totalPages, 1);
+
+                if (items != null && !items.isEmpty()) {
+                    // 严格还原官网列表分页：每页几个就几个，换页时刷新替换为该页新闻
+                    campusList.clear();
+                    campusList.addAll(items);
+                    if (selectedTab == R.id.tab_campus) {
+                        activeNews = campusList;
+                        filterNews(etSearch != null ? etSearch.getText().toString() : "");
+                        rvNews.scrollToPosition(0);
+                    }
+                }
+
+                updateCampusPaginationUI(school);
+
+                if (userInitiated) {
+                    Toast.makeText(requireContext(), "已成功爬取刷新第 " + respPage + " 页！(本页 " + campusList.size() + " 条)", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                if (!isAdded()) {
+                    return;
+                }
+                updateCampusPaginationUI("武汉晴川学院");
+                if (userInitiated) {
+                    Toast.makeText(requireContext(), "提示：" + reason, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void updateCampusPaginationUI(String school) {
+        if (btnCampusSync != null) {
+            btnCampusSync.setEnabled(true);
+            btnCampusSync.setText("🕷️ 爬取本页");
+        }
+        if (btnPagePrev != null) {
+            boolean canPrev = campusCurrentPage > 1;
+            btnPagePrev.setEnabled(canPrev);
+            btnPagePrev.setAlpha(canPrev ? 1.0f : 0.35f);
+        }
+        if (btnPageNext != null) {
+            boolean canNext = campusCurrentPage < campusTotalPages;
+            btnPageNext.setEnabled(canNext);
+            btnPageNext.setAlpha(canNext ? 1.0f : 0.35f);
+        }
+        if (tvPageIndicator != null) {
+            tvPageIndicator.setText("第 " + campusCurrentPage + " / " + campusTotalPages + " 页 (本页 " + campusList.size() + " 篇)");
+        }
+        if (tvCampusBannerText != null) {
+            tvCampusBannerText.setText("🏫 【" + school + "】官网第 " + campusCurrentPage + " 页 · 点击下方可翻页爬取");
+        }
+    }
+
+    private void showPageJumpDialog() {
+        String[] pages = new String[campusTotalPages];
+        for (int i = 0; i < campusTotalPages; i++) {
+            pages[i] = "第 " + (i + 1) + " 页" + ((i + 1) == campusCurrentPage ? " (当前浏览)" : "");
+        }
+        new AlertDialog.Builder(requireContext())
+                .setTitle("选择跳转晴川官网页数")
+                .setItems(pages, (dialog, which) -> {
+                    int target = which + 1;
+                    if (target != campusCurrentPage) {
+                        loadCampusPage(target, true);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void filterNews(String query) {

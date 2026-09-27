@@ -81,10 +81,10 @@
                     android:textSize="@dimen/text_title"
                     android:paddingHorizontal="@dimen/space_m"/>
                 <TextView
-                    android:id="@+id/tab_kangyi"
+                    android:id="@+id/tab_campus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="健康"
+                    android:text="校园"
                     android:textColor="@color/tab_inactive"
                     android:textSize="@dimen/text_title"
                     android:paddingHorizontal="@dimen/space_m"/>
@@ -101,14 +101,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="北京"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_video"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="视频"
                     android:textColor="@color/tab_inactive"
                     android:textSize="@dimen/text_title"
                     android:paddingHorizontal="@dimen/space_m"/>

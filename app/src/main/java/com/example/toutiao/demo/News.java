@@ -1,11 +1,12 @@
 package com.example.toutiao.demo;
 
 public class News {
-    // 4种类型常量
+    // 5种新闻展示类型常量
     public static final int TYPE_TEXT = 1;
     public static final int TYPE_SINGLE_IMG = 2;
     public static final int TYPE_THREE_IMG = 3;
     public static final int TYPE_VIDEO = 4;
+    public static final int TYPE_BIG_IMG = 5;
 
     private int type;
     private String title;
@@ -16,7 +17,10 @@ public class News {
     private int img3;
     private String content; //正文：仅用户发布的动态在内存里携带；站内文章正文统一在 NewsContentStore，详情页按需查询
     private String imageUrl; //远程封面 URL（接口拉回的文章才有）；本地文章为 null，走 img1 资源
-    private String linkUrl; //原文网页链接（接口文章才有），详情页「阅读原文」用
+    private String imageUrl2; //第二张远程配图 URL
+    private String imageUrl3; //第三张远程配图 URL
+    private String linkUrl; //原文网页链接
+    private String blocksJson; // 真实正文与图片流 JSON
 
     public News withRemote(String imageUrl, String linkUrl) {
         this.imageUrl = imageUrl;
@@ -24,8 +28,35 @@ public class News {
         return this;
     }
 
+    public News withRemote2(String imageUrl2) {
+        this.imageUrl2 = imageUrl2;
+        return this;
+    }
+
+    public News withRemote3(String imageUrl3) {
+        this.imageUrl3 = imageUrl3;
+        return this;
+    }
+
+    public String getImageUrl3() {
+        return imageUrl3;
+    }
+
+    public News withBlocks(String blocksJson) {
+        this.blocksJson = blocksJson;
+        return this;
+    }
+
+    public String getBlocksJson() {
+        return blocksJson;
+    }
+
     public String getImageUrl() {
         return imageUrl;
+    }
+
+    public String getImageUrl2() {
+        return imageUrl2;
     }
 
     public String getLinkUrl() {

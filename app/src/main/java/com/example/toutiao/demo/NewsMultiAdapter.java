@@ -80,12 +80,28 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
     }
 
+    static class BigImgViewHolder extends RecyclerView.ViewHolder{
+        TextView tvTitle,tvSource,tvTime;
+        ImageView ivBig;
+        public BigImgViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvTitle = itemView.findViewById(R.id.tv_title_big);
+            tvSource = itemView.findViewById(R.id.tv_source_big);
+            tvTime = itemView.findViewById(R.id.tv_time_big);
+            ivBig = itemView.findViewById(R.id.iv_big);
+        }
+    }
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view;
         RecyclerView.ViewHolder holder;
         switch (viewType){
+            case News.TYPE_BIG_IMG:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_news_big,parent,false);
+                holder = new BigImgViewHolder(view);
+                break;
             case News.TYPE_SINGLE_IMG:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_news_single,parent,false);
                 holder = new SingleImgViewHolder(view);
@@ -128,11 +144,21 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 singleHolder.tvTitle.setText(news.getTitle());
                 singleHolder.tvSource.setText(news.getSource());
                 singleHolder.tvTime.setText(news.getTime());
-                //接口头条带远程封面 URL，本地文章走 drawable 资源
-                if (news.getImageUrl() != null) {
+                if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
                     RemoteImage.load(singleHolder.ivSingle, news.getImageUrl());
-                } else {
+                } else if (news.getImg1() != 0) {
                     singleHolder.ivSingle.setImageResource(news.getImg1());
+                }
+                break;
+            case News.TYPE_BIG_IMG:
+                BigImgViewHolder bigHolder = (BigImgViewHolder) holder;
+                bigHolder.tvTitle.setText(news.getTitle());
+                bigHolder.tvSource.setText(news.getSource());
+                bigHolder.tvTime.setText(news.getTime());
+                if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
+                    RemoteImage.load(bigHolder.ivBig, news.getImageUrl());
+                } else if (news.getImg1() != 0) {
+                    bigHolder.ivBig.setImageResource(news.getImg1());
                 }
                 break;
             case News.TYPE_THREE_IMG:
@@ -140,16 +166,32 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 threeHolder.tvTitle.setText(news.getTitle());
                 threeHolder.tvSource.setText(news.getSource());
                 threeHolder.tvTime.setText(news.getTime());
-                threeHolder.iv1.setImageResource(news.getImg1());
-                threeHolder.iv2.setImageResource(news.getImg2());
-                threeHolder.iv3.setImageResource(news.getImg3());
+                if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
+                    RemoteImage.load(threeHolder.iv1, news.getImageUrl());
+                } else if (news.getImg1() != 0) {
+                    threeHolder.iv1.setImageResource(news.getImg1());
+                }
+                if (news.getImageUrl2() != null && !news.getImageUrl2().isEmpty()) {
+                    RemoteImage.load(threeHolder.iv2, news.getImageUrl2());
+                } else if (news.getImg2() != 0) {
+                    threeHolder.iv2.setImageResource(news.getImg2());
+                }
+                if (news.getImageUrl3() != null && !news.getImageUrl3().isEmpty()) {
+                    RemoteImage.load(threeHolder.iv3, news.getImageUrl3());
+                } else if (news.getImg3() != 0) {
+                    threeHolder.iv3.setImageResource(news.getImg3());
+                }
                 break;
             case News.TYPE_VIDEO:
                 VideoViewHolder videoHolder = (VideoViewHolder) holder;
                 videoHolder.tvTitle.setText(news.getTitle());
                 videoHolder.tvSource.setText(news.getSource());
                 videoHolder.tvTime.setText(news.getTime());
-                videoHolder.ivCover.setImageResource(news.getImg1());
+                if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
+                    RemoteImage.load(videoHolder.ivCover, news.getImageUrl());
+                } else if (news.getImg1() != 0) {
+                    videoHolder.ivCover.setImageResource(news.getImg1());
+                }
                 break;
         }
     }
