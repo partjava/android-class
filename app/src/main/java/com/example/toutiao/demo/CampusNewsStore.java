@@ -100,20 +100,25 @@ public final class CampusNewsStore {
      * @param callback 成功/失败回调
      */
     public static void fetchCampusNews(final int page, final int size, final PageCallback callback) {
+        fetchCategoryNews("xxyw", page, size, callback);
+    }
+
+    /**
+     * 分类实时爬取核心方法：支持学校要闻(xxyw)、通知公告(tzgg)、教育教学(jyjx)、媒体关注(mtgz)、学校荣誉(xxry)
+     * @param category 栏目 ID 或拼音标识
+     * @param page 页码（从 1 开始累加）
+     * @param size 每批读取数量（默认 15 条）
+     * @param callback 成功/失败回调
+     */
+    public static void fetchCategoryNews(final String category, final int page, final int size, final PageCallback callback) {
         new Thread(() -> {
             HttpURLConnection conn = null;
             BufferedReader reader = null;
             try {
-                String reqUrl;
-                if (serverBaseUrl.contains("/xiaoyuan/page/")) {
-                    reqUrl = serverBaseUrl + page;
-                } else if (serverBaseUrl.contains("/api/news")) {
-                    reqUrl = serverBaseUrl.replace("/api/news", "/xiaoyuan/page/" + page);
-                } else if (serverBaseUrl.endsWith("/")) {
-                    reqUrl = serverBaseUrl + "xiaoyuan/page/" + page;
-                } else {
-                    reqUrl = serverBaseUrl + "/xiaoyuan/page/" + page;
-                }
+                String cat = (category == null || category.trim().isEmpty()) ? "xxyw" : category.trim();
+                String base = serverBaseUrl;
+                if (base.endsWith("/")) base = base.substring(0, base.length() - 1);
+                String reqUrl = base + "/xiaoyuan/" + cat + "/page/" + page;
 
                 URL url = new URL(reqUrl);
                 conn = (HttpURLConnection) url.openConnection();

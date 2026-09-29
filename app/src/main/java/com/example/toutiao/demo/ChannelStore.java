@@ -29,41 +29,53 @@ public final class ChannelStore {
     // =========================================================================
 
     /**
-     * 默认【我的频道】初始列表 (已默认加载学校官网的核心多标题)
+     * 默认【我的频道】初始列表：
+     * 推荐 + 官网5大实时爬虫新闻栏目(校园要闻、通知公告、教育教学、媒体关注、学校荣誉) + 官网后续各主要栏目
      */
     public static List<Channel> getDefaultMyChannels() {
         List<Channel> list = new ArrayList<>();
-        // 固定频道 (isFixed=true，不可删除)
+        // 固定基础频道
         list.add(new Channel("recommend", "推荐", true));
         list.add(new Channel("campus", "校园要闻", true));
 
-        // 武汉晴川学院官网核心多标题 (支持编辑与排序)
+        // 官网 4 大实时爬虫栏目 (紧跟校园要闻之后，组成前五大资讯流)
+        list.add(new Channel("tzgg", "通知公告", false));
+        list.add(new Channel("jyjx", "教育教学", false));
+        list.add(new Channel("mtgz", "媒体关注", false));
+        list.add(new Channel("xxry", "学校荣誉", false));
+
+        // 武汉晴川学院官网后续各主要栏目
         list.add(new Channel("survey", "学校概况", false));
         list.add(new Channel("org", "机构设置", false));
         list.add(new Channel("talent", "人才培养", false));
         list.add(new Channel("faculty", "师资队伍", false));
         list.add(new Channel("research", "教学科研", false));
         list.add(new Channel("admissions", "招生就业", false));
-        return list;
-    }
-
-    /**
-     * 默认【更多频道 / 推荐添加】初始列表 (点击即可添加至我的频道)
-     */
-    public static List<Channel> getDefaultMoreChannels() {
-        List<Channel> list = new ArrayList<>();
-        // 晴川学院官网后续栏目
         list.add(new Channel("party", "党建思政", false));
         list.add(new Channel("student", "学生工作", false));
         list.add(new Channel("culture", "校园文化", false));
         list.add(new Channel("service", "公共服务", false));
+        return list;
+    }
 
-        // 头条经典综合资讯频道 (供用户自由添加)
+    /**
+     * 默认【更多频道 / 推荐添加】初始列表
+     */
+    public static List<Channel> getDefaultMoreChannels() {
+        List<Channel> list = new ArrayList<>();
+        // 晴川官网首页与特色公共资源
+        list.add(new Channel("home", "晴川首页", false));
+        list.add(new Channel("library", "图书馆", false));
+        list.add(new Channel("hr", "人才引进", false));
+        list.add(new Channel("openinfo", "信息公开", false));
+        list.add(new Channel("mailbox", "学校信箱", false));
+        list.add(new Channel("contact", "联系方式", false));
+
+        // 头条经典综合资讯频道
         list.add(new Channel("hot", "热点", false));
         list.add(new Channel("video_small", "小视频", false));
-        list.add(new Channel("entertain", "娱乐", false));
-        list.add(new Channel("beijing", "北京", false));
         list.add(new Channel("tech", "科技", false));
+        list.add(new Channel("entertain", "娱乐", false));
         list.add(new Channel("sports", "体育", false));
         return list;
     }
@@ -79,7 +91,22 @@ public final class ChannelStore {
             saveMyChannels(context, def);
             return def;
         }
-        return parseChannelsJson(json);
+        List<Channel> list = parseChannelsJson(json);
+        // 自动校验是否缺少核心爬虫栏目（如 tzgg、jyjx 等），若缺少则平滑合并升级
+        boolean hasTzgg = false;
+        for (Channel c : list) {
+            if ("tzgg".equals(c.getId())) {
+                hasTzgg = true;
+                break;
+            }
+        }
+        if (!hasTzgg) {
+            List<Channel> def = getDefaultMyChannels();
+            saveMyChannels(context, def);
+            saveMoreChannels(context, getDefaultMoreChannels());
+            return def;
+        }
+        return list;
     }
 
     /**

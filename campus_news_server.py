@@ -163,17 +163,79 @@ def parse_detail_page(item, host):
 
     return item
 
-def crawl_qcu_page(page_num, host):
+NEWS_CATEGORIES = {
+    "xxyw": {
+        "id": "xxyw",
+        "name": "学校要闻",
+        "official_title": "聚焦晴川 · 学校要闻",
+        "default_source": "党委宣传部 官方发布",
+        "first_url": "https://www.qcuwh.cn/jjqc/xxyw.htm",
+        "pattern": "https://www.qcuwh.cn/jjqc/xxyw/{page_idx}.htm"
+    },
+    "tzgg": {
+        "id": "tzgg",
+        "name": "通知公告",
+        "official_title": "聚焦晴川 · 通知公告",
+        "default_source": "学校办公室 / 官方公告",
+        "first_url": "https://www.qcuwh.cn/jjqc/tzgg.htm",
+        "pattern": "https://www.qcuwh.cn/jjqc/tzgg/{page_idx}.htm"
+    },
+    "jyjx": {
+        "id": "jyjx",
+        "name": "教育教学",
+        "official_title": "聚焦晴川 · 教育教学",
+        "default_source": "教务处 / 教学科研部",
+        "first_url": "https://www.qcuwh.cn/jjqc/jyjx.htm",
+        "pattern": "https://www.qcuwh.cn/jjqc/jyjx/{page_idx}.htm"
+    },
+    "mtgz": {
+        "id": "mtgz",
+        "name": "媒体关注",
+        "official_title": "聚焦晴川 · 媒体关注",
+        "default_source": "主流媒体 聚焦晴川",
+        "first_url": "https://www.qcuwh.cn/jjqc/mtgz.htm",
+        "pattern": "https://www.qcuwh.cn/jjqc/mtgz/{page_idx}.htm"
+    },
+    "xxry": {
+        "id": "xxry",
+        "name": "学校荣誉",
+        "official_title": "特色晴川 · 学校荣誉",
+        "default_source": "学校官方荣誉表彰",
+        "first_url": "https://www.qcuwh.cn/tsqc/xxry.htm",
+        "pattern": "https://www.qcuwh.cn/tsqc/xxry/{page_idx}.htm"
+    }
+}
+
+CAT_ALIAS = {
+    "campus": "xxyw",
+    "xxyw": "xxyw",
+    "news": "xxyw",
+    "tzgg": "tzgg",
+    "notice": "tzgg",
+    "jyjx": "jyjx",
+    "teaching": "jyjx",
+    "updates": "jyjx",
+    "mtgz": "mtgz",
+    "media": "mtgz",
+    "xxry": "xxry",
+    "honor": "xxry"
+}
+
+def crawl_qcu_page(category, page_num, host):
     """
-    实时爬取武汉晴川学院官网学校要闻指定页码
+    实时爬取武汉晴川学院官网指定栏目与指定页码
+    category 可选: xxyw (要闻), tzgg (公告), jyjx (教育教学), mtgz (媒体关注), xxry (学校荣誉)
     """
+    cat_key = CAT_ALIAS.get(str(category).lower(), "xxyw")
+    cat_info = NEWS_CATEGORIES.get(cat_key, NEWS_CATEGORIES["xxyw"])
+
     # 步骤 1：先获取第 1 页以探知最新总页数
-    page1_resp = session.get(OFFICIAL_NEWS_URL, timeout=5, verify=False)
+    page1_resp = session.get(cat_info["first_url"], timeout=8, verify=False)
     page1_html = page1_resp.content.decode('utf-8-sig', errors='ignore')
     page1_soup = BeautifulSoup(page1_html, 'html.parser')
 
     # 解析总页数
-    total_pages = 153
+    total_pages = 1
     page_match = re.search(r'共\s*(\d+)\s*页', page1_html)
     if page_match:
         total_pages = int(page_match.group(1))
@@ -185,13 +247,13 @@ def crawl_qcu_page(page_num, host):
 
     # 步骤 2：确定当前目标页 URL
     if page_num == 1:
-        target_url = OFFICIAL_NEWS_URL
+        target_url = cat_info["first_url"]
         target_soup = page1_soup
     else:
-        # 官网分页规则：第 2 页对应 total_pages - 1.htm (例如 152.htm)
+        # 官网通用分页规则：第 N 页对应 total_pages - N + 1.htm
         target_page_index = total_pages - page_num + 1
-        target_url = f"{OFFICIAL_BASE_URL}/jjqc/xxyw/{target_page_index}.htm"
-        resp = session.get(target_url, timeout=5, verify=False)
+        target_url = cat_info["pattern"].format(page_idx=target_page_index)
+        resp = session.get(target_url, timeout=8, verify=False)
         html = resp.content.decode('utf-8-sig', errors='ignore')
         target_soup = BeautifulSoup(html, 'html.parser')
 
@@ -199,7 +261,7 @@ def crawl_qcu_page(page_num, host):
     raw_items = []
     for li in target_soup.find_all('li'):
         a = li.find('a')
-        if a and a.get('href') and 'info/' in a.get('href'):
+        if a and a.get('href') and ('info/' in a.get('href') or 'content' in a.get('href')):
             h2 = a.find('h2')
             title = h2.get_text(strip=True) if h2 else a.get_text(strip=True)
             date_div = a.find(class_='date')
@@ -207,12 +269,19 @@ def crawl_qcu_page(page_num, host):
             href = a.get('href')
             full_url = urllib.parse.urljoin(target_url, href)
 
+            # 过滤掉过短的无意义字符
+            cleaned_title = re.sub(r'^\d{4}-\d{2}-\d{2}', '', title).strip()
+            if len(cleaned_title) > 2:
+                title = cleaned_title
+
             if len(title) > 3:
                 raw_items.append({
                     "title": title,
-                    "source": "党委宣传部 官方发布",
+                    "source": cat_info["default_source"],
                     "time": time_str,
-                    "link": full_url
+                    "link": full_url,
+                    "category": cat_key,
+                    "category_name": cat_info["name"]
                 })
 
     # 去重
@@ -223,40 +292,49 @@ def crawl_qcu_page(page_num, host):
             seen_urls.add(it["link"])
             items.append(it)
 
-    print(f"[实时爬虫] 成功从官网页面 ({target_url}) 抓取到 {len(items)} 条要闻列表，正在并发解析文章详情...")
+    print(f"[实时爬虫] 成功从官网【{cat_info['name']}】({target_url}) 抓取到 {len(items)} 条列表，正在并发解析详情...")
 
     # 步骤 4：多线程并发解析正文和真实图片
     with ThreadPoolExecutor(max_workers=8) as executor:
         detailed_items = list(executor.map(lambda it: parse_detail_page(it, host), items))
 
-    print(f"[实时爬虫] 详情抓取完成！本页共 {len(detailed_items)} 篇官方新闻全部包含真实排版与实拍图片！")
-    return detailed_items, total_pages
+    print(f"[实时爬虫] 详情抓取完成！【{cat_info['name']}】第 {page_num} 页共 {len(detailed_items)} 篇官方资讯全部包含真实排版与实拍图片！")
+    return detailed_items, total_pages, cat_info
 
+@app.route("/xiaoyuan/<cat_name>/page/<int:page_num>", methods=["GET"])
 @app.route("/xiaoyuan/page/<int:page_num>", methods=["GET"])
 @app.route("/api/news", methods=["GET"])
 @app.route("/api/campus/news", methods=["GET"])
 @app.route("/api/crawl", methods=["GET", "POST"])
-def get_campus_news(page_num=None):
+def get_campus_news(cat_name="xxyw", page_num=None):
     now_str = datetime.datetime.now().strftime("%H:%M:%S")
     client_ip = request.remote_addr
     host = request.host
+
+    # 提取栏目类别
+    category = request.args.get("category") or request.args.get("cat") or cat_name or "xxyw"
 
     if page_num is not None:
         page = page_num
     else:
         page = request.args.get("page", default=1, type=int)
 
-    print(f"\n[Flask 校园服务] [{now_str}] 收到来自 {client_ip} 的【实时爬取】请求：指定抓取官网第 {page} 页！")
+    cat_key = CAT_ALIAS.get(str(category).lower(), "xxyw")
+    cat_info = NEWS_CATEGORIES.get(cat_key, NEWS_CATEGORIES["xxyw"])
+
+    print(f"\n[Flask 校园服务] [{now_str}] 收到来自 {client_ip} 的【实时爬取】请求：指定抓取【{cat_info['name']}】第 {page} 页！")
 
     try:
-        news_items, total_pages = crawl_qcu_page(page, host)
+        news_items, total_pages, cat_meta = crawl_qcu_page(category, page, host)
     except Exception as e:
-        print(f"[Flask 校园服务] 爬取失败: {e}")
+        print(f"[Flask 校园服务] 爬取【{cat_info['name']}】失败: {e}")
         return jsonify({
             "code": 500,
             "msg": f"实时爬取官网异常: {str(e)}",
             "school": SCHOOL_NAME,
-            "url": OFFICIAL_NEWS_URL,
+            "category": cat_key,
+            "category_name": cat_info["name"],
+            "url": cat_info["first_url"],
             "query_time": now_str,
             "currentpage": page,
             "pagecount": 0,
@@ -269,7 +347,10 @@ def get_campus_news(page_num=None):
         "code": 200,
         "msg": "实时爬取刷新成功",
         "school": SCHOOL_NAME,
-        "url": OFFICIAL_NEWS_URL,
+        "category": cat_key,
+        "category_name": cat_info["name"],
+        "official_title": cat_info["official_title"],
+        "url": cat_info["first_url"],
         "query_time": now_str,
         "crawled_live": True,
         # 老师要求的专属接口字段规范:
@@ -277,7 +358,7 @@ def get_campus_news(page_num=None):
         "pagecount": total_pages,
         "newscount": total_pages * 15,
         "perpage": len(news_items),
-        # 兼容原有字段:
+        # 兼容字段:
         "page": page,
         "size": len(news_items),
         "total": total_pages * 15,
@@ -286,7 +367,7 @@ def get_campus_news(page_num=None):
         "newslist": news_items
     }
 
-    print(f"[Flask 校园服务] [{now_str}] 爬取成功！已向客户端返回官网第 {page}/{total_pages} 页真实新闻 {len(news_items)} 条 (累计总数 {total_pages * 15})。")
+    print(f"[Flask 校园服务] [{now_str}] 爬取成功！已向客户端返回【{cat_info['name']}】第 {page}/{total_pages} 页真实新闻 {len(news_items)} 条。")
     return jsonify(response_data)
 
 @app.route("/api/image_proxy", methods=["GET"])
@@ -314,6 +395,7 @@ def image_proxy():
         return f"Error fetching image: {e}", 500
 
 OFFICIAL_PAGES = {
+    "home": "https://www.qcuwh.cn/index.htm",             # 官网首页
     "survey": "https://www.qcuwh.cn/xxgk/xxjj.htm",       # 学校概况 -> 学校简介
     "org": "https://www.qcuwh.cn/jgsz/jxdw.htm",          # 机构设置 -> 教学单位
     "talent": "https://www.qcuwh.cn/rcpy/bxdw.htm",       # 人才培养 -> 办学定位
@@ -324,9 +406,15 @@ OFFICIAL_PAGES = {
     "student": "https://www.qcuwh.cn/xsgz/gzgk.htm",      # 学生工作 -> 工作概况
     "culture": "https://www.qcuwh.cn/xywh/jsgk.htm",      # 校园文化 -> 精神概况
     "service": "https://www.qcuwh.cn/xyfw/xydt.htm",      # 公共服务 -> 校园动态
+    "library": "https://tsg.qcuwh.edu.cn/",               # 图书馆
+    "hr": "https://rsc.qcuwh.edu.cn/",                   # 人才引进
+    "openinfo": "https://xxgk.qcuwh.edu.cn/",             # 信息公开
+    "mailbox": "https://www.qcuwh.cn/xxxx.htm",           # 学校信箱
+    "contact": "https://www.qcuwh.cn/lxfs.htm",           # 联系方式
 }
 
 CHANNEL_CONFIG = {
+    "home": {"title": "晴川首页", "en": "OFFICIAL HOME", "sub": "官网精选"},
     "survey": {"title": "学校概况", "en": "ABOUT US", "sub": "学校简介"},
     "org": {"title": "机构设置", "en": "ORGANIZATION", "sub": "教学单位"},
     "talent": {"title": "人才培养", "en": "TALENT TRAINING", "sub": "办学定位"},
@@ -336,7 +424,12 @@ CHANNEL_CONFIG = {
     "party": {"title": "党建思政", "en": "PARTY & IDEOLOGY", "sub": "思政建设"},
     "student": {"title": "学生工作", "en": "STUDENT AFFAIRS", "sub": "工作概况"},
     "culture": {"title": "校园文化", "en": "CAMPUS CULTURE", "sub": "精神概况"},
-    "service": {"title": "公共服务", "en": "PUBLIC SERVICES", "sub": "校园动态"}
+    "service": {"title": "公共服务", "en": "PUBLIC SERVICES", "sub": "校园动态"},
+    "library": {"title": "晴川图书馆", "en": "LIBRARY", "sub": "馆藏资源"},
+    "hr": {"title": "人才引进", "en": "TALENT RECRUITMENT", "sub": "诚聘英才"},
+    "openinfo": {"title": "信息公开", "en": "INFORMATION DISCLOSURE", "sub": "公开清单"},
+    "mailbox": {"title": "学校信箱", "en": "PRESIDENT'S MAILBOX", "sub": "信箱留言"},
+    "contact": {"title": "联系方式", "en": "CONTACT US", "sub": "办公电话"},
 }
 
 # 官方网站各频道完整二级小标签结构 (100% 对应官网二级子栏目导航)
@@ -587,40 +680,73 @@ def school_page(page_id):
       border: 1px solid rgba(255, 255, 255, 0.25);
     }}
     
-    /* 2. 官方校园风景大 Banner */
-    .school_banner {{
+    /* 2. 官方校园风景大 Banner 6图自动轮播 (100% 还原官网 6 大轮播大图) */
+    .school_banner_carousel {{
       position: relative;
       width: 100%;
-      height: 115px;
-      background: #002E8B url('/api/image_proxy?url=https%3A//www.qcuwh.cn/img/nybanner.jpg') center center / cover no-repeat;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 0 20px;
+      height: 140px;
+      overflow: hidden;
+      background: #002E8B;
     }}
-    .school_banner::after {{
+    .carousel_track {{
+      display: flex;
+      width: 600%;
+      height: 100%;
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }}
+    .carousel_item {{
+      width: 16.66667%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }}
+    .carousel_item::after {{
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, rgba(0, 46, 139, 0.78) 0%, rgba(13, 71, 161, 0.48) 100%);
+      background: linear-gradient(180deg, rgba(0, 46, 139, 0.40) 0%, rgba(0, 46, 139, 0.85) 100%);
     }}
-    .school_banner .banner_text {{
-      position: relative;
-      z-index: 2;
+    .banner_text_box {{
+      position: absolute;
+      left: 18px;
+      bottom: 14px;
+      z-index: 10;
       color: #FFFFFF;
+      pointer-events: none;
     }}
-    .school_banner .banner_title {{
-      font-size: 21px;
+    .banner_text_box .banner_title {{
+      font-size: 20px;
       font-weight: bold;
-      letter-spacing: 1px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      letter-spacing: 0.8px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
     }}
-    .school_banner .banner_en {{
+    .banner_text_box .banner_en {{
       font-size: 10px;
-      opacity: 0.85;
+      opacity: 0.88;
       text-transform: uppercase;
       letter-spacing: 1.5px;
       margin-top: 2px;
+    }}
+    .carousel_dots {{
+      position: absolute;
+      right: 14px;
+      bottom: 14px;
+      z-index: 10;
+      display: flex;
+      gap: 5px;
+    }}
+    .carousel_dots .dot {{
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.45);
+      transition: all 0.3s ease;
+    }}
+    .carousel_dots .dot.active {{
+      width: 16px;
+      border-radius: 4px;
+      background: #FFFFFF;
     }}
 
     /* 2.5 二级小标签横向滑动胶囊导航栏 (支持多标签横向滚动) */
@@ -808,11 +934,27 @@ def school_page(page_id):
     <div class="tag">晴川移动官网</div>
   </header>
   
-  <!-- 校园实景大 Banner -->
-  <div class="school_banner">
-    <div class="banner_text">
+  <!-- 校园实景大 Banner 6图多图自动轮播 (100% 还原官网 6 大高清轮播实景) -->
+  <div class="school_banner_carousel" id="schoolCarousel">
+    <div class="carousel_track" id="carouselTrack">
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/xiaomen.jpg');"></div>
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/5e71cc4835f76574a1fdddde75662c1c.jpg');"></div>
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/IMG_8114.jpg');"></div>
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/196A3022.jpg');"></div>
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/caiwu.jpg');"></div>
+      <div class="carousel_item" style="background-image: url('/api/image_proxy?url=https%3A//www.qcuwh.cn/images/weixintupian_20250603154507.jpg');"></div>
+    </div>
+    <div class="banner_text_box">
       <div class="banner_title">{cfg['title']}</div>
       <div class="banner_en">{cfg['en']}</div>
+    </div>
+    <div class="carousel_dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
     </div>
   </div>
 
@@ -840,7 +982,41 @@ def school_page(page_id):
   </footer>
 
   <script>
-    // 自动将当前选中的小标签平滑滚动至居中视野
+    // 1. 顶部 6 图轮播自动定时切换与触摸手势支持
+    (function() {{
+      var track = document.getElementById('carouselTrack');
+      var dots = document.querySelectorAll('.carousel_dots .dot');
+      var total = 6;
+      var cur = 0;
+      function setSlide(idx) {{
+        cur = (idx + total) % total;
+        if (track) track.style.transform = 'translateX(-' + (cur * (100 / total)) + '%)';
+        for (var i = 0; i < dots.length; i++) {{
+          if (i === cur) dots[i].classList.add('active');
+          else dots[i].classList.remove('active');
+        }}
+      }}
+      setInterval(function() {{
+        setSlide(cur + 1);
+      }}, 3500);
+
+      var startX = 0;
+      var banner = document.getElementById('schoolCarousel');
+      if (banner) {{
+        banner.addEventListener('touchstart', function(e) {{
+          if (e.touches.length > 0) startX = e.touches[0].clientX;
+        }}, {{passive: true}});
+        banner.addEventListener('touchend', function(e) {{
+          if (e.changedTouches.length > 0) {{
+            var diff = e.changedTouches[0].clientX - startX;
+            if (diff > 35) setSlide(cur - 1);
+            else if (diff < -35) setSlide(cur + 1);
+          }}
+        }}, {{passive: true}});
+      }}
+    }})();
+
+    // 2. 自动将当前选中的小标签平滑滚动至居中视野
     window.addEventListener('DOMContentLoaded', function() {{
       var activeEl = document.querySelector('.subtag_item.active');
       if (activeEl) {{

@@ -31,7 +31,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class HomeFragment extends PageFragment {
     private static final List<News> userCreatedPosts = new ArrayList<>();
@@ -73,6 +75,28 @@ public class HomeFragment extends PageFragment {
 
     private WebView wvSchoolPage;
     private ProgressBar pbSchoolLoading;
+
+    // 官网5大实时爬虫新闻栏目状态模型
+    public static class CrawlerState {
+        public final String id;
+        public final String catParam;
+        public final String name;
+        public final String officialSection;
+        public final List<News> list = new ArrayList<>();
+        public int currentPage = 1;
+        public int totalPages = 153;
+        public boolean hasMore = true;
+        public boolean isLoading = false;
+
+        public CrawlerState(String id, String catParam, String name, String officialSection) {
+            this.id = id;
+            this.catParam = catParam;
+            this.name = name;
+            this.officialSection = officialSection;
+        }
+    }
+
+    private final Map<String, CrawlerState> crawlerStates = new HashMap<>();
 
     private int campusCurrentPage = 1;
     private int campusTotalPages = 153;
@@ -201,15 +225,35 @@ public class HomeFragment extends PageFragment {
 
     private boolean isSchoolChannel(String channelId) {
         if (channelId == null) return false;
-        return "survey".equals(channelId) || "org".equals(channelId) || "talent".equals(channelId)
+        return "home".equals(channelId) || "survey".equals(channelId) || "org".equals(channelId) || "talent".equals(channelId)
                 || "faculty".equals(channelId) || "research".equals(channelId) || "admissions".equals(channelId)
                 || "party".equals(channelId) || "student".equals(channelId) || "culture".equals(channelId)
-                || "service".equals(channelId);
+                || "service".equals(channelId) || "library".equals(channelId) || "hr".equals(channelId)
+                || "openinfo".equals(channelId) || "mailbox".equals(channelId) || "contact".equals(channelId);
+    }
+
+    private boolean isCrawlerChannel(String channelId) {
+        return channelId != null && crawlerStates.containsKey(channelId);
+    }
+
+    private void initCrawlerStates() {
+        crawlerStates.put("campus", new CrawlerState("campus", "xxyw", "校园要闻", "聚焦晴川 · 学校要闻"));
+        crawlerStates.put("tzgg", new CrawlerState("tzgg", "tzgg", "通知公告", "聚焦晴川 · 通知公告"));
+        crawlerStates.put("jyjx", new CrawlerState("jyjx", "jyjx", "教育教学", "聚焦晴川 · 教育教学"));
+        crawlerStates.put("mtgz", new CrawlerState("mtgz", "mtgz", "媒体关注", "聚焦晴川 · 媒体关注"));
+        crawlerStates.put("xxry", new CrawlerState("xxry", "xxry", "学校荣誉", "特色晴川 · 学校荣誉"));
     }
 
     private void initNewsData(){
+        initCrawlerStates();
         recommendList = buildRecommend();
-        campusList = new ArrayList<>(NewsContentStore.campus());
+        CrawlerState campusState = crawlerStates.get("campus");
+        if (campusState != null) {
+            campusState.list.addAll(NewsContentStore.campus());
+            campusList = campusState.list;
+        } else {
+            campusList = new ArrayList<>(NewsContentStore.campus());
+        }
         campusCurrentPage = 1;
         campusTotalPages = 153;
         hasMoreCampusNews = true;
@@ -424,16 +468,13 @@ public class HomeFragment extends PageFragment {
             wvSchoolPage.setVisibility(View.GONE);
         }
 
-        // 校园要闻栏目：展示自动无限加载横幅与底栏状态
-        boolean isCampus = "campus".equals(channel.getId());
+        // 5大实时爬虫新闻栏目（校园要闻、通知公告、教育教学、媒体关注、学校荣誉）：展示自动无限加载横幅与底栏状态
+        boolean isCrawler = isCrawlerChannel(channel.getId());
         if (llCampusBanner != null) {
-            llCampusBanner.setVisibility(isCampus ? View.VISIBLE : View.GONE);
+            llCampusBanner.setVisibility(isCrawler ? View.VISIBLE : View.GONE);
         }
         if (llCampusFooter != null) {
-            llCampusFooter.setVisibility(isCampus ? View.VISIBLE : View.GONE);
-            if (isCampus) {
-                updateCampusFooterUI("📖 滑动触底自动无限加载 · 已加载 " + (campusList != null ? campusList.size() : 0) + " 条", false);
-            }
+            llCampusFooter.setVisibility(isCrawler ? View.VISIBLE : View.GONE);
         }
 
         // 热点栏目展示工匠列表，其他栏目展示图文新闻资讯
@@ -448,10 +489,18 @@ public class HomeFragment extends PageFragment {
 
             if ("recommend".equals(channel.getId())) {
                 activeNews = recommendList;
-            } else if ("campus".equals(channel.getId())) {
-                activeNews = campusList;
-                if (campusList == null || campusList.isEmpty()) {
-                    refreshCampusFirstPage(false);
+            } else if (isCrawler) {
+                CrawlerState state = crawlerStates.get(channel.getId());
+                if (state != null) {
+                    if (tvCampusBannerText != null) {
+                        tvCampusBannerText.setText("🏫 武汉晴川学院 · " + state.officialSection + " (实时同步)");
+                    }
+                    activeNews = state.list;
+                    if (state.list.isEmpty()) {
+                        refreshCrawlerFirstPage(channel.getId(), false);
+                    } else {
+                        updateCampusFooterUI("📖 滑动触底自动无限加载 · 已加载 " + state.list.size() + " 条", false);
+                    }
                 }
             } else {
                 activeNews = NewsContentStore.getNewsByChannel(channel.getId());
@@ -514,11 +563,11 @@ public class HomeFragment extends PageFragment {
             });
         }
 
-        // 点击顶部大标题【仿今日头条】：在校园频道时重新从第1页刷新
+        // 点击顶部大标题【仿今日头条】：在爬虫频道时重新从第1页刷新
         if (tvHomeTitle != null) {
             tvHomeTitle.setOnClickListener(v -> {
-                if ("campus".equals(selectedChannelId)) {
-                    refreshCampusFirstPage(true);
+                if (isCrawlerChannel(selectedChannelId)) {
+                    refreshCrawlerFirstPage(selectedChannelId, true);
                 } else {
                     selectChannelById("campus");
                 }
@@ -527,10 +576,18 @@ public class HomeFragment extends PageFragment {
 
         // 点击顶部同步条或按钮：重新从第1页爬取刷新
         if (tvCampusBannerText != null) {
-            tvCampusBannerText.setOnClickListener(v -> refreshCampusFirstPage(true));
+            tvCampusBannerText.setOnClickListener(v -> {
+                if (isCrawlerChannel(selectedChannelId)) {
+                    refreshCrawlerFirstPage(selectedChannelId, true);
+                }
+            });
         }
         if (btnCampusSync != null) {
-            btnCampusSync.setOnClickListener(v -> refreshCampusFirstPage(true));
+            btnCampusSync.setOnClickListener(v -> {
+                if (isCrawlerChannel(selectedChannelId)) {
+                    refreshCrawlerFirstPage(selectedChannelId, true);
+                }
+            });
         }
 
         // 触底手势监听：下拉后面没有了自动刷新，动态接上去，当前页+1
@@ -538,16 +595,17 @@ public class HomeFragment extends PageFragment {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (!"campus".equals(selectedChannelId) || dy <= 0) {
+                if (!isCrawlerChannel(selectedChannelId) || dy <= 0) {
                     return;
                 }
-                if (isCampusLoadingMore || !hasMoreCampusNews) {
+                CrawlerState state = crawlerStates.get(selectedChannelId);
+                if (state == null || state.isLoading || !state.hasMore) {
                     return;
                 }
                 // 检测是否滑动触底（无法继续向下滑动，后面没有了）
                 if (!recyclerView.canScrollVertically(1)) {
-                    int nextPage = campusCurrentPage + 1;
-                    loadMoreCampusNews(nextPage);
+                    int nextPage = state.currentPage + 1;
+                    loadMoreCrawlerNews(selectedChannelId, nextPage);
                 }
             }
         });
@@ -555,42 +613,43 @@ public class HomeFragment extends PageFragment {
 
     /**
      * 触底手势自动无限刷新核心逻辑：
-     * 1. 记录当前 pagenumber，下一步请求的 pagenumber = campusCurrentPage + 1
-     * 2. 调用 /xiaoyuan/page/<pagenumber>
-     * 3. 只要异步获取到内容，就把当前页计算 +1，并动态接到列表后面 (campusList.addAll)
+     * 1. 记录当前 pagenumber，下一步请求的 pagenumber = state.currentPage + 1
+     * 2. 调用 /xiaoyuan/<cat>/page/<pagenumber>
+     * 3. 只要异步获取到内容，就把当前页计算 +1，并动态接到列表后面 (state.list.addAll)
      */
-    private void loadMoreCampusNews(final int nextPage) {
-        if (isCampusLoadingMore || !hasMoreCampusNews) {
+    private void loadMoreCrawlerNews(final String channelId, final int nextPage) {
+        final CrawlerState state = crawlerStates.get(channelId);
+        if (state == null || state.isLoading || !state.hasMore) {
             return;
         }
+        state.isLoading = true;
         isCampusLoadingMore = true;
-        updateCampusFooterUI("⏳ 正在自动请求第 " + nextPage + " 页 (/xiaoyuan/page/" + nextPage + ")...", true);
+        updateCampusFooterUI("⏳ 正在自动请求【" + state.name + "】第 " + nextPage + " 页...", true);
 
-        CampusNewsStore.fetchCampusNews(nextPage, CAMPUS_PAGE_SIZE, new CampusNewsStore.PageCallback() {
+        CampusNewsStore.fetchCategoryNews(state.catParam, nextPage, CAMPUS_PAGE_SIZE, new CampusNewsStore.PageCallback() {
             @Override
             public void onSuccess(List<News> items, String queryTime, String school, int currentPage, int pageCount, int newsCount, int perPage, boolean hasMore) {
                 if (!isAdded()) {
                     return;
                 }
-                // 只要异步获取到内容，就把当前页计算 +1
-                campusCurrentPage = currentPage;
-                campusTotalPages = Math.max(pageCount, 1);
-                hasMoreCampusNews = hasMore && (currentPage < pageCount);
+                state.currentPage = currentPage;
+                state.totalPages = Math.max(pageCount, 1);
+                state.hasMore = hasMore && (currentPage < pageCount);
 
                 if (items != null && !items.isEmpty()) {
-                    // 动态加载到列表里面，自动接上去，不用切换页！
-                    campusList.addAll(items);
-                    if ("campus".equals(selectedChannelId)) {
-                        activeNews = campusList;
+                    state.list.addAll(items);
+                    if (channelId.equals(selectedChannelId)) {
+                        activeNews = state.list;
                         filterNews(etSearch != null ? etSearch.getText().toString() : "");
                     }
                 }
 
+                state.isLoading = false;
                 isCampusLoadingMore = false;
-                if (!hasMoreCampusNews) {
+                if (!state.hasMore) {
                     updateCampusFooterUI("—— 已经到底啦，去看看其他内容吧 ——", false);
                 } else {
-                    updateCampusFooterUI("📖 已加载至第 " + campusCurrentPage + " 页 (累计 " + campusList.size() + " 条) · 下滑自动加载更多", false);
+                    updateCampusFooterUI("📖 已加载至第 " + state.currentPage + " 页 (累计 " + state.list.size() + " 条) · 下滑自动加载更多", false);
                 }
             }
 
@@ -599,6 +658,7 @@ public class HomeFragment extends PageFragment {
                 if (!isAdded()) {
                     return;
                 }
+                state.isLoading = false;
                 isCampusLoadingMore = false;
                 updateCampusFooterUI("❌ 第 " + nextPage + " 页加载失败: " + reason + "，下滑可重试", false);
             }
@@ -608,38 +668,40 @@ public class HomeFragment extends PageFragment {
     /**
      * 重新从第 1 页拉取刷新
      */
-    private void refreshCampusFirstPage(final boolean userInitiated) {
-        if (!isAdded() || isCampusLoadingMore) {
+    private void refreshCrawlerFirstPage(final String channelId, final boolean userInitiated) {
+        final CrawlerState state = crawlerStates.get(channelId);
+        if (state == null || !isAdded() || state.isLoading) {
             return;
         }
+        state.isLoading = true;
         isCampusLoadingMore = true;
-        campusCurrentPage = 1;
-        hasMoreCampusNews = true;
+        state.currentPage = 1;
+        state.hasMore = true;
         if (btnCampusSync != null) {
             btnCampusSync.setEnabled(false);
             btnCampusSync.setText("爬取中...");
         }
-        updateCampusFooterUI("⏳ 正在请求第 1 页 (/xiaoyuan/page/1)...", true);
+        updateCampusFooterUI("⏳ 正在请求【" + state.name + "】第 1 页...", true);
         if (userInitiated) {
-            Toast.makeText(requireContext(), "正在从第 1 页重新爬取刷新...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "正在从第 1 页重新爬取刷新【" + state.name + "】...", Toast.LENGTH_SHORT).show();
         }
 
-        CampusNewsStore.fetchCampusNews(1, CAMPUS_PAGE_SIZE, new CampusNewsStore.PageCallback() {
+        CampusNewsStore.fetchCategoryNews(state.catParam, 1, CAMPUS_PAGE_SIZE, new CampusNewsStore.PageCallback() {
             @Override
             public void onSuccess(List<News> items, String queryTime, String school, int currentPage, int pageCount, int newsCount, int perPage, boolean hasMore) {
                 if (!isAdded()) {
                     return;
                 }
-                campusCurrentPage = currentPage;
-                campusTotalPages = Math.max(pageCount, 1);
-                hasMoreCampusNews = hasMore && (currentPage < pageCount);
+                state.currentPage = currentPage;
+                state.totalPages = Math.max(pageCount, 1);
+                state.hasMore = hasMore && (currentPage < pageCount);
 
-                campusList.clear();
+                state.list.clear();
                 if (items != null && !items.isEmpty()) {
-                    campusList.addAll(items);
+                    state.list.addAll(items);
                 }
-                if ("campus".equals(selectedChannelId)) {
-                    activeNews = campusList;
+                if (channelId.equals(selectedChannelId)) {
+                    activeNews = state.list;
                     filterNews(etSearch != null ? etSearch.getText().toString() : "");
                     rvNews.scrollToPosition(0);
                 }
@@ -649,13 +711,14 @@ public class HomeFragment extends PageFragment {
                     btnCampusSync.setText("🔄 刷新第1页");
                 }
                 if (tvCampusBannerText != null) {
-                    tvCampusBannerText.setText("🏫 " + school + " · 触底自动无限加载 · " + queryTime);
+                    tvCampusBannerText.setText("🏫 " + school + " · " + state.officialSection + " · " + queryTime);
                 }
 
+                state.isLoading = false;
                 isCampusLoadingMore = false;
-                updateCampusFooterUI("📖 已加载第 1 页 (共 " + campusList.size() + " 条) · 下滑触底自动加载更多", false);
+                updateCampusFooterUI("📖 已加载第 1 页 (共 " + state.list.size() + " 条) · 下滑触底自动加载更多", false);
                 if (userInitiated) {
-                    Toast.makeText(requireContext(), "第 1 页刷新成功！已加载 " + campusList.size() + " 条", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "【" + state.name + "】第 1 页刷新成功！已加载 " + state.list.size() + " 条", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -664,6 +727,7 @@ public class HomeFragment extends PageFragment {
                 if (!isAdded()) {
                     return;
                 }
+                state.isLoading = false;
                 isCampusLoadingMore = false;
                 if (btnCampusSync != null) {
                     btnCampusSync.setEnabled(true);
@@ -675,6 +739,10 @@ public class HomeFragment extends PageFragment {
                 }
             }
         });
+    }
+
+    private void refreshCampusFirstPage(final boolean userInitiated) {
+        refreshCrawlerFirstPage("campus", userInitiated);
     }
 
     private void updateCampusFooterUI(String text, boolean isLoading) {
