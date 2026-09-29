@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>有好券 - 领券中心</title>
+  <link rel="stylesheet" href="css/shop.css">
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #FF2A68 0%, #FF5E3A 100%);">
+    <div class="banner_badge">🎟️ 大额神券 · 抢先领取 · 下单立减</div>
+    <div class="banner_title">有好券 · 领券中心</div>
+    <div class="banner_subtitle">每日 0 点、10 点、20 点限量发放全平台满减券</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>🔥 今日必抢神券</span>
+      </div>
+
+      <div class="coupon_card">
+        <div class="coupon_left">
+          <div class="coupon_amount"><small>￥</small>20</div>
+          <div class="coupon_cond">满 99 可用</div>
+        </div>
+        <div class="coupon_right">
+          <div class="coupon_name">全品类无门槛通用券</div>
+          <div class="coupon_desc">商城全场实物商品均可使用</div>
+          <button class="btn btn_primary coupon_btn" onclick="claimCoupon(this, 20)">立即领取</button>
+        </div>
+      </div>
+
+      <div class="coupon_card">
+        <div class="coupon_left">
+          <div class="coupon_amount"><small>￥</small>50</div>
+          <div class="coupon_cond">满 199 可用</div>
+        </div>
+        <div class="coupon_right">
+          <div class="coupon_name">潮流数码与生活美学券</div>
+          <div class="coupon_desc">限数码配件、居家生活类商品</div>
+          <button class="btn btn_primary coupon_btn" onclick="claimCoupon(this, 50)">立即领取</button>
+        </div>
+      </div>
+
+      <div class="coupon_card">
+        <div class="coupon_left">
+          <div class="coupon_amount"><small>￥</small>100</div>
+          <div class="coupon_cond">满 499 可用</div>
+        </div>
+        <div class="coupon_right">
+          <div class="coupon_name">大额重磅狂欢神券</div>
+          <div class="coupon_desc">智能家电、大牌箱包专享</div>
+          <button class="btn btn_primary coupon_btn" onclick="claimCoupon(this, 100)">立即领取</button>
+        </div>
+      </div>
+
+      <div class="coupon_card">
+        <div class="coupon_left" style="background: #9C27B0;">
+          <div class="coupon_amount"><small>￥</small>10</div>
+          <div class="coupon_cond">满 49 可用</div>
+        </div>
+        <div class="coupon_right">
+          <div class="coupon_name">美味零食生鲜专享券</div>
+          <div class="coupon_desc">休闲食品、膨化坚果满减</div>
+          <button class="btn btn_primary coupon_btn" onclick="claimCoupon(this, 10)">立即领取</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

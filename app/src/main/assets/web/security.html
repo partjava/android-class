@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>账号与安全中心</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .security_list_item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #ECEFF1;
+      font-size: 14px;
+    }
+    .security_list_item:last-child {
+      border-bottom: none;
+    }
+    .sec_val {
+      font-size: 13px;
+      color: #78909C;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #00897B 0%, #004D40 100%);">
+    <div class="banner_badge">🛡️ 安全评分：95分 · 极高保障</div>
+    <div class="banner_title">账号与安全中心</div>
+    <div class="banner_subtitle">实时守护您的账号资产安全，拦截可疑登录设备</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>🔐 基础安全设置</span>
+      </div>
+
+      <div class="security_list_item" onclick="showToast('正在前往绑定手机修改流程...')">
+        <span>密保手机</span>
+        <div class="sec_val">138****0001 ❯</div>
+      </div>
+
+      <div class="security_list_item" onclick="showToast('正在前往修改登录密码...')">
+        <span>登录密码</span>
+        <div class="sec_val">已设置 (定期更新更安全) ❯</div>
+      </div>
+
+      <div class="security_list_item" onclick="showToast('双重身份验证已处于开启状态')">
+        <span>双重身份验证 (2FA)</span>
+        <div class="sec_val" style="color: #4CAF50;">已开启 ❯</div>
+      </div>
+
+      <div class="security_list_item" onclick="showToast('当前设备：Android 模拟器 (本机)')">
+        <span>当前登录设备管理</span>
+        <div class="sec_val">1 台在线 ❯</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card_title">
+        <span style="color: #D32F2F;">⚠️ 危险操作</span>
+      </div>
+      <div class="security_list_item" onclick="showToast('如需注销账号，请联系人工客服核验身份')">
+        <span style="color: #D32F2F;">注销当前账号</span>
+        <div class="sec_val" style="color: #D32F2F;">永久删除数据 ❯</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

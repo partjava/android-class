@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>飞猪旅行 - 特价机票·酒店度假</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .trip_search_box {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 16px;
+      margin: -14px 12px 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .trip_route {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ECEFF1;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+    .city_name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #212121;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #FF9100 0%, #FF3D00 100%);">
+    <div class="banner_badge">✈️ 假一赔百 · 订贵退差 · 极速退改</div>
+    <div class="banner_title">飞猪旅行 · 假期随心出发</div>
+    <div class="banner_subtitle">学生专享认证特惠，领 100 元机票代金券</div>
+  </div>
+
+  <div class="trip_search_box">
+    <div class="trip_route">
+      <div>
+        <div style="font-size: 11px; color: #78909C;">出发地</div>
+        <div class="city_name">武汉 (WUH)</div>
+      </div>
+      <div style="font-size: 22px;">✈️</div>
+      <div style="text-align: right;">
+        <div style="font-size: 11px; color: #78909C;">目的地</div>
+        <div class="city_name">北京 (BJS)</div>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #37474F; margin-bottom: 14px;">
+      <span>📅 10月01日 (国庆黄金周)</span>
+      <span style="color: #FF3D00; font-weight: bold;">经济舱 2.3折起</span>
+    </div>
+    <button class="btn btn_primary btn_block" style="background: #FF9100;" onclick="showToast('🔍 正在为您检索全国特价航线...')">搜索低价机票 / 酒店</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>🏖️ 热门度假路线特惠</span>
+      </div>
+      <div class="product_card">
+        <div class="product_cover" style="height: 130px;">
+          <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500" alt="三亚海滩">
+          <div class="product_tag" style="background: #00ACC1;">纯玩无购物</div>
+        </div>
+        <div class="product_info">
+          <div class="product_name">三亚亚特兰蒂斯 5天4晚 豪华海景房 双人自助早餐+水世界门票</div>
+          <div class="product_price_row">
+            <span class="price_now"><small>￥</small>2399.00</span>
+            <button class="btn btn_primary" style="padding: 2px 10px; font-size: 11px; background: #FF9100;" onclick="showToast('已进入飞猪急速预订通道！')">预订</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

@@ -75,19 +75,11 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         itemAccountSafe.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("账号与安全")
-                    .setMessage("绑定手机号：138****0001\n安全等级：较高\n双重认证：已开启\n登录设备：本机 (Android Emulator)")
-                    .setPositiveButton("确定", null)
-                    .show();
+            WebActivity.open(this, "账号与安全中心", "file:///android_asset/web/security.html");
         });
 
         itemPrivacy.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("隐私设置")
-                    .setMessage("· 允许通过手机号找到我：开启\n· 个性化内容推荐：开启\n· 允许陌生人发私信：开启\n· 历史浏览记录同步：开启")
-                    .setPositiveButton("确定", null)
-                    .show();
+            WebActivity.open(this, "用户协议与隐私政策", "file:///android_asset/web/privacy.html");
         });
 
         itemDarkMode.setOnClickListener(v -> {
@@ -210,14 +202,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         itemPrivacySimple.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("隐私政策摘要")
-                    .setMessage("本应用遵循个人信息保护规范，严格在本地沙盒环境存储用户信息、点赞记录与个人资料。不会私自上传任何第三方服务器。")
-                    .setPositiveButton("查看完整政策", (dialog, which) -> {
-                        Toast.makeText(this, "本地离线演示环境：已加载隐私条款", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("返回", null)
-                    .show();
+            WebActivity.open(this, "隐私政策与个人信息保护", "file:///android_asset/web/privacy.html");
         });
 
         itemPersonalInfo.setOnClickListener(v -> {
@@ -250,11 +235,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         itemAbout.setOnClickListener(v -> {
-            new AlertDialog.Builder(this)
-                    .setTitle("关于今日头条")
-                    .setMessage("《Android移动应用开发》课程大作业实验项目\n技术实现：\n· 单Activity + 多Fragment架构\n· 离线视频流播放器 (TextureView + MediaPlayer)\n· 瀑布流商品列表与本地购物车\n· SharedPreferences 与 JSON 离线数据存储\n开发团队：Android 课程开发组")
-                    .setPositiveButton("确定", null)
-                    .show();
+            WebActivity.open(this, "关于仿今日头条", "file:///android_asset/web/about.html");
         });
 
         //退出登录

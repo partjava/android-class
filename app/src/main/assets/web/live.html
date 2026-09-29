@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>淘宝直播 - 官方好物实况专场</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .live_screen {
+      position: relative;
+      height: 280px;
+      background: #1A1A1A url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800') center center / cover no-repeat;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .live_overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.7) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px;
+    }
+    .streamer_bar {
+      display: flex;
+      align-items: center;
+      background: rgba(0,0,0,0.5);
+      border-radius: 20px;
+      padding: 4px 10px 4px 4px;
+      width: fit-content;
+      color: #FFFFFF;
+    }
+    .streamer_avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #FF3B30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      margin-right: 8px;
+    }
+    .live_danmaku {
+      color: #FFFFFF;
+      font-size: 12px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      line-height: 1.8;
+      max-height: 90px;
+      overflow: hidden;
+    }
+    .danmaku_item {
+      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      padding: 2px 8px;
+      margin-bottom: 4px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #E02020 0%, #FA6400 100%);">
+    <div class="banner_badge">🔴 官方直播 · 主播带货 · 专属骨折价</div>
+    <div class="banner_title">淘宝直播 · 爆款好物实况</div>
+    <div class="banner_subtitle">正在直播中，进房立领 10 元专属看播红包</div>
+  </div>
+
+  <div class="container">
+    <div class="live_screen">
+      <div class="live_overlay">
+        <div class="streamer_bar">
+          <div class="streamer_avatar">🎙️</div>
+          <div>
+            <div style="font-size: 12px; font-weight: bold;">官方旗舰主播·小晴</div>
+            <div style="font-size: 10px; opacity: 0.8;">🔥 12.8 万人正在观看</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="live_danmaku">
+            <div><span class="danmaku_item">用户8392: 刚拍了耳机，什么时候发货呀？</span></div>
+            <div><span class="danmaku_item">晴天娃娃: 这个台灯确实好看，主播给力！</span></div>
+            <div><span class="danmaku_item" style="color: #FFEB3B;">系统消息: 恭喜 晴川学子 抢到 20 元免单红包</span></div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button class="btn btn_primary" style="flex: 1;" onclick="showToast('🎁 恭喜领取看播专属 10 元红包！')">🧧 领看播红包</button>
+            <button class="btn btn_gold" style="flex: 1;" onclick="showToast('🛒 正在连线主播推荐商品专属通道...')">🛍️ 购买当前讲解好物</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

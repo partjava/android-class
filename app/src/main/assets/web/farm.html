@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>芭芭农场 - 种果树免费领水果</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .farm_orchard {
+      background: linear-gradient(180deg, #A8E6CF 0%, #DCEDC1 100%);
+      border-radius: 16px;
+      padding: 24px 16px;
+      text-align: center;
+      position: relative;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.2);
+    }
+    .tree_icon {
+      font-size: 72px;
+      display: inline-block;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .progress_box {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 20px;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      width: 80%;
+    }
+    .progress_track {
+      flex: 1;
+      height: 8px;
+      background: #C8E6C9;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress_fill {
+      height: 100%;
+      background: #4CAF50;
+      width: 65%;
+      transition: width 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%);">
+    <div class="banner_badge">🍎 真实水果 · 包邮送到家</div>
+    <div class="banner_title">芭芭农场 · 趣味果园</div>
+    <div class="banner_subtitle">每天浇水施肥，果树成熟即刻免费兑换一箱鲜果！</div>
+  </div>
+
+  <div class="stats_row">
+    <div class="stat_col">
+      <div class="stat_num" id="water_count" style="color: #27AE60;">100g</div>
+      <div class="stat_label">现有水滴</div>
+    </div>
+    <div class="stat_col">
+      <div class="stat_num" style="color: #E67E22;">阿克苏苹果</div>
+      <div class="stat_label">当前种植</div>
+    </div>
+    <div class="stat_col">
+      <div class="stat_num" style="color: #2980B9;">开花期</div>
+      <div class="stat_label">果树阶段</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="farm_orchard">
+      <div class="tree_icon" id="crop_tree">🌳</div>
+      <div>
+        <div class="progress_box">
+          <span style="font-size: 11px; font-weight: bold; color: #2E7D32;">成长进度</span>
+          <div class="progress_track">
+            <div class="progress_fill" id="crop_progress"></div>
+          </div>
+          <span style="font-size: 11px; font-weight: bold; color: #2E7D32;" id="crop_percent">65%</span>
+        </div>
+      </div>
+      <div style="margin-top: 18px;">
+        <button class="btn btn_green" style="padding: 10px 32px; font-size: 16px;" onclick="waterCrop(this)">💧 浇水 10g</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card_title">
+        <span>📋 每日水滴任务</span>
+      </div>
+      <div class="coupon_card" style="border: 1px solid #C8E6C9; background: #F1F8E9;">
+        <div class="coupon_left" style="background: #4CAF50; width: 70px;">
+          <div style="font-size: 14px; font-weight: bold;">+20g</div>
+          <div style="font-size: 10px;">水滴</div>
+        </div>
+        <div class="coupon_right">
+          <div class="coupon_name">浏览商城热卖商品 15 秒</div>
+          <div class="coupon_desc">去逛逛精选大牌折扣好物</div>
+          <button class="btn btn_green coupon_btn" onclick="showToast('获得任务水滴 +20g！'); farmWater+=20; document.getElementById('water_count').innerText=farmWater+'g';">去完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

@@ -90,7 +90,6 @@ public class MineFragment extends PageFragment {
                 R.id.iv_msg,
                 R.id.ll_msg_private,
                 R.id.iv_friend,
-                R.id.ll_service,
                 R.id.btn_go_comment,
                 R.id.tv_chatroom_title,
                 R.id.tv_chatroom_more,
@@ -98,6 +97,9 @@ public class MineFragment extends PageFragment {
         }) {
             click(id, () -> startActivity(new Intent(requireContext(), MsgActivity.class)));
         }
+
+        // 客服中心 -> 帮助中心与客服网页
+        click(R.id.ll_service, () -> WebActivity.open(requireContext(), "帮助中心与客服", "file:///android_asset/web/help.html"));
 
         // 浏览历史与书架
         for (int id : new int[]{R.id.ll_history, R.id.ll_book}) {
@@ -136,13 +138,17 @@ public class MineFragment extends PageFragment {
         // 我的功能快捷列表
         click(R.id.tv_all_func, () -> new AlertDialog.Builder(requireContext())
                 .setTitle("我的功能")
-                .setItems(new String[]{"浏览历史", "收藏", "本地作品", "购物车", "本地订单"}, (d, w) -> {
+                .setItems(new String[]{"浏览历史", "收藏", "本地作品", "购物车", "本地订单", "会员中心", "帮助中心与客服"}, (d, w) -> {
                     if (w < 3) {
                         ContentLibraryActivity.open(requireContext(), new String[]{"history", "saved", "posts"}[w]);
                     } else if (w == 3) {
                         ShoppingDialogs.showCart(requireContext());
-                    } else {
+                    } else if (w == 4) {
                         ShoppingDialogs.showOrders(requireContext());
+                    } else if (w == 5) {
+                        WebActivity.open(requireContext(), "会员中心", "file:///android_asset/web/vip.html");
+                    } else if (w == 6) {
+                        WebActivity.open(requireContext(), "帮助中心与客服", "file:///android_asset/web/help.html");
                     }
                 }).show());
 

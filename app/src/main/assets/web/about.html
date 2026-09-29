@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>关于我们 - 仿今日头条</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .app_logo_box {
+      text-align: center;
+      padding: 24px 0 16px;
+    }
+    .logo_badge {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #FF3B30 0%, #D32F2F 100%);
+      border-radius: 18px;
+      color: #FFFFFF;
+      font-size: 30px;
+      font-weight: bold;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+      margin-bottom: 8px;
+    }
+    .timeline {
+      position: relative;
+      padding-left: 20px;
+      margin-top: 10px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: #E0E0E0;
+    }
+    .timeline_item {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .timeline_item::before {
+      content: '';
+      position: absolute;
+      left: -18px;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #D32F2F;
+    }
+    .ver_tag {
+      font-weight: bold;
+      color: #212121;
+      font-size: 13px;
+    }
+    .ver_date {
+      font-size: 11px;
+      color: #9E9E9E;
+      margin-left: 6px;
+    }
+    .ver_desc {
+      font-size: 12px;
+      color: #616161;
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+    .license_box {
+      background: #F8F9FA;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: #546E7A;
+      border-left: 3px solid #D32F2F;
+    }
+  </style>
+</head>
+<body>
+  <div class="app_logo_box">
+    <div class="logo_badge">头条</div>
+    <div style="font-size: 18px; font-weight: bold; color: #1C1C1E;">仿今日头条客户端</div>
+    <div style="font-size: 12px; color: #8E8E93; margin-top: 2px;">Version 2.4.0 (Build 2026.09.29)</div>
+  </div>
+
+  <div class="container">
+    <!-- 产品介绍 -->
+    <div class="card">
+      <div class="card_title">
+        <span>📖 一、产品与技术架构介绍</span>
+      </div>
+      <div style="font-size: 13px; color: #424242; line-height: 1.6;">
+        《仿今日头条》是基于《Android 移动应用开发》课程教学设计的高水准全功能实战项目。采用单 Activity + 多 Fragment 架构体系，深度融合了官方真实数据拉取、离线短视频播放引擎、瀑布流电商系统与 Hybrid 跨平台 Web 混合容器。
+      </div>
+      <div class="rule_item" style="margin-top: 8px;">
+        <div class="rule_title">🔥 核心架构亮点</div>
+        <div class="rule_content">
+          · 晴川官网真实数据直连：Python 后端高并发异步解析与多标签动态挂载。<br>
+          · 异步分页流式加载：标准化 pagenumber 触底预加载计算。<br>
+          · 原生-Web 深度桥接：注入 JavascriptInterface，实现原生 Toast、页面导航与数据联动。
+        </div>
+      </div>
+    </div>
+
+    <!-- 版本更新记录 -->
+    <div class="card">
+      <div class="card_title">
+        <span>🚀 二、版本更新记录 (Changelog)</span>
+      </div>
+      <div class="timeline">
+        <div class="timeline_item">
+          <div><span class="ver_tag">v2.4.0 (当前版本)</span><span class="ver_date">2026-09-29</span></div>
+          <div class="ver_desc">【重大升级】上线 assets/web 全套 20+ 商城专场与个人中心 Web 页面；打通原生与 JS 双向桥接交互；支持多级标签新闻自适应。</div>
+        </div>
+        <div class="timeline_item">
+          <div><span class="ver_tag">v2.3.0</span><span class="ver_date">2026-09-27</span></div>
+          <div class="ver_desc">接入武汉晴川学院官网真实校园要闻与各大学院资讯；优化离线视频播放器 TextureView 渲染。</div>
+        </div>
+        <div class="timeline_item">
+          <div><span class="ver_tag">v2.0.0</span><span class="ver_date">2026-09-24</span></div>
+          <div class="ver_desc">重构底部五大导航栏架构，新增商城瀑布流、本地购物车与聊天室互动。</div>
+        </div>
+        <div class="timeline_item">
+          <div><span class="ver_tag">v1.0.0</span><span class="ver_date">2026-09-18</span></div>
+          <div class="ver_desc">初始版本立项，完成基础登录认证与 SharedPreferences 数据持久化。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 开发团队信息 -->
+    <div class="card">
+      <div class="card_title">
+        <span>👥 三、课程设计开发团队</span>
+      </div>
+      <div style="font-size: 13px; color: #424242; line-height: 1.7;">
+        <strong>项目研发：</strong>Android 移动应用开发课程大作业实战小组<br>
+        <strong>负责成员：</strong>凝墨（核心架构与前端混合交互）<br>
+        <strong>指导教师：</strong>专业教研室 Android 课程教学团队<br>
+        <strong>项目性质：</strong>武汉晴川学院 计算机与软件类课程大作业设计
+      </div>
+    </div>
+
+    <!-- 开源许可与第三方组件 -->
+    <div class="card">
+      <div class="card_title">
+        <span>📄 四、开源软件与知识产权许可</span>
+      </div>
+      <div style="font-size: 12px; color: #616161;">本工程遵循 Apache License 2.0 规范，引用的第三方开源组件清单如下：</div>
+
+      <div class="license_box">
+        <strong>· Square OkHttp 4.x</strong><br>
+        高效网络请求客户端框架 (Apache License 2.0)
+      </div>
+      <div class="license_box">
+        <strong>· Google Gson & Material Components</strong><br>
+        JSON 序列化解析库与官方 Material Design 交互组件 (Apache License 2.0)
+      </div>
+      <div class="license_box">
+        <strong>· Bumptech Glide 4.x</strong><br>
+        Android 高效图片加载与多级内存缓存框架 (BSD / MIT License)
+      </div>
+      <div class="license_box">
+        <strong>· AndroidX Jetpack Support Libraries</strong><br>
+        Fragment、RecyclerView、ConstraintLayout 架构组件 (Apache License 2.0)
+      </div>
+    </div>
+
+    <div class="card" style="text-align: center; color: #8E8E93; font-size: 11px;">
+      <div>仿今日头条 Android 客户端 · 严谨教学规范制作</div>
+      <div style="margin-top: 4px;">Copyright © 2026 All Rights Reserved</div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

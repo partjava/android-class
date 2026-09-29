@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>全部分类 - 商品类目导航</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .cat_grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .cat_item {
+      background: #F8F9FA;
+      border-radius: 10px;
+      padding: 14px 6px;
+      text-align: center;
+      border: 1px solid #ECEFF1;
+      cursor: pointer;
+    }
+    .cat_icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+    .cat_name {
+      font-size: 12px;
+      font-weight: 500;
+      color: #37474F;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);">
+    <div class="banner_badge">📑 全品类导航 · 一站式精选</div>
+    <div class="banner_title">全部分类与频道</div>
+    <div class="banner_subtitle">点击下方品类，快速检索心仪优质好物</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>📦 热门商品大类</span>
+      </div>
+
+      <div class="cat_grid">
+        <div class="cat_item" onclick="showToast('正在为您筛选：数码 3C 专区好物')">
+          <div class="cat_icon">💻</div>
+          <div class="cat_name">数码 3C</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：家居生活 专区好物')">
+          <div class="cat_icon">🛋️</div>
+          <div class="cat_name">家居生活</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：美食生鲜 专区好物')">
+          <div class="cat_icon">🍔</div>
+          <div class="cat_name">休闲美食</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：潮流穿搭 专区好物')">
+          <div class="cat_icon">👗</div>
+          <div class="cat_name">服饰穿搭</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：美妆个护 专区好物')">
+          <div class="cat_icon">💄</div>
+          <div class="cat_name">美妆个护</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：运动户外 专区好物')">
+          <div class="cat_icon">⚽</div>
+          <div class="cat_name">运动户外</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：母婴玩具 专区好物')">
+          <div class="cat_icon">🧸</div>
+          <div class="cat_name">母婴亲子</div>
+        </div>
+        <div class="cat_item" onclick="showToast('正在为您筛选：图书文娱 专区好物')">
+          <div class="cat_icon">📚</div>
+          <div class="cat_name">图书文创</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

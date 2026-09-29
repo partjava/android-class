@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>阿里拍卖 - 珍品好物竞价拍卖</title>
+  <link rel="stylesheet" href="css/shop.css">
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #4A148C 0%, #7B1FA2 100%);">
+    <div class="banner_badge">🔨 权威保真 · 司法直供 · 1元起拍</div>
+    <div class="banner_title">阿里拍卖 · 珍品甄选</div>
+    <div class="banner_subtitle">汇聚文玩字画、数码数码典藏、房产豪车竞价</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>🔥 正在竞拍热标</span>
+        <span class="more" style="color: #E91E63;">正在竞价中</span>
+      </div>
+
+      <div class="product_card">
+        <div class="product_cover" style="height: 160px;">
+          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500" alt="复古机械手表">
+          <div class="product_tag" style="background: #9C27B0;">18 次出价</div>
+        </div>
+        <div class="product_info">
+          <div class="product_name">瑞士制造 经典背透机械手表 蓝宝石镜面 典藏限量版</div>
+          <div style="background: #F3E5F5; padding: 8px 12px; border-radius: 8px; margin: 8px 0;">
+            <div style="font-size: 11px; color: #7B1FA2;">当前领先价</div>
+            <div style="font-size: 22px; font-weight: bold; color: #4A148C;" id="current_bid_price">￥1850</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn_primary" style="flex: 1; background: #7B1FA2;" onclick="bidProduct(this, 50)">出价 +￥50</button>
+            <button class="btn btn_gold" style="flex: 1;" onclick="bidProduct(this, 100)">出价 +￥100</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

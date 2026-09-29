@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>帮助与反馈中心</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .faq_item {
+      padding: 12px 0;
+      border-bottom: 1px solid #ECEFF1;
+      cursor: pointer;
+    }
+    .faq_q {
+      font-weight: bold;
+      color: #263238;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .faq_a {
+      font-size: 13px;
+      color: #546E7A;
+      margin-top: 6px;
+      line-height: 1.6;
+      display: none;
+    }
+    .faq_item.open .faq_a {
+      display: block;
+    }
+    .faq_item.open .faq_arrow {
+      transform: rotate(90deg);
+    }
+    .faq_arrow {
+      transition: transform 0.2s;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #0288D1 0%, #01579B 100%);">
+    <div class="banner_badge">💬 智能解答 · 24小时客服响应</div>
+    <div class="banner_title">帮助中心与常见问题</div>
+    <div class="banner_subtitle">遇到使用问题？点击常见问题查看图文解答</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>❓ 常见问题 FAQ (点击查看答案)</span>
+      </div>
+
+      <div class="faq_item" onclick="this.classList.toggle('open')">
+        <div class="faq_q">
+          <span>1. 如何切换学校官网的各个频道与小标签？</span>
+          <span class="faq_arrow">❯</span>
+        </div>
+        <div class="faq_a">在 App 首页顶部滑动点击对应频道（如“人才培养”、“师资队伍”），进入页面后在风景大横幅下方即可左右滑动点击具体的二级小标签进行无缝浏览。</div>
+      </div>
+
+      <div class="faq_item" onclick="this.classList.toggle('open')">
+        <div class="faq_q">
+          <span>2. 校园要闻如何加载更多新闻？</span>
+          <span class="faq_arrow">❯</span>
+        </div>
+        <div class="faq_a">切换至“校园要闻”频道，手指往上滑动列表到底部，App 会自动向学校官网异步发起下一页请求并自动拼接到列表末尾，页码自动计算 +1。</div>
+      </div>
+
+      <div class="faq_item" onclick="this.classList.toggle('open')">
+        <div class="faq_q">
+          <span>3. 在商城领取的优惠券如何使用？</span>
+          <span class="faq_arrow">❯</span>
+        </div>
+        <div class="faq_a">在领券中心领取的满减券会自动存入您的个人卡包，在商城挑选商品点击“立即购买”提交订单时，系统将自动匹配最优满减金额。</div>
+      </div>
+    </div>
+
+    <!-- 意见反馈表单 -->
+    <div class="card">
+      <div class="card_title">
+        <span>📝 意见反馈</span>
+      </div>
+      <textarea id="feedback_content" style="width: 100%; height: 80px; border: 1px solid #CFD8DC; border-radius: 8px; padding: 10px; font-size: 13px; outline: none; resize: none;" placeholder="请详细描述您遇到的问题或宝贵改进意见..."></textarea>
+      <div style="margin-top: 10px;">
+        <button class="btn btn_primary btn_block" onclick="submitFeedback()">提交反馈</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+  <script>
+    function submitFeedback() {
+      var text = document.getElementById('feedback_content').value.trim();
+      if (!text) {
+        showToast("请输入您的反馈意见内容");
+        return;
+      }
+      showToast("✅ 感谢您的宝贵建议！我们已收到并会尽快处理。");
+      document.getElementById('feedback_content').value = "";
+    }
+  </script>
+</body>
+</html>

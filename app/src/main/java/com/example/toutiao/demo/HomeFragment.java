@@ -11,7 +11,9 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -22,6 +24,11 @@ import android.view.ViewGroup;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import android.graphics.Bitmap;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +39,7 @@ public class HomeFragment extends PageFragment {
         userCreatedPosts.add(0, news);
     }
 
-    private int selectedTab = R.id.tab_recommend;
+    private String selectedChannelId = "recommend";
     private List<News> activeNews;
     private String savedQuery = "";
     @Override public View onCreateView(android.view.LayoutInflater inflater, ViewGroup parent, Bundle state) {
@@ -48,14 +55,15 @@ public class HomeFragment extends PageFragment {
 
     private List<News> recommendList;//推荐
     private List<News> campusList;//校园 (对接 Flask 本地服务)
-    private List<News> videoSmallList;//小视频
-    private List<News> beijingList;//北京
-    private List<News> entertainList;//娱乐
 
     private List<Craftsman> craftsmanList;
     private CraftsmanAdapter craftAdapter;
 
-    private TextView tabRecommend, tabCampus, tabVideoSmall, tabBeijing, tabHot, tabEntertain;
+    private HorizontalScrollView hsvTabBar;
+    private LinearLayout llTabContainer;
+    private View btnChannelManage;
+    private List<Channel> myChannels;
+
     private TextView tvHomeTitle;
     private View llCampusBanner;
     private TextView tvCampusBannerText, btnCampusSync;
@@ -63,7 +71,9 @@ public class HomeFragment extends PageFragment {
     private ProgressBar pbCampusLoading;
     private TextView tvCampusFooterText;
 
-    private TextView[] allTabs;
+    private WebView wvSchoolPage;
+    private ProgressBar pbSchoolLoading;
+
     private int campusCurrentPage = 1;
     private int campusTotalPages = 153;
     private boolean isCampusLoadingMore = false;
@@ -78,15 +88,16 @@ public class HomeFragment extends PageFragment {
         initNewsData();
         initCraftData();
         bindEvent();
-        int restoreTab = savedInstanceState == null ? selectedTab : savedInstanceState.getInt("tab", selectedTab);
+
+        String restoreChannelId = savedInstanceState == null ? selectedChannelId : savedInstanceState.getString("channel_id", selectedChannelId);
         String query = savedInstanceState == null ? savedQuery : savedInstanceState.getString("query", "");
-        View targetTab = findViewById(restoreTab);
-        if (targetTab != null) {
-            targetTab.performClick();
-        } else {
-            findViewById(R.id.tab_recommend).performClick();
+
+        buildChannelTabs();
+        selectChannelById(restoreChannelId);
+
+        if (etSearch != null) {
+            etSearch.setText(query);
         }
-        etSearch.setText(query);
     }
 
     @Override
@@ -100,7 +111,7 @@ public class HomeFragment extends PageFragment {
     /** 重建推荐列表：发布页回来（用户动态可能新增）、接口头条到达共用这一个入口 */
     private void refreshRecommend() {
         recommendList = buildRecommend();
-        if (activeNews == null || selectedTab == R.id.tab_recommend) {
+        if (activeNews == null || "recommend".equals(selectedChannelId)) {
             activeNews = recommendList;
             filterNews(etSearch != null ? etSearch.getText().toString() : "");
         }
@@ -120,15 +131,80 @@ public class HomeFragment extends PageFragment {
         pbCampusLoading = findViewById(R.id.pb_campus_loading);
         tvCampusFooterText = findViewById(R.id.tv_campus_footer_text);
 
-        tabRecommend = findViewById(R.id.tab_recommend);
-        tabCampus = findViewById(R.id.tab_campus);
-        tabVideoSmall = findViewById(R.id.tab_video_small);
-        tabBeijing = findViewById(R.id.tab_beijing);
-        tabHot = findViewById(R.id.tab_hot);
-        tabEntertain = findViewById(R.id.tab_entertain);
+        wvSchoolPage = findViewById(R.id.wv_school_page);
+        pbSchoolLoading = findViewById(R.id.pb_school_loading);
+        initSchoolWebView();
 
-        allTabs = new TextView[]{tabRecommend, tabCampus, tabVideoSmall,
-                tabBeijing, tabHot, tabEntertain};
+        hsvTabBar = findViewById(R.id.hsv_tab_bar);
+        llTabContainer = findViewById(R.id.ll_tab_container);
+        btnChannelManage = findViewById(R.id.btn_channel_manage);
+    }
+
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private void initSchoolWebView() {
+        if (wvSchoolPage == null) return;
+        WebSettings ws = wvSchoolPage.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setDomStorageEnabled(true);
+        ws.setUseWideViewPort(true);
+        ws.setLoadWithOverviewMode(true);
+        ws.setSupportZoom(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
+        ws.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+        wvSchoolPage.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (request != null && request.getUrl() != null) {
+                    return handleSchoolUrl(view, request.getUrl().toString());
+                }
+                return false;
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleSchoolUrl(view, url);
+            }
+
+            private boolean handleSchoolUrl(WebView view, String url) {
+                if (url != null) {
+                    if (url.startsWith("http://10.0.2.2:5000/school_page/") || url.startsWith("/school_page/")) {
+                        String full = url.startsWith("/") ? ("http://10.0.2.2:5000" + url) : url;
+                        view.loadUrl(full);
+                        return true;
+                    }
+                    if (url.startsWith("https://www.qcuwh.cn/") || url.startsWith("http://www.qcuwh.cn/")) {
+                        view.loadUrl("http://10.0.2.2:5000/school_page/" + selectedChannelId + "?url=" + android.net.Uri.encode(url));
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                if (pbSchoolLoading != null) pbSchoolLoading.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (pbSchoolLoading != null) pbSchoolLoading.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                if (pbSchoolLoading != null) pbSchoolLoading.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private boolean isSchoolChannel(String channelId) {
+        if (channelId == null) return false;
+        return "survey".equals(channelId) || "org".equals(channelId) || "talent".equals(channelId)
+                || "faculty".equals(channelId) || "research".equals(channelId) || "admissions".equals(channelId)
+                || "party".equals(channelId) || "student".equals(channelId) || "culture".equals(channelId)
+                || "service".equals(channelId);
     }
 
     private void initNewsData(){
@@ -137,9 +213,6 @@ public class HomeFragment extends PageFragment {
         campusCurrentPage = 1;
         campusTotalPages = 153;
         hasMoreCampusNews = true;
-        videoSmallList = buildVideoSmall();
-        beijingList = buildBeijing();
-        entertainList = buildEntertain();
 
         newsList = new ArrayList<>(recommendList);
         newsAdapter = new NewsMultiAdapter(newsList);
@@ -211,21 +284,6 @@ public class HomeFragment extends PageFragment {
         return list;
     }
 
-    private List<News> buildCampus(){
-        return NewsContentStore.campus();
-    }
-
-    private List<News> buildVideoSmall(){
-        return NewsContentStore.videoSmall();
-    }
-
-    private List<News> buildBeijing(){
-        return NewsContentStore.beijing();
-    }
-
-    private List<News> buildEntertain(){
-        return NewsContentStore.entertain();
-    }
     private void initCraftData(){
         craftsmanList = new ArrayList<>();
         craftsmanList.add(new Craftsman("高凤林",
@@ -270,40 +328,143 @@ public class HomeFragment extends PageFragment {
         });
     }
 
-    private void resetTabColor(){
-        for (TextView tab : allTabs) {
-            tab.setTextColor(ContextCompat.getColor(requireContext(), R.color.tab_inactive));
+    private void buildChannelTabs() {
+        if (llTabContainer == null) return;
+        llTabContainer.removeAllViews();
+        myChannels = ChannelStore.getMyChannels(requireContext());
+        if (myChannels == null || myChannels.isEmpty()) {
+            myChannels = ChannelStore.getDefaultMyChannels();
+        }
+
+        int paddingH = dpToPx(14);
+        for (int i = 0; i < myChannels.size(); i++) {
+            Channel channel = myChannels.get(i);
+            TextView tabView = new TextView(requireContext());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+            tabView.setLayoutParams(lp);
+            tabView.setGravity(android.view.Gravity.CENTER);
+            tabView.setPadding(paddingH, 0, paddingH, 0);
+            tabView.setText(channel.getName());
+            tabView.setTextSize(16);
+            tabView.setTag(channel.getId());
+
+            boolean isSelected = channel.getId().equals(selectedChannelId);
+            tabView.setTextColor(ContextCompat.getColor(requireContext(),
+                    isSelected ? R.color.brand_red : R.color.tab_inactive));
+            tabView.setTypeface(null, isSelected ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+
+            tabView.setOnClickListener(v -> selectChannel(channel));
+            llTabContainer.addView(tabView);
         }
     }
 
-    private void selectTab(TextView activeTab){
-        selectedTab = activeTab.getId();
-        resetTabColor();
-        activeTab.setTextColor(ContextCompat.getColor(requireContext(), R.color.brand_red));
-        boolean isCampus = selectedTab == R.id.tab_campus;
+    private void selectChannelById(String channelId) {
+        if (myChannels == null || myChannels.isEmpty()) {
+            myChannels = ChannelStore.getMyChannels(requireContext());
+        }
+        Channel target = null;
+        for (Channel c : myChannels) {
+            if (c.getId().equals(channelId)) {
+                target = c;
+                break;
+            }
+        }
+        if (target == null && !myChannels.isEmpty()) {
+            target = myChannels.get(0);
+        }
+        if (target != null) {
+            selectChannel(target);
+        }
+    }
+
+    private void selectChannel(Channel channel) {
+        if (channel == null) return;
+        selectedChannelId = channel.getId();
+
+        // 更新顶部Tab高亮与字体样式，并将激活Tab平滑滑动至可见区域
+        if (llTabContainer != null) {
+            for (int i = 0; i < llTabContainer.getChildCount(); i++) {
+                View child = llTabContainer.getChildAt(i);
+                if (child instanceof TextView) {
+                    TextView tv = (TextView) child;
+                    boolean isMatch = channel.getId().equals(tv.getTag());
+                    tv.setTextColor(ContextCompat.getColor(requireContext(),
+                            isMatch ? R.color.brand_red : R.color.tab_inactive));
+                    tv.setTypeface(null, isMatch ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL);
+
+                    if (isMatch && hsvTabBar != null) {
+                        int scrollX = child.getLeft() - dpToPx(30);
+                        hsvTabBar.smoothScrollTo(Math.max(0, scrollX), 0);
+                    }
+                }
+            }
+        }
+
+        // 晴川学院官网频道：直接在 App 内呈现学校官网原汁原味真实手机移动版网页
+        if (isSchoolChannel(channel.getId())) {
+            if (llCampusBanner != null) llCampusBanner.setVisibility(View.GONE);
+            if (llCampusFooter != null) llCampusFooter.setVisibility(View.GONE);
+            rvNews.setVisibility(View.GONE);
+            lvCraft.setVisibility(View.GONE);
+            if (wvSchoolPage != null) {
+                wvSchoolPage.setVisibility(View.VISIBLE);
+                String schoolPageUrl = "http://10.0.2.2:5000/school_page/" + channel.getId();
+                wvSchoolPage.loadUrl(schoolPageUrl);
+            }
+            TextView empty = findViewById(R.id.tv_search_empty);
+            if (empty != null) empty.setVisibility(View.GONE);
+            return;
+        }
+
+        // 非官网原生网页频道时，隐藏学校网页 WebView
+        if (wvSchoolPage != null) {
+            wvSchoolPage.setVisibility(View.GONE);
+        }
+
+        // 校园要闻栏目：展示自动无限加载横幅与底栏状态
+        boolean isCampus = "campus".equals(channel.getId());
         if (llCampusBanner != null) {
             llCampusBanner.setVisibility(isCampus ? View.VISIBLE : View.GONE);
         }
         if (llCampusFooter != null) {
             llCampusFooter.setVisibility(isCampus ? View.VISIBLE : View.GONE);
             if (isCampus) {
-                updateCampusFooterUI("📖 滑动触底自动无限加载 · 已加载 " + campusList.size() + " 条", false);
+                updateCampusFooterUI("📖 滑动触底自动无限加载 · 已加载 " + (campusList != null ? campusList.size() : 0) + " 条", false);
             }
+        }
+
+        // 热点栏目展示工匠列表，其他栏目展示图文新闻资讯
+        boolean isHot = "hot".equals(channel.getId());
+        if (isHot) {
+            rvNews.setVisibility(View.GONE);
+            lvCraft.setVisibility(View.VISIBLE);
+            filterNews(etSearch != null ? etSearch.getText().toString() : "");
+        } else {
+            rvNews.setVisibility(View.VISIBLE);
+            lvCraft.setVisibility(View.GONE);
+
+            if ("recommend".equals(channel.getId())) {
+                activeNews = recommendList;
+            } else if ("campus".equals(channel.getId())) {
+                activeNews = campusList;
+                if (campusList == null || campusList.isEmpty()) {
+                    refreshCampusFirstPage(false);
+                }
+            } else {
+                activeNews = NewsContentStore.getNewsByChannel(channel.getId());
+            }
+
+            filterNews(etSearch != null ? etSearch.getText().toString() : "");
+            rvNews.scrollToPosition(0);
         }
     }
 
-    private void bindNewsTab(TextView tab, List<News> data){
-        tab.setOnClickListener(v -> switchNewsTab(data, tab));
-    }
-
-    private void switchNewsTab(List<News> data, TextView activeTab){
-        selectTab(activeTab);
-        activeNews = data;
-        filterNews(etSearch.getText().toString());
-        rvNews.scrollToPosition(0);//回到列表顶部
-
-        rvNews.setVisibility(View.VISIBLE);
-        lvCraft.setVisibility(View.GONE);
+    private int dpToPx(int dp) {
+        if (!isAdded()) return dp * 2;
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
     }
 
     private void bindEvent() {
@@ -334,28 +495,37 @@ public class HomeFragment extends PageFragment {
             return false;
         });
 
-        bindNewsTab(tabRecommend, recommendList);
+        // 汉堡菜单：打开频道管理/编辑弹窗
+        if (btnChannelManage != null) {
+            btnChannelManage.setOnClickListener(v -> {
+                ChannelManagerDialog.show(requireContext(), selectedChannelId, new ChannelManagerDialog.OnChannelChangeListener() {
+                    @Override
+                    public void onChannelSelected(Channel channel) {
+                        selectChannel(channel);
+                    }
 
-        //点击顶部大标题【仿今日头条】：在校园频道时重新从第1页刷新
+                    @Override
+                    public void onChannelsUpdated(List<Channel> updatedChannels) {
+                        myChannels = updatedChannels;
+                        buildChannelTabs();
+                        selectChannelById(selectedChannelId);
+                    }
+                });
+            });
+        }
+
+        // 点击顶部大标题【仿今日头条】：在校园频道时重新从第1页刷新
         if (tvHomeTitle != null) {
             tvHomeTitle.setOnClickListener(v -> {
-                if (selectedTab == R.id.tab_campus) {
+                if ("campus".equals(selectedChannelId)) {
                     refreshCampusFirstPage(true);
                 } else {
-                    tabCampus.performClick();
+                    selectChannelById("campus");
                 }
             });
         }
 
-        //点击【校园】频道，切换列表并自动检查加载
-        tabCampus.setOnClickListener(v -> {
-            switchNewsTab(campusList, tabCampus);
-            if (campusList.isEmpty()) {
-                refreshCampusFirstPage(false);
-            }
-        });
-
-        //点击顶部同步条或按钮：重新从第1页爬取刷新
+        // 点击顶部同步条或按钮：重新从第1页爬取刷新
         if (tvCampusBannerText != null) {
             tvCampusBannerText.setOnClickListener(v -> refreshCampusFirstPage(true));
         }
@@ -368,7 +538,7 @@ public class HomeFragment extends PageFragment {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                if (selectedTab != R.id.tab_campus || dy <= 0) {
+                if (!"campus".equals(selectedChannelId) || dy <= 0) {
                     return;
                 }
                 if (isCampusLoadingMore || !hasMoreCampusNews) {
@@ -380,15 +550,6 @@ public class HomeFragment extends PageFragment {
                     loadMoreCampusNews(nextPage);
                 }
             }
-        });
-
-        bindNewsTab(tabVideoSmall, videoSmallList);
-        bindNewsTab(tabBeijing, beijingList);
-        bindNewsTab(tabEntertain, entertainList);
-
-        tabHot.setOnClickListener(v -> {
-            selectTab(tabHot);
-            filterNews(etSearch.getText().toString());
         });
     }
 
@@ -419,7 +580,7 @@ public class HomeFragment extends PageFragment {
                 if (items != null && !items.isEmpty()) {
                     // 动态加载到列表里面，自动接上去，不用切换页！
                     campusList.addAll(items);
-                    if (selectedTab == R.id.tab_campus) {
+                    if ("campus".equals(selectedChannelId)) {
                         activeNews = campusList;
                         filterNews(etSearch != null ? etSearch.getText().toString() : "");
                     }
@@ -477,7 +638,7 @@ public class HomeFragment extends PageFragment {
                 if (items != null && !items.isEmpty()) {
                     campusList.addAll(items);
                 }
-                if (selectedTab == R.id.tab_campus) {
+                if ("campus".equals(selectedChannelId)) {
                     activeNews = campusList;
                     filterNews(etSearch != null ? etSearch.getText().toString() : "");
                     rvNews.scrollToPosition(0);
@@ -529,7 +690,16 @@ public class HomeFragment extends PageFragment {
         savedQuery = query;
         String key = query.trim().toLowerCase(java.util.Locale.ROOT);
         TextView empty = findViewById(R.id.tv_search_empty);
-        boolean hot = selectedTab == R.id.tab_hot;
+
+        if (isSchoolChannel(selectedChannelId)) {
+            rvNews.setVisibility(View.GONE);
+            lvCraft.setVisibility(View.GONE);
+            if (wvSchoolPage != null) wvSchoolPage.setVisibility(View.VISIBLE);
+            if (empty != null) empty.setVisibility(View.GONE);
+            return;
+        }
+
+        boolean hot = "hot".equals(selectedChannelId);
         rvNews.setVisibility(hot ? View.GONE : View.VISIBLE);
         lvCraft.setVisibility(hot ? View.VISIBLE : View.GONE);
         if (hot) {
@@ -548,8 +718,17 @@ public class HomeFragment extends PageFragment {
         }
     }
 
+    @Override
+    public void onDestroyView() {
+        if (wvSchoolPage != null) {
+            wvSchoolPage.stopLoading();
+        }
+        super.onDestroyView();
+    }
+
     @Override public void onSaveInstanceState(Bundle out) {
-        out.putInt("tab",selectedTab); out.putString("query",savedQuery);
+        out.putString("channel_id", selectedChannelId);
+        out.putString("query", savedQuery);
         super.onSaveInstanceState(out);
     }
 

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>红包签到 - 每日领金币</title>
+  <link rel="stylesheet" href="css/shop.css">
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%);">
+    <div class="banner_badge">💰 连续打卡 · 金币当钱花</div>
+    <div class="banner_title">每日签到领红包</div>
+    <div class="banner_subtitle">连续签到 7 天可额外开启 66 元超级无门槛红包！</div>
+  </div>
+
+  <div class="stats_row">
+    <div class="stat_col">
+      <div class="stat_num" id="my_gold_count">680</div>
+      <div class="stat_label">我的淘金币</div>
+    </div>
+    <div class="stat_col">
+      <div class="stat_num">可抵￥6.80</div>
+      <div class="stat_label">下单自动抵扣</div>
+    </div>
+    <div class="stat_col">
+      <div class="stat_num">第 3 天</div>
+      <div class="stat_label">连续签到</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>📅 本周打卡日历</span>
+        <span class="more">坚持签到奖更大</span>
+      </div>
+
+      <div class="signin_calendar">
+        <div class="signin_day done">
+          <div>周一</div>
+          <div class="day_coin">✓+30</div>
+        </div>
+        <div class="signin_day done">
+          <div>周二</div>
+          <div class="day_coin">✓+30</div>
+        </div>
+        <div class="signin_day active">
+          <div>今日</div>
+          <div class="day_coin">+50</div>
+        </div>
+        <div class="signin_day">
+          <div>周四</div>
+          <div class="day_coin">+40</div>
+        </div>
+        <div class="signin_day">
+          <div>周五</div>
+          <div class="day_coin">+50</div>
+        </div>
+        <div class="signin_day">
+          <div>周六</div>
+          <div class="day_coin">+60</div>
+        </div>
+        <div class="signin_day" style="background: #FFF8E1; border-color: #FFB300; color: #E65100;">
+          <div>周日</div>
+          <div class="day_coin">🎁红包</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 14px;">
+        <button class="btn btn_gold btn_block" onclick="doSignin(this)">立即签到领 50 金币</button>
+      </div>
+    </div>
+
+    <!-- 金币兑换专区 -->
+    <div class="card">
+      <div class="card_title">
+        <span>🪙 金币专享特惠好礼</span>
+      </div>
+
+      <div class="product_card" style="margin-bottom: 10px;">
+        <div class="product_cover" style="height: 120px;">
+          <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500" alt="文具本">
+          <div class="product_tag">100金币 + 1元包邮</div>
+        </div>
+        <div class="product_info">
+          <div class="product_name">加厚日式精装记事本 手账本空白内页</div>
+          <div class="product_price_row">
+            <div>
+              <span class="price_now">100金币 + ￥1.00</span>
+              <span class="price_old">￥15.00</span>
+            </div>
+            <button class="btn btn_outline" style="padding: 2px 10px; font-size: 11px;" onclick="showToast('已使用 100 金币成功兑换！')">立即兑换</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

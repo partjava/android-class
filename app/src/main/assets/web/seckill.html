@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>淘宝秒杀 - 限时整点狂欢</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .countdown_bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 12px 0 6px;
+      font-size: 13px;
+      color: #FFFFFF;
+    }
+    .time_box {
+      background: #000000;
+      color: #FFFFFF;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .seckill_tabs {
+      display: flex;
+      background: #FFFFFF;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 8px 4px;
+    }
+    .seckill_tab {
+      flex: 1;
+      text-align: center;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: #666;
+    }
+    .seckill_tab.active {
+      color: #FF3B30;
+      font-weight: bold;
+      border-bottom: 2px solid #FF3B30;
+    }
+    .progress_outer {
+      width: 100%;
+      height: 6px;
+      background: #FFE0B2;
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 6px 0;
+    }
+    .progress_inner {
+      height: 100%;
+      background: #FF5722;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #FF5722 0%, #E64A19 100%);">
+    <div class="banner_badge">⚡ 整点秒杀 · 1折起疯抢</div>
+    <div class="banner_title">限时秒杀专场</div>
+    <div class="countdown_bar">
+      <span>本场距结束还剩：</span>
+      <span class="time_box" id="h_box">01</span>:
+      <span class="time_box" id="m_box">45</span>:
+      <span class="time_box" id="s_box">28</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="seckill_tabs">
+      <div class="seckill_tab active">10:00<br><small>疯抢中</small></div>
+      <div class="seckill_tab">14:00<br><small>即将开始</small></div>
+      <div class="seckill_tab">18:00<br><small>即将开始</small></div>
+      <div class="seckill_tab">20:00<br><small>明日预告</small></div>
+    </div>
+
+    <div class="card">
+      <div class="product_card" style="margin-bottom: 12px;">
+        <div class="product_cover" style="height: 150px;">
+          <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=500" alt="拍立得相机">
+          <div class="product_tag">已抢 86%</div>
+        </div>
+        <div class="product_info">
+          <div class="product_name">富士拍立得一次成像相机 经典复古设计 套装版</div>
+          <div class="progress_outer">
+            <div class="progress_inner" style="width: 86%;"></div>
+          </div>
+          <div class="product_price_row">
+            <div>
+              <span class="price_now"><small>￥</small>499.00</span>
+              <span class="price_old">￥899.00</span>
+            </div>
+            <button class="btn btn_primary" style="padding: 4px 14px; font-size: 12px;" onclick="showToast('🔥 秒杀抢购成功！订单已生成')">马上抢</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product_card">
+        <div class="product_cover" style="height: 150px;">
+          <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500" alt="耐克运动鞋">
+          <div class="product_tag">已抢 92%</div>
+        </div>
+        <div class="product_info">
+          <div class="product_name">Nike Air Max 减震气垫跑步鞋 男款实战红黑配色</div>
+          <div class="progress_outer">
+            <div class="progress_inner" style="width: 92%;"></div>
+          </div>
+          <div class="product_price_row">
+            <div>
+              <span class="price_now"><small>￥</small>299.00</span>
+              <span class="price_old">￥799.00</span>
+            </div>
+            <button class="btn btn_primary" style="padding: 4px 14px; font-size: 12px;" onclick="showToast('🔥 秒杀抢购成功！订单已生成')">马上抢</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+  <script>
+    // 简易倒计时动效
+    var s = 28, m = 45, h = 1;
+    setInterval(function() {
+      s--;
+      if (s < 0) { s = 59; m--; }
+      if (m < 0) { m = 59; h--; }
+      if (h < 0) { h = 2; }
+      document.getElementById('s_box').innerText = s < 10 ? '0' + s : s;
+      document.getElementById('m_box').innerText = m < 10 ? '0' + m : m;
+      document.getElementById('h_box').innerText = h < 10 ? '0' + h : h;
+    }, 1000);
+  </script>
+</body>
+</html>

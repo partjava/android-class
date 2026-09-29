@@ -200,6 +200,214 @@ public final class NewsContentStore {
         return list;
     }
 
+    //===== 学校概况 (武汉晴川学院) =====
+
+    public static List<News> survey() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_BIG_IMG, "大木苍翠·晴川历历：武汉晴川学院办学特色与校园全貌概览", "晴川校史馆 1.2万评", "置顶", R.drawable.news_smart_city, 0, 0),
+                "　　武汉晴川学院坐落于武汉市东湖高新区与江夏区交汇的龙泉山麓，紧依美丽的梁子湖，校园依山傍水、林木葱郁、风景如画，是潜心求学治艺的理想沃土。\n\n　　学校秉承“明德、博学、笃行、创新”的校训精神，坚持以立德树人为根本，以应用型人才培养为导向，全面实施特色办学与质量立校战略，先后获评全国生态文明示范高校、湖北省文明校园等多项荣誉称号。\n\n　　建校以来，学校不断深化教学改革，建设了现代化数字化教学大楼、高标准实验实训中心、智能化图书馆以及综合体育运动场馆，为广大学子提供了国际化、现代化的求学环境。");
+        add(list, new News(News.TYPE_THREE_IMG, "校友打卡晴川四季：春赏樱花夏听蝉鸣，秋赏银杏冬看落雪的生态校园", "晴川融媒 8600评", "1小时前", R.drawable.news_nature_park, R.drawable.img4, R.drawable.img5),
+                "　　走进晴川校园，四季风景各异：三月樱花大道如粉色烟霞，初夏环湖步道清风徐徐，深秋银杏林一片金黄灿烂，严冬覆雪古朴静谧。\n\n　　广大师生与校友在社交平台上纷纷晒出晴川生态之美，盛赞校园“既有现代化大学的学术气息，又有江南园林的诗情画意”。");
+        add(list, new News(News.TYPE_SINGLE_IMG, "办学理念再升华：晴川学院全面构建‘四位一体’应用型人才培养生态圈", "高教研究 6500评", "3小时前", R.drawable.news_school_study, 0, 0),
+                "　　学校围绕国家区域经济社会发展战略需求，系统优化专业布局，形成了以工学、管理学为主，工、管、经、文、艺等多学科相互支撑、协调发展的学科专业体系。");
+        add(list, new News(News.TYPE_TEXT, "荣誉晴川：我校在全国民办高校综合实力排名前列，社会声誉持续提升", "中国教育报 9100评", "昨天", 0, 0, 0),
+                "　　在最新发布的全国民办本科高校科研竞争力与社会满意度评价榜单中，武汉晴川学院凭借扎实的办学实力、优质的育人成果与高满意度毕业生评价名列前茅。");
+        return list;
+    }
+
+    //===== 机构设置 =====
+
+    public static List<News> org() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "北斗学院与计算机学院协同攻坚：新一代空天信息技术创新实验室群投入使用", "学院动态 5400评", "刚刚", R.drawable.news_tech_chip, 0, 0),
+                "　　为贯彻落实国家北斗产业高质量发展战略，学校重点投入建设的北斗空天信息与智能感知创新实训平台正式挂牌启用。平台整合了北斗高精度导航定位、嵌入式物联网及人工智能遥感计算设备，面向全校工科专业开放实验教学。");
+        add(list, new News(News.TYPE_THREE_IMG, "学校举行二级教学单位年度工作交流会：突出学院特色，打造优势专业集群", "党委宣传部 4300评", "2小时前", R.drawable.news_smart_city, R.drawable.img1, R.drawable.img2),
+                "　　计算机学院、机械与电气工程学院、商学院、外国语学院、传媒艺术学院等二级学院负责人分别作了年度工作汇报与专业建设规划答辩。\n\n　　各教学单位紧密对接行业产业新需求，在微专业建设、校企定制班与实训基地建设上达成多项务实成果。");
+        add(list, new News(News.TYPE_TEXT, "职能部门提质增效：学校推行‘一网通办’数字化办事服务大厅", "党政办公室 3100评", "昨天", 0, 0, 0),
+                "　　教务处、学生处、财务处、保卫处等职能部门联合完成智慧校务协同平台改造，现已实现成绩证明打印、奖助学金申报、科研立项等数十项业务手机端一键办理。");
+        return list;
+    }
+
+    //===== 人才培养 =====
+
+    public static List<News> talent() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_THREE_IMG, "捷报频传！晴川学子在全国大学生电子设计与蓝桥杯大赛中斩获国家一等奖", "教务在线 1.5万评", "刚刚", R.drawable.news_education_youth, R.drawable.news_tech_chip, R.drawable.img6),
+                "　　在刚刚揭晓的全国大学生计算机算法设计与智能硬件创新设计国家级总决赛中，我校参赛团队凭借扎实的算法编程与硬件调试基本功，从数百所知名高校战队中突围，勇夺全国一等奖两项、二等奖四项。\n\n　　指导教师团队常年深耕学科竞赛指导，采取‘课赛融通、项目驱动、导师护航’模式，极大激发了学生的创新实践潜能。");
+        add(list, new News(News.TYPE_BIG_IMG, "校企协同育人新篇章：晴川与华为、腾讯云深度共建数字产业实训基地", "校企合作处 1.1万评", "3小时前", R.drawable.news_smart_city, 0, 0),
+                "　　学校与多家国内顶尖科技企业签署高水平产教融合战略合作框架协议，挂牌成立联合工程师创新中心。企业资深技术架构师直接进驻课堂授课，引入真实企业工程项目作为毕业设计选题。");
+        add(list, new News(News.TYPE_SINGLE_IMG, "国际交流与联合培养：我校与海外知名高校开展学分互认与硕士直通项目", "国际交流处 4800评", "昨天", R.drawable.news_school_study, 0, 0),
+                "　　学校持续拓展全球优质教育资源网络，已与英国、澳大利亚、新加坡等多所合作大学开展‘3+1’、‘4+1’本硕双学位联合培养计划，为晴川学子搭建起宽广的国际化深造桥梁。");
+        return list;
+    }
+
+    //===== 师资队伍 =====
+
+    public static List<News> faculty() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "名师引领发展：我校特聘教授团队在工业智能制造领域取得重要教学科研突破", "教师发展中心 7200评", "刚刚", R.drawable.news_smart_city, 0, 0),
+                "　　学校持续实施‘人才强校’核心战略，引育并举，打造了一支由国家级教学名师、行业领军专家及中青年骨干教师组成的多元化高水平师资队伍。\n\n　　特聘教授团队牵头开展的精密数控智能装配教研项目荣获湖北省高等教育教学成果奖。");
+        add(list, new News(News.TYPE_THREE_IMG, "青蓝相继·匠心育人：晴川青年教师教学创新大赛圆满落幕", "工会宣传部 5800评", "2小时前", R.drawable.news_education_youth, R.drawable.img2, R.drawable.img3),
+                "　　决赛现场，来自各院系的青年教学骨干以充沛的教学热情、精妙的思政元素融入和熟练的现代数字化教学手段，展现了扎实的教学功底与昂扬的精神面貌。");
+        add(list, new News(News.TYPE_TEXT, "大力弘扬教育家精神：我校隆重表彰‘晴川育人模范’与‘十佳优秀辅导员’", "党委宣传部 8900评", "昨天", 0, 0, 0),
+                "　　在教师节庆祝表彰大会上，十位常年辛勤耕耘在教学科研第一线、深受学生爱戴的杰出教师受到隆重表彰，号召全校教职工潜心教书育人、培根铸魂。");
+        return list;
+    }
+
+    //===== 教学科研 =====
+
+    public static List<News> research() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "喜讯！我校3项省部级人文社科与自然科学基金科研项目获批立项", "科研处 6100评", "刚刚", R.drawable.news_green_energy, 0, 0),
+                "　　湖北省科技厅与教育厅日前发布年度重点科研课题立项名单，我校申报的人工智能辅助决策、区域绿色低碳经济转型等3个项目获批正式立项，立项数量与资助经费再创历史新高。\n\n　　科研处负责同志表示，学校将进一步健全科研成果转化机制与激励保障政策，鼓励广大教师将科研反哺课堂教学。");
+        add(list, new News(News.TYPE_THREE_IMG, "智慧物联网与绿色能源交叉融合：晴川科研团队发表高水平国际期刊论文", "科技前沿 7400评", "4小时前", R.drawable.news_solar_energy, R.drawable.news_tech_chip, R.drawable.img7),
+                "　　科研团队针对分布式光伏阵列微网调峰难点，构建了高精度边缘自适应预测模型，相关论文被IEEE知名核心学术期刊录用，彰显了学校在前沿交叉学科的学术探索活力。");
+        add(list, new News(News.TYPE_TEXT, "产学研转化按下‘快进键’：我校教师多项智能专利技术实现企业成果转化应用", "成果转化中心 4300评", "昨天", 0, 0, 0),
+                "　　通过与武汉光谷多家高新技术企业的技术对接，学校有3项软件著作权及发明专利成功落地投产，取得了良好的经济与社会效益。");
+        return list;
+    }
+
+    //===== 招生就业 =====
+
+    public static List<News> admissions() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_BIG_IMG, "武汉晴川学院2026年普通本科招生简章正式公布：多元专业矩阵赋能未来", "招生办公室 2.4万评", "置顶", R.drawable.news_school_study, 0, 0),
+                "　　武汉晴川学院面向全国30个省（市、自治区）招收全日制普通本科生。招生专业涵盖计算机科学与技术、电子信息工程、软件工程、大数据管理与应用、会计学、网络与新媒体等多个国家级与省级一流本科专业建设点。\n\n　　学校设有新生校长特别奖学金、各类国家级及社会捐赠奖学金，完善的‘奖助贷勤补免’全流程资助育人体系护航每一位学子逐梦晴川。");
+        add(list, new News(News.TYPE_THREE_IMG, "职引未来·筑梦启航：晴川春季大型校园供需双选会提供8000+优质高薪岗位", "就业指导服务中心 1.8万评", "2小时前", R.drawable.news_smart_city, R.drawable.img8, R.drawable.img9),
+                "　　体育馆内人头攒动，来自全国的300余家行业龙头企业与上市公司入场招贤纳士，涵盖央企国企、高科技制造与现代金融等核心领域。\n\n　　现场特别设置了‘简历诊断问诊室’、‘征兵政策咨询点’与‘考研留学指导区’，全方位为毕业生求职赋能。");
+        add(list, new News(News.TYPE_SINGLE_IMG, "高质量充分就业典型：我校近五成优秀毕业生签约一线名企或成功考取名校研究生", "毕业生之声 1.3万评", "昨天", R.drawable.news_education_youth, 0, 0),
+                "　　毕业生就业质量跟踪调查报告显示，晴川毕业生以‘专业技能硬、综合素质高、动手能力强、作风踏实’赢得用人单位广泛赞誉。");
+        return list;
+    }
+
+    //===== 党建思政 =====
+
+    public static List<News> party() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "深学细悟笃行：校党委理论学习中心组举行专题学习会，筑牢立德树人根基", "党委组织部 5100评", "刚刚", R.drawable.news_museum_art, 0, 0),
+                "　　校党委深入学习贯彻习近平总书记关于教育的重要论述，强调要坚守‘为党育人、为国育才’的崇高初心使命，把思政工作贯穿教育教学全过程。");
+        add(list, new News(News.TYPE_THREE_IMG, "思政小课堂连接社会大课堂：马克思主义学院师生走进革命纪念馆开展沉浸式研学", "马院动态 4700评", "3小时前", R.drawable.news_nature_park, R.drawable.img1, R.drawable.img2),
+                "　　师生在红安革命烈士陵园与辛亥革命博物馆重温入党誓词，聆听老红军感人事迹，将红色基因深植于青春血脉之中。");
+        add(list, new News(News.TYPE_TEXT, "先锋引领：学校设立党员先锋模范示范岗，青年党员师生在学风建设中当表率", "党建之窗 3900评", "昨天", 0, 0, 0),
+                "　　通过建立党员联系宿舍、党员义务导学助学等长效机制，充分发挥基层党组织的战斗堡垒作用和党员先锋模范作用。");
+        return list;
+    }
+
+    //===== 学生工作 =====
+
+    public static List<News> student() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "‘晴听心声’青年座谈会举行：倾听学子心声，共建和谐美好校园", "学工处 4200评", "刚刚", R.drawable.news_school_study, 0, 0),
+                "　　校领导、各职能部门负责人与来自各年级学生代表围坐畅谈，就宿舍生活条件改善、图书借阅升级、考研自习室增设等提案逐一现场研讨解答。");
+        add(list, new News(News.TYPE_THREE_IMG, "志愿青春·善行江城：晴川青年志愿者联合会荣获湖北省学雷锋优秀志愿服务团队", "校团委 6800评", "1小时前", R.drawable.news_education_youth, R.drawable.img4, R.drawable.img5),
+                "　　志愿者长期扎根周边社区、特殊教育学校开展关爱孤寡老人、阳光助残、环保巡河等志愿服务，累计服务时长超数万小时。");
+        add(list, new News(News.TYPE_TEXT, "考研加油站：学校为考研学子精心定制‘温情大礼包’与专线送考大巴", "辅导员之家 5300评", "昨天", 0, 0, 0),
+                "　　冬日暖阳下，学院为每一位全力备考的考研学子送去写满励志祝福的文具袋、热饮和能量补给包，传递晴川大家庭的关怀与温情。");
+        return list;
+    }
+
+    //===== 校园文化 =====
+
+    public static List<News> culture() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_BIG_IMG, "晴川之声·青春绽放：第二十届校园科技文化艺术节盛大开幕", "校团委 1.9万评", "置顶", R.drawable.news_music_concert, 0, 0),
+                "　　随着绚丽的灯光与激昂的旋律响起，一年一度的校园科技文化艺术节在风雨操场隆重开幕。本届艺术节涵盖金秋十佳歌手大赛、高雅艺术进校园、原创微电影大赛等数十项精彩活动。\n\n　　各院系学子在舞台上各展所长，用青春洋溢的歌声、优美刚劲的舞蹈与创意十足的舞台剧，展现了晴川青年的昂扬活力与艺术素养。");
+        add(list, new News(News.TYPE_THREE_IMG, "端午游园雅聚：包粽子、画团扇、投壶射礼，晴川传统文化游园会热闹非凡", "学生社团联合会 9800评", "2小时前", R.drawable.news_museum_art, R.drawable.img8, R.drawable.img9),
+                "　　林荫大道旁设立数十个传统国风民俗体验展位，中外师生身穿传统华服体验刺绣、剪纸与诗词飞花令，感受中华优秀传统文化的独特魅力。");
+        add(list, new News(News.TYPE_SINGLE_IMG, "唇枪舌剑辨明理：晴川‘思辨杯’大学生辩论锦标赛巅峰对决落下帷幕", "演讲与辩论协会 4700评", "昨天", R.drawable.news_education_youth, 0, 0),
+                "　　正反双方围绕‘人工智能对青年思维发展利弊’等时代热点辩题引经据典、针锋相对，思维火花激烈碰撞，奉献了一场高水准的视听盛宴。");
+        return list;
+    }
+
+    //===== 公共服务 =====
+
+    public static List<News> service() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "智慧校园‘指尖晴川’全量上线：水电缴费、自习室预约、门禁一卡通全贯通", "信息化办公室 8100评", "刚刚", R.drawable.news_smart_city, 0, 0),
+                "　　新版智慧校园移动端App全面完成系统升级，现已支持校园人脸门禁通行、图书馆自习座位精准预约、宿舍水电余量实时提醒及故障一键报修，极大提升了师生在校学习生活的便捷度。");
+        add(list, new News(News.TYPE_THREE_IMG, "书香晴川·数智赋能：图书馆新增数十万册全球中外文核心数字期刊数据库资源", "图书馆 5900评", "3小时前", R.drawable.news_school_study, R.drawable.img1, R.drawable.img3),
+                "　　图书馆完成电子资源采购扩容，中国知网（CNKI）、万方数据、Elsevier ScienceDirect等核心外文文献数据库实现校园网络无缝检索下载，支持全天候校外VPN学术访问。");
+        add(list, new News(News.TYPE_TEXT, "舌尖上的晴川：学生食堂全面引入阳光明厨亮灶与多元风味特色美食档口", "后勤保障处 7700评", "昨天", 0, 0, 0),
+                "　　后勤部门严格把控食品原料安全准入与每餐留样检测，食堂一楼至三楼涵盖南北风味、西点轻食、特色铁板烧等百余种精品菜品，全力守护师生舌尖上的健康与美味。");
+        return list;
+    }
+
+    //===== 科技 =====
+
+    public static List<News> tech() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "新一代大模型算法算力突破：自主人工智能芯片在万亿级参数训练中稳定运行", "前沿科技 3.4万评", "刚刚", R.drawable.news_tech_chip, 0, 0),
+                "　　我国科研机构联合高新技术企业发布新一代超大规模分布式AI集群算力架构，芯片算力能效比较国际顶尖产品提升超40%，为工业大模型和具身智能带来全新突破。");
+        add(list, new News(News.TYPE_THREE_IMG, "人形机器人走进汽车总装车间：高精度双目视觉赋能万次无失误螺栓装配", "智能制造 2.1万评", "1小时前", R.drawable.news_smart_city, R.drawable.img4, R.drawable.img5),
+                "　　多款自主研发的轻量化双足人形机器人在现代化整车生产线上协同作业，展示出出色的柔性制造能力。");
+        add(list, new News(News.TYPE_TEXT, "量子通信卫星‘墨子号’最新成果：跨越万里实现超高安全级密钥分发", "量子科学 1.7万评", "昨天", 0, 0, 0),
+                "　　国际顶级学术刊物刊载我国量子卫星实验最新突破，进一步奠定了我国在广域量子通信网络构建领域的领跑地位。");
+        return list;
+    }
+
+    //===== 体育 =====
+
+    public static List<News> sports() {
+        List<News> list = new ArrayList<>();
+        add(list, new News(News.TYPE_SINGLE_IMG, "第十五届秋季田径运动会圆满闭幕：晴川健儿刷新三项校纪录", "体育教研部 1.4万评", "刚刚", R.drawable.news_sports_field, 0, 0),
+                "　　绿茵场上健儿驰骋，百米飞人大战、接力赛、跳高跳远现场喝彩声震天，传媒艺术学院与计算机学院斩获团体总分冠亚军。");
+        add(list, new News(News.TYPE_THREE_IMG, "‘晴川杯’三对三篮球争霸赛激情上演：热血暴扣燃爆全场，展示青年蓬勃活力", "体育协会 9200评", "2小时前", R.drawable.news_sports_field, R.drawable.img6, R.drawable.img7),
+                "　　全校数十支院系篮球战队历经两周激烈角逐，决赛以压哨三分绝杀收尾，展现了顽强拼搏、团结协作的体育精神。");
+        add(list, new News(News.TYPE_TEXT, "全民健身月：学校开展夜跑打卡、飞盘积分赛与荧光夜光接力跑活动", "团委社团部 6300评", "昨天", 0, 0, 0),
+                "　　阳光体育运动深入人心，丰富的课外体育运动不仅强健了体魄，更成为晴川青年释放活力、广交益友的亮丽风景线。");
+        return list;
+    }
+
+    /**
+     * 核心统一路由：根据频道ID查询对应频道的新闻数据列表
+     * 开发者后续增加新频道时，在此处增加对应的 case 分支即可！
+     */
+    public static List<News> getNewsByChannel(String channelId) {
+        if (channelId == null) {
+            return recommend();
+        }
+        switch (channelId) {
+            case "recommend":
+                return recommend();
+            case "campus":
+                return campus();
+            case "survey":
+                return survey();
+            case "org":
+                return org();
+            case "talent":
+                return talent();
+            case "faculty":
+                return faculty();
+            case "research":
+                return research();
+            case "admissions":
+                return admissions();
+            case "party":
+                return party();
+            case "student":
+                return student();
+            case "culture":
+                return culture();
+            case "service":
+                return service();
+            case "hot":
+                return recommend(); // 热点由工匠ListView展示，新闻流备用
+            case "video_small":
+                return videoSmall();
+            case "beijing":
+                return beijing();
+            case "entertain":
+                return entertain();
+            case "tech":
+                return tech();
+            case "sports":
+                return sports();
+            default:
+                return campus();
+        }
+    }
+
     /** 组装列表摘要字段的同时把正文登记进 CONTENTS：标题全项目只写这一次，列表和正文库必然对得上 */
     private static void add(List<News> list, News news, String content) {
         CONTENTS.put(news.getTitle(), content);

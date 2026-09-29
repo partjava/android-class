@@ -35,6 +35,7 @@ public class ShopFragment extends PageFragment {
     private HorizontalScrollView hsTabs;
     private LinearLayout llTabs, llDots;
     private RecyclerView rvEntries, rvShop;
+    private androidx.core.widget.NestedScrollView nsvShop;
 
     private final List<View> tabViews = new ArrayList<>();
     private int currentTab = DEFAULT_TAB;
@@ -60,6 +61,7 @@ public class ShopFragment extends PageFragment {
         llDots = findViewById(R.id.ll_dots);
         rvEntries = findViewById(R.id.rv_entries);
         rvShop = findViewById(R.id.rv_shop);
+        nsvShop = findViewById(R.id.nsv_shop);
     }
 
     private void initShopData() {
@@ -151,6 +153,9 @@ public class ShopFragment extends PageFragment {
         productList.addAll(filterByTab(TAB_LABELS[index]));
         shopAdapter.notifyDataSetChanged();
         rvShop.scrollToPosition(0);
+        if (nsvShop != null) {
+            nsvShop.scrollTo(0, 0);
+        }
     }
 
     private List<ShopItem> filterByTab(String tab) {
@@ -282,69 +287,76 @@ public class ShopFragment extends PageFragment {
 
     private void handleEntryClick(ShopEntry entry) {
         String name = entry.label;
-        if ("百亿补贴".equals(name) || "新人特惠".equals(name) || "今日特卖".equals(name) || "天天特卖".equals(name)) {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle(name + " 专属优惠")
-                    .setMessage("恭喜获得【" + name + "】专属满减券：\n· 满 99 减 20\n· 满 199 减 50\n优惠已自动放入您的卡券包！")
-                    .setPositiveButton("立即查看热卖", (d, w) -> {
-                        selectTab(1); // 推荐
-                    })
-                    .setNegativeButton("知道了", null)
-                    .show();
-        } else if ("红包签到".equals(name) || "领淘金币".equals(name) || "芭芭农场".equals(name)) {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle(name)
-                    .setMessage("今日签到成功！\n获得淘金币 +100，可在下单时抵扣 1.00 元。")
-                    .setPositiveButton("开心收下", (d, w) -> {
-                        Toast.makeText(requireContext(), "金币已入账", Toast.LENGTH_SHORT).show();
-                    })
-                    .show();
-        } else if ("充值中心".equals(name)) {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("手机话费充值")
-                    .setMessage("充值号码：13800000001\n优惠方案：充 100 元仅需 98.5 元 (本地模拟)")
-                    .setPositiveButton("模拟充值", (d, w) -> {
-                        Toast.makeText(requireContext(), "充值成功！", Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("取消", null)
-                    .show();
-        } else if ("飞猪旅行".equals(name)) {
-            selectTab(4); // 切换至飞猪分类
-            Toast.makeText(requireContext(), "已为您筛选飞猪出行好物", Toast.LENGTH_SHORT).show();
-        } else if ("淘宝闪购".equals(name)) {
-            selectTab(2); // 闪购
-            Toast.makeText(requireContext(), "已为您切换至闪购专区", Toast.LENGTH_SHORT).show();
-        } else if ("分类".equals(name) || "全部频道".equals(name)) {
-            String[] cats = {"全部商品", "数码产品", "家居生活", "休闲食品", "服饰穿搭"};
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("选择商品分类")
-                    .setItems(cats, (d, which) -> {
-                        productList.clear();
-                        if (which == 0) {
-                            productList.addAll(allItems);
-                        } else {
-                            String catName = cats[which].substring(0, 2);
-                            for (ShopItem it : allItems) {
-                                if (it.getCategory().contains(catName)) {
-                                    productList.add(it);
-                                }
-                            }
-                        }
-                        shopAdapter.notifyDataSetChanged();
-                        rvShop.scrollToPosition(0);
-                        Toast.makeText(requireContext(), "已筛选：" + cats[which], Toast.LENGTH_SHORT).show();
-                    })
-                    .show();
-        } else {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle(name)
-                    .setMessage("【" + name + "】频道专场已就绪。\n包含品牌精选、专属售后与快速配送支持。")
-                    .setPositiveButton("浏览专场商品", (d, w) -> {
-                        selectTab(DEFAULT_TAB);
-                    })
-                    .setNegativeButton("返回", null)
-                    .show();
+        String pageName;
+        switch (name) {
+            case "百亿补贴":
+                pageName = "subsidy.html";
+                break;
+            case "淘宝秒杀":
+                pageName = "seckill.html";
+                break;
+            case "淘宝直播":
+                pageName = "live.html";
+                break;
+            case "充值中心":
+                pageName = "recharge.html";
+                break;
+            case "新人特惠":
+                pageName = "newuser.html";
+                break;
+            case "红包签到":
+            case "领淘金币":
+                pageName = "signin.html";
+                break;
+            case "芭芭农场":
+                pageName = "farm.html";
+                break;
+            case "阿里拍卖":
+                pageName = "auction.html";
+                break;
+            case "天猫超市":
+                pageName = "supermarket.html";
+                break;
+            case "天猫国际":
+                pageName = "global.html";
+                break;
+            case "今日特卖":
+            case "天天特卖":
+                pageName = "temai.html";
+                break;
+            case "闲鱼":
+                pageName = "xianyu.html";
+                break;
+            case "飞猪旅行":
+                pageName = "feizhu.html";
+                break;
+            case "阿里药房":
+                pageName = "pharmacy.html";
+                break;
+            case "天猫新品":
+                pageName = "newproducts.html";
+                break;
+            case "淘宝礼物":
+                pageName = "gifts.html";
+                break;
+            case "有好券":
+                pageName = "coupons.html";
+                break;
+            case "分类":
+            case "全部频道":
+                pageName = "categories.html";
+                break;
+            case "淘宝闪购":
+                pageName = "flashsale.html";
+                break;
+            case "资质规则":
+                pageName = "rules.html";
+                break;
+            default:
+                pageName = "subsidy.html";
+                break;
         }
+        WebActivity.open(requireContext(), name, "file:///android_asset/web/" + pageName);
     }
 
     private class EntryPageAdapter extends RecyclerView.Adapter<EntryPageAdapter.PageViewHolder> {

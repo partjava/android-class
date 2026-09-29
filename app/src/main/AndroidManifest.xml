@@ -4,6 +4,7 @@
 
     <!-- 首页实时头条（天行数据 TianAPI）联网拉取；其余功能仍是纯本地 -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <!-- 接口域名是 https，但头条的封面图 CDN 常是 http 链接，
          不放开明文流量远程配图会加载失败 -->
@@ -50,6 +51,7 @@
         <activity android:name=".OrderConfirmActivity" android:exported="true"/>
         <activity android:name=".OrderListActivity" android:exported="true"/>
         <activity android:name=".OrderDetailActivity" android:exported="true"/>
+        <activity android:name=".WebActivity" android:exported="true"/>
     </application>
 
 </manifest>

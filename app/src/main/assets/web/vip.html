@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>会员权益中心 - 头条金卡特权</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .vip_card {
+      background: linear-gradient(135deg, #1A1A1A 0%, #2D3436 60%, #434343 100%);
+      border-radius: 16px;
+      padding: 22px 20px;
+      color: #FFFFFF;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      margin-bottom: 16px;
+      position: relative;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      overflow: hidden;
+    }
+    .vip_card::after {
+      content: 'VIP';
+      position: absolute;
+      right: -10px;
+      bottom: -15px;
+      font-size: 80px;
+      font-weight: 900;
+      color: rgba(255, 215, 0, 0.06);
+      font-style: italic;
+    }
+    .badge_display {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(90deg, #FFDF00 0%, #FFA500 100%);
+      color: #212121;
+      font-weight: bold;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      box-shadow: 0 2px 6px rgba(255, 223, 0, 0.4);
+    }
+    .privilege_grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .priv_item {
+      background: #F8F9FA;
+      border-radius: 10px;
+      padding: 14px 6px;
+      border: 1px solid #ECEFF1;
+      transition: transform 0.2s;
+    }
+    .priv_item:active {
+      transform: scale(0.96);
+    }
+    .priv_icon {
+      font-size: 26px;
+      margin-bottom: 6px;
+    }
+    .priv_title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #263238;
+    }
+    .priv_sub {
+      font-size: 10px;
+      color: #78909C;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #232526 0%, #414345 100%);">
+    <div class="banner_badge" style="color: #FFD700; border-color: #FFD700;">👑 头条金卡会员 · 专属尊贵身份</div>
+    <div class="banner_title">会员权益中心</div>
+    <div class="banner_subtitle">专享极速免广告体验、专属尊贵身份铭牌与商城大额特权</div>
+  </div>
+
+  <div class="container">
+    <!-- 专属身份铭牌展示 -->
+    <div class="vip_card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <div class="badge_display">
+            <span>✨</span>
+            <span>头条金卡 VIP</span>
+          </div>
+          <div style="font-size: 20px; font-weight: bold; color: #FFD700; margin-top: 10px; letter-spacing: 0.5px;">凝墨</div>
+          <div style="font-size: 11px; color: #CFD8DC; margin-top: 2px;">尊贵铭牌编号：NO.88692026</div>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 10px; background: rgba(255, 215, 0, 0.15); border: 1px solid rgba(255, 215, 0, 0.4); color: #FFD700; padding: 3px 8px; border-radius: 12px;">永久尊享</span>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: #B0BEC5;">
+        <span>权益状态：全部特权已激活</span>
+        <span>已累计节省 ￥328.00</span>
+      </div>
+    </div>
+
+    <!-- 核心特权专区 -->
+    <div class="card">
+      <div class="card_title">
+        <span>💎 头条金卡六大专属特权</span>
+      </div>
+      <div class="privilege_grid">
+        <div class="priv_item">
+          <div class="priv_icon">🚫</div>
+          <div class="priv_title">全局免广告</div>
+          <div class="priv_sub">纯净阅读体验</div>
+        </div>
+        <div class="priv_item">
+          <div class="priv_icon">🏷️</div>
+          <div class="priv_title">双倍淘金币</div>
+          <div class="priv_sub">下单返现翻倍</div>
+        </div>
+        <div class="priv_item">
+          <div class="priv_icon">👑</div>
+          <div class="priv_title">专属身份铭牌</div>
+          <div class="priv_sub">评论发光徽章</div>
+        </div>
+        <div class="priv_item">
+          <div class="priv_icon">🚚</div>
+          <div class="priv_title">每月免邮券</div>
+          <div class="priv_sub">每月立领2张</div>
+        </div>
+        <div class="priv_item">
+          <div class="priv_icon">⚡</div>
+          <div class="priv_title">极速专属通道</div>
+          <div class="priv_sub">人工客服秒回</div>
+        </div>
+        <div class="priv_item">
+          <div class="priv_icon">🎁</div>
+          <div class="priv_title">会员生日礼</div>
+          <div class="priv_sub">专属大额红包</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn_gold btn_block" onclick="showToast('🎉 头条金卡 VIP 特权已生效，免广告与身份铭牌已点亮！')">一键领取本月专属 VIP 权益包</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

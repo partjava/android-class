@@ -313,6 +313,551 @@ def image_proxy():
     except Exception as e:
         return f"Error fetching image: {e}", 500
 
+OFFICIAL_PAGES = {
+    "survey": "https://www.qcuwh.cn/xxgk/xxjj.htm",       # 学校概况 -> 学校简介
+    "org": "https://www.qcuwh.cn/jgsz/jxdw.htm",          # 机构设置 -> 教学单位
+    "talent": "https://www.qcuwh.cn/rcpy/bxdw.htm",       # 人才培养 -> 办学定位
+    "faculty": "https://www.qcuwh.cn/szdw/szgk.htm",      # 师资队伍 -> 师资概况
+    "research": "https://www.qcuwh.cn/jxky/bxcg.htm",     # 教学科研 -> 办学成果
+    "admissions": "https://www.qcuwh.cn/zsjy/cgzs.htm",   # 招生就业 -> 成果展示
+    "party": "https://www.qcuwh.cn/djsz/szjs.htm",        # 党建思政 -> 思政建设
+    "student": "https://www.qcuwh.cn/xsgz/gzgk.htm",      # 学生工作 -> 工作概况
+    "culture": "https://www.qcuwh.cn/xywh/jsgk.htm",      # 校园文化 -> 精神概况
+    "service": "https://www.qcuwh.cn/xyfw/xydt.htm",      # 公共服务 -> 校园动态
+}
+
+CHANNEL_CONFIG = {
+    "survey": {"title": "学校概况", "en": "ABOUT US", "sub": "学校简介"},
+    "org": {"title": "机构设置", "en": "ORGANIZATION", "sub": "教学单位"},
+    "talent": {"title": "人才培养", "en": "TALENT TRAINING", "sub": "办学定位"},
+    "faculty": {"title": "师资队伍", "en": "FACULTY TEAM", "sub": "师资概况"},
+    "research": {"title": "教学科研", "en": "RESEARCH & TEACHING", "sub": "办学成果"},
+    "admissions": {"title": "招生就业", "en": "ADMISSIONS & CAREERS", "sub": "成果展示"},
+    "party": {"title": "党建思政", "en": "PARTY & IDEOLOGY", "sub": "思政建设"},
+    "student": {"title": "学生工作", "en": "STUDENT AFFAIRS", "sub": "工作概况"},
+    "culture": {"title": "校园文化", "en": "CAMPUS CULTURE", "sub": "精神概况"},
+    "service": {"title": "公共服务", "en": "PUBLIC SERVICES", "sub": "校园动态"}
+}
+
+# 官方网站各频道完整二级小标签结构 (100% 对应官网二级子栏目导航)
+CHANNEL_SUBTAGS = {
+    "survey": [
+        {"name": "学校简介", "url": "https://www.qcuwh.cn/xxgk/xxjj.htm"},
+        {"name": "董事长介绍", "url": "https://www.qcuwh.cn/xxgk/dszjs.htm"},
+        {"name": "现任领导", "url": "https://www.qcuwh.cn/xxgk/xrld1/dsh_jshcy.htm"},
+        {"name": "发展规划", "url": "https://www.qcuwh.cn/xxgk/fzgh.htm"},
+        {"name": "形象标识", "url": "https://www.qcuwh.cn/xxgk/xxbs.htm"},
+        {"name": "学校荣誉", "url": "https://www.qcuwh.cn/xxgk/xxry.htm"}
+    ],
+    "org": [
+        {"name": "教学单位", "url": "https://www.qcuwh.cn/jgsz/jxdw.htm"},
+        {"name": "党政机构", "url": "https://www.qcuwh.cn/jgsz/dzjg.htm"},
+        {"name": "直属单位", "url": "https://www.qcuwh.cn/jgsz/zsdw.htm"},
+        {"name": "群团组织", "url": "https://www.qcuwh.cn/jgsz/qtzz.htm"}
+    ],
+    "talent": [
+        {"name": "办学定位", "url": "https://www.qcuwh.cn/rcpy/bxdw.htm"},
+        {"name": "培养特色", "url": "https://www.qcuwh.cn/rcpy/pyts.htm"},
+        {"name": "学科专业", "url": "https://www.qcuwh.cn/rcpy/xkzy1.htm"},
+        {"name": "专业设置", "url": "https://www.qcuwh.cn/rcpy/xkzy1/zyjqsz.htm"},
+        {"name": "专业介绍", "url": "https://www.qcuwh.cn/rcpy/xkzy1/zyjs/jxydqgcxy.htm"},
+        {"name": "实践教学", "url": "https://www.qcuwh.cn/rcpy/sjjx1.htm"},
+        {"name": "学科竞赛", "url": "https://www.qcuwh.cn/rcpy/sjjx1/xkjs.htm"},
+        {"name": "实验教学", "url": "https://www.qcuwh.cn/rcpy/sjjx1/syjx/jxydqgcxy.htm"},
+        {"name": "产教融合", "url": "https://www.qcuwh.cn/rcpy/sjjx1/cjrh.htm"},
+        {"name": "教育数字化", "url": "https://www.qcuwh.cn/rcpy/jyszh.htm"}
+    ],
+    "faculty": [
+        {"name": "师资概况", "url": "https://www.qcuwh.cn/szdw/szgk.htm"},
+        {"name": "知名学者", "url": "https://www.qcuwh.cn/szdw/zmxz.htm"},
+        {"name": "教授团队", "url": "https://www.qcuwh.cn/szdw/jstd.htm"},
+        {"name": "晴川英才", "url": "https://www.qcuwh.cn/szdw/qcyc.htm"},
+        {"name": "双师双能", "url": "https://www.qcuwh.cn/szdw/sssn.htm"}
+    ],
+    "research": [
+        {"name": "办学成果", "url": "https://www.qcuwh.cn/jxky/bxcg.htm"}
+    ],
+    "admissions": [
+        {"name": "成果展示", "url": "https://www.qcuwh.cn/zsjy/cgzs.htm"}
+    ],
+    "party": [
+        {"name": "思政建设", "url": "https://www.qcuwh.cn/djsz/szjs.htm"},
+        {"name": "党建成果", "url": "https://www.qcuwh.cn/djsz/djcg.htm"}
+    ],
+    "student": [
+        {"name": "工作概况", "url": "https://www.qcuwh.cn/xsgz/gzgk.htm"},
+        {"name": "成果展示", "url": "https://www.qcuwh.cn/xsgz/cgzs.htm"}
+    ],
+    "culture": [
+        {"name": "建设概况", "url": "https://www.qcuwh.cn/xywh/jsgk.htm"},
+        {"name": "文化品牌", "url": "https://www.qcuwh.cn/xywh/whpp.htm"},
+        {"name": "晴川讲堂", "url": "https://www.qcuwh.cn/xywh/qcjt.htm"},
+        {"name": "美丽晴川", "url": "https://www.qcuwh.cn/xywh/mlqc.htm"},
+        {"name": "学生社团", "url": "https://www.qcuwh.cn/xywh/xsst.htm"}
+    ],
+    "service": [
+        {"name": "校园动态", "url": "https://www.qcuwh.cn/xyfw/xydt.htm"},
+        {"name": "办公电话", "url": "https://www.qcuwh.cn/lxfs.htm"},
+        {"name": "学校校历", "url": "https://www.qcuwh.cn/xyfw/xxxl.htm"}
+    ]
+}
+
+page_html_cache = {}
+
+def proxy_remote_asset(target_url, default_type="application/octet-stream"):
+    if target_url in image_cache:
+        data, content_type = image_cache[target_url]
+        return Response(data, mimetype=content_type)
+    try:
+        resp = session.get(target_url, timeout=10, verify=False)
+        if resp.status_code == 200:
+            c_type = resp.headers.get("Content-Type", default_type)
+            image_cache[target_url] = (resp.content, c_type)
+            return Response(resp.content, mimetype=c_type)
+        return Response(f"Asset not found: {resp.status_code}", status=404)
+    except Exception as e:
+        return Response(str(e), status=500)
+
+@app.route("/img/<path:subpath>")
+def proxy_img_path(subpath):
+    return proxy_remote_asset(f"https://www.qcuwh.cn/img/{subpath}", "image/jpeg")
+
+@app.route("/images/<path:subpath>")
+def proxy_images_path(subpath):
+    return proxy_remote_asset(f"https://www.qcuwh.cn/images/{subpath}", "image/png")
+
+@app.route("/css/<path:subpath>")
+def proxy_css_path(subpath):
+    return proxy_remote_asset(f"https://www.qcuwh.cn/css/{subpath}", "text/css")
+
+@app.route("/fonts/<path:subpath>")
+def proxy_fonts_path(subpath):
+    return proxy_remote_asset(f"https://www.qcuwh.cn/fonts/{subpath}", "font/woff2")
+
+@app.route("/__local/<path:subpath>")
+def proxy_local_path(subpath):
+    return proxy_remote_asset(f"https://www.qcuwh.cn/__local/{subpath}", "image/jpeg")
+
+@app.route("/school_page/<page_id>", methods=["GET"])
+def school_page(page_id):
+    """
+    提供武汉晴川学院官网各频道的真实原版移动端页面。
+    包含：
+    1. 武大蓝官方品牌顶栏与白色矢量校徽 Logo
+    2. 校园实景大 Banner 与频道中英文标题
+    3. 二级小标签横向滑动胶囊导航栏 (支持所有二级子栏目自由切换)
+    4. 面包屑路径与正文内容白底自适应卡片
+    5. 100% 真实官网数据，所有图片通过代理高保真秒开
+    6. 官方权威版权与备案页脚
+    """
+    cfg = CHANNEL_CONFIG.get(page_id, {"title": "官网频道", "en": "OFFICIAL", "sub": "详情"})
+    subtags_list = CHANNEL_SUBTAGS.get(page_id, [])
+
+    custom_url = request.args.get("url")
+    if custom_url:
+        target_url = custom_url
+    elif subtags_list:
+        target_url = subtags_list[0]["url"]
+    else:
+        target_url = OFFICIAL_PAGES.get(page_id, "https://www.qcuwh.cn/xxgk/xxjj.htm")
+
+    # 判断当前选中的小标签名称
+    active_sub_name = cfg.get("sub", "")
+    for item in subtags_list:
+        if item["url"] == target_url or target_url.endswith(item["url"].split("/")[-1]):
+            active_sub_name = item["name"]
+            break
+
+    # 构建二级横向滑动标签栏 (胶囊风格导航)
+    subtags_html = ""
+    if subtags_list:
+        pills = []
+        for tag in subtags_list:
+            is_active = (tag["name"] == active_sub_name)
+            active_class = "active" if is_active else ""
+            encoded_url = urllib.parse.quote(tag["url"], safe="")
+            link_href = f"http://10.0.2.2:5000/school_page/{page_id}?url={encoded_url}"
+            pills.append(f'<a href="{link_href}" class="subtag_item {active_class}">{tag["name"]}</a>')
+        subtags_html = f"""
+  <nav class="subtag_bar">
+    <div class="subtag_container">
+      {"".join(pills)}
+    </div>
+  </nav>
+"""
+
+    # 优先读内存缓存，保障秒开
+    cache_key = f"{page_id}_{target_url}"
+    if cache_key in page_html_cache:
+        return Response(page_html_cache[cache_key], mimetype="text/html; charset=utf-8")
+
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+        }
+        res = session.get(target_url, headers=headers, timeout=10, verify=False)
+        res.encoding = "utf-8"
+        soup = BeautifulSoup(res.text, "html.parser")
+
+        # 彻底移除全屏遮罩、浏览器检测弹窗、PC冗余导航
+        for l in soup.find_all(class_="loader"): l.decompose()
+        for bm in soup.find_all(id="browser-modal"): bm.decompose()
+
+        # 提取标题
+        t_el = soup.find("h1") or soup.find(class_="content_title") or soup.find(class_="ny_tit")
+        page_heading = t_el.get_text(strip=True) if t_el else (soup.title.get_text(strip=True) if soup.title else "")
+        if not page_heading or len(page_heading) < 2:
+            page_heading = f"武汉晴川学院 · {active_sub_name}"
+
+        # 提取核心内容容器
+        cont_el = soup.find(class_="cont") or soup.find(class_="v_news_content") or soup.find(class_="content") or soup.find(class_="sub_right") or soup.find(class_="ny_con")
+        if not cont_el:
+            cont_el = soup.find("body") or soup
+
+        # 修正所有图片走 /api/image_proxy 保证 100% 正常显示
+        for img in cont_el.find_all("img"):
+            src = img.get("src")
+            if src:
+                abs_src = urllib.parse.urljoin(target_url, src)
+                img["src"] = f"/api/image_proxy?url={urllib.parse.quote(abs_src)}"
+
+        # 修正所有正文内部跳转，使其全部在客户端内无缝跳转
+        for a in cont_el.find_all("a"):
+            href = a.get("href")
+            if href and not href.startswith("javascript:") and not href.startswith("#"):
+                abs_href = urllib.parse.urljoin(target_url, href)
+                if "qcuwh.cn" in abs_href:
+                    a["href"] = f"http://10.0.2.2:5000/school_page/{page_id}?url={urllib.parse.quote(abs_href, safe='')}"
+
+        # 移除外链脚本
+        for s in cont_el.find_all("script"):
+            s.decompose()
+
+        # 移除可能残留的重复大标题
+        for el in cont_el.find_all(["h1", "h2"]):
+            if el.get_text(strip=True) == page_heading:
+                el.decompose()
+
+        content_html = str(cont_el)
+
+        # 构造完整真实、排版精良的移动官网原生 HTML
+        html_out = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+  <title>{page_heading} - 武汉晴川学院</title>
+  <script>
+    window._addDynClicks = function() {{}};
+    window._jsq_ = function() {{}};
+  </script>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }}
+    body {{
+      background: #F4F6F9;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #2D3748;
+      font-size: 15px;
+      line-height: 1.85;
+      overflow-x: hidden;
+      padding-bottom: 24px;
+    }}
+    
+    /* 1. 学校官方深蓝品牌顶栏 (武大蓝 + 官方白底矢量 Logo) */
+    .school_header {{
+      background: #002E8B;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0, 46, 139, 0.25);
+    }}
+    .school_header .logo_wrap img {{
+      height: 36px;
+      display: block;
+    }}
+    .school_header .tag {{
+      background: rgba(255, 255, 255, 0.16);
+      color: #FFFFFF;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }}
+    
+    /* 2. 官方校园风景大 Banner */
+    .school_banner {{
+      position: relative;
+      width: 100%;
+      height: 115px;
+      background: #002E8B url('/api/image_proxy?url=https%3A//www.qcuwh.cn/img/nybanner.jpg') center center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 20px;
+    }}
+    .school_banner::after {{
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 46, 139, 0.78) 0%, rgba(13, 71, 161, 0.48) 100%);
+    }}
+    .school_banner .banner_text {{
+      position: relative;
+      z-index: 2;
+      color: #FFFFFF;
+    }}
+    .school_banner .banner_title {{
+      font-size: 21px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }}
+    .school_banner .banner_en {{
+      font-size: 10px;
+      opacity: 0.85;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 2px;
+    }}
+
+    /* 2.5 二级小标签横向滑动胶囊导航栏 (支持多标签横向滚动) */
+    .subtag_bar {{
+      background: #FFFFFF;
+      padding: 10px 12px;
+      border-bottom: 1px solid #E2E8F0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }}
+    .subtag_container {{
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      gap: 8px;
+    }}
+    .subtag_container::-webkit-scrollbar {{
+      display: none;
+    }}
+    .subtag_item {{
+      display: inline-block;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #4A5568;
+      background: #F1F5F9;
+      border-radius: 20px;
+      text-decoration: none;
+      border: 1px solid #E2E8F0;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }}
+    .subtag_item.active {{
+      color: #FFFFFF;
+      background: #002E8B;
+      border-color: #002E8B;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 46, 139, 0.35);
+    }}
+    
+    /* 3. 面包屑路径 */
+    .breadcrumb_bar {{
+      background: #FFFFFF;
+      padding: 9px 16px;
+      font-size: 12px;
+      color: #718096;
+      border-bottom: 1px solid #E2E8F0;
+      display: flex;
+      align-items: center;
+    }}
+    .breadcrumb_bar span {{
+      margin: 0 5px;
+      color: #CBD5E0;
+    }}
+    .breadcrumb_bar .active {{
+      color: #D32F2F;
+      font-weight: bold;
+    }}
+    
+    /* 4. 正文主体白底卡片 */
+    .content_container {{
+      margin: 12px;
+      background: #FFFFFF;
+      border-radius: 8px;
+      padding: 18px 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }}
+    
+    .article_title {{
+      font-size: 18px;
+      font-weight: bold;
+      color: #1A202C;
+      line-height: 1.45;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+      border-bottom: 2px solid #EDF2F7;
+      position: relative;
+    }}
+    .article_title::after {{
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -2px;
+      width: 44px;
+      height: 2px;
+      background: #D32F2F;
+    }}
+    
+    /* 正文段落排版 (彻底杜绝文字截断与错位) */
+    .article_body {{
+      color: #2D3748;
+      font-size: 15px;
+      line-height: 1.85;
+      word-break: break-word;
+    }}
+    .article_body p {{
+      margin: 10px 0;
+      text-align: justify;
+      line-height: 1.85;
+      text-indent: 2em;
+    }}
+    .article_body p span {{
+      line-height: 1.85 !important;
+      font-size: 15px !important;
+    }}
+    
+    /* 核心属性标签加粗与高亮 (总体定位、办学类型、办学层次等) */
+    .article_body strong, .article_body b {{
+      color: #002E8B;
+      font-weight: bold;
+    }}
+    
+    /* 图片自适应响应 */
+    .article_body img {{
+      max-width: 100% !important;
+      height: auto !important;
+      display: block;
+      margin: 14px auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }}
+    
+    /* 表格自适应 */
+    .article_body table {{
+      width: 100% !important;
+      max-width: 100% !important;
+      border-collapse: collapse;
+      margin: 14px 0;
+      font-size: 13px;
+    }}
+    .article_body th, .article_body td {{
+      border: 1px solid #E2E8F0;
+      padding: 8px 10px;
+      text-align: left;
+    }}
+    .article_body th {{
+      background: #F7FAFC;
+      font-weight: bold;
+      color: #002E8B;
+    }}
+    
+    /* 机构设置中的二级学院与系部列表卡片 */
+    .article_body ul, .article_body ol {{
+      padding-left: 0;
+      list-style: none;
+    }}
+    .article_body li {{
+      background: #F8FAFC;
+      margin-bottom: 8px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border-left: 3px solid #002E8B;
+      font-size: 14px;
+      font-weight: 500;
+      color: #2D3748;
+    }}
+    
+    /* 5. 官方权威页脚 */
+    .school_footer {{
+      margin-top: 14px;
+      padding: 16px 12px;
+      text-align: center;
+      font-size: 11px;
+      color: #A0AEC0;
+      line-height: 1.7;
+    }}
+    .school_footer .badge {{
+      display: inline-block;
+      margin-bottom: 4px;
+      color: #718096;
+      font-weight: bold;
+    }}
+  </style>
+</head>
+<body>
+  <!-- 官方移动顶栏 -->
+  <header class="school_header">
+    <div class="logo_wrap">
+      <img src="/api/image_proxy?url=https%3A//www.qcuwh.cn/img/logo.png" alt="武汉晴川学院">
+    </div>
+    <div class="tag">晴川移动官网</div>
+  </header>
+  
+  <!-- 校园实景大 Banner -->
+  <div class="school_banner">
+    <div class="banner_text">
+      <div class="banner_title">{cfg['title']}</div>
+      <div class="banner_en">{cfg['en']}</div>
+    </div>
+  </div>
+
+  <!-- 二级小标签横向滑动胶囊导航栏 -->
+  {subtags_html}
+  
+  <!-- 面包屑导航 -->
+  <div class="breadcrumb_bar">
+    首页 <span>/</span> {cfg['title']} <span>/</span> <b class="active">{active_sub_name}</b>
+  </div>
+  
+  <!-- 内容主体卡片 -->
+  <main class="content_container">
+    <h1 class="article_title">{page_heading}</h1>
+    <div class="article_body">
+      {content_html}
+    </div>
+  </main>
+  
+  <!-- 官方页脚 -->
+  <footer class="school_footer">
+    <div class="badge">🏫 武汉晴川学院官方网站</div>
+    <div>版权所有：武汉晴川学院 · 鄂ICP备16010078号</div>
+    <div>地址：武汉市东湖高新技术开发区玉屏大道9号 · 邮编：430204</div>
+  </footer>
+
+  <script>
+    // 自动将当前选中的小标签平滑滚动至居中视野
+    window.addEventListener('DOMContentLoaded', function() {{
+      var activeEl = document.querySelector('.subtag_item.active');
+      if (activeEl) {{
+        activeEl.scrollIntoView({{ behavior: 'smooth', inline: 'center', block: 'nearest' }});
+      }}
+    }});
+  </script>
+</body>
+</html>"""
+
+        page_html_cache[cache_key] = html_out
+        print(f"[官网页面服务] 成功抓取并生成精美移动端版面: {page_id} - {active_sub_name} ({target_url})，大小: {len(html_out)} 字节")
+        return Response(html_out, mimetype="text/html; charset=utf-8")
+    except Exception as e:
+        print(f"[官网页面服务] 抓取失败: {e}")
+        return f"<div style='padding:20px;text-align:center;'><h3>页面加载失败</h3><p>{e}</p></div>", 500
+
 if __name__ == "__main__":
     print("=" * 68)
     print(f"  [*] {SCHOOL_NAME} 100% 真实实时官网爬虫服务启动中...")

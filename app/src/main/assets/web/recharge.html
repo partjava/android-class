@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>充值中心 - 手机话费与流量充值</title>
+  <link rel="stylesheet" href="css/shop.css">
+  <style>
+    .phone_input_box {
+      display: flex;
+      align-items: center;
+      background: #F8F9FA;
+      border: 1px solid #CFD8DC;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 8px;
+    }
+    .phone_input_box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      flex: 1;
+    }
+    .carrier_tag {
+      font-size: 12px;
+      color: #007AFF;
+      background: #E5F1FF;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page_header_banner" style="background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);">
+    <div class="banner_badge">📱 官方直充 · 即时到账 · 98折起</div>
+    <div class="banner_title">话费 / 流量充值中心</div>
+    <div class="banner_subtitle">支持全国移动、联通、电信手机号码充值</div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="card_title">
+        <span>充值号码</span>
+        <span class="carrier_tag">湖北移动</span>
+      </div>
+      <div class="phone_input_box">
+        <input type="tel" id="phone_input" value="13800000001" maxlength="11" placeholder="请输入11位手机号码">
+      </div>
+
+      <div style="margin-top: 16px; font-weight: bold; color: #1C1C1E;">充值面额</div>
+      <div class="recharge_grid">
+        <div class="recharge_item" onclick="selectRecharge(this, 30, 29.85)">
+          <div class="recharge_face">30元</div>
+          <div class="recharge_price">售价￥29.85</div>
+        </div>
+        <div class="recharge_item" onclick="selectRecharge(this, 50, 49.50)">
+          <div class="recharge_face">50元</div>
+          <div class="recharge_price">售价￥49.50</div>
+        </div>
+        <div class="recharge_item selected" onclick="selectRecharge(this, 100, 98.50)">
+          <div class="recharge_face">100元</div>
+          <div class="recharge_price">售价￥98.50</div>
+        </div>
+        <div class="recharge_item" onclick="selectRecharge(this, 200, 197.00)">
+          <div class="recharge_face">200元</div>
+          <div class="recharge_price">售价￥197.00</div>
+        </div>
+        <div class="recharge_item" onclick="selectRecharge(this, 300, 295.50)">
+          <div class="recharge_face">300元</div>
+          <div class="recharge_price">售价￥295.50</div>
+        </div>
+        <div class="recharge_item" onclick="selectRecharge(this, 500, 492.00)">
+          <div class="recharge_face">500元</div>
+          <div class="recharge_price">售价￥492.00</div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px;">
+        <button class="btn btn_primary btn_block" id="pay_price_text" onclick="submitRecharge()">立即支付 ￥98.50</button>
+      </div>
+    </div>
+
+    <!-- 充值常见问题 -->
+    <div class="card">
+      <div class="card_title">
+        <span>📋 充值说明</span>
+      </div>
+      <div class="rule_item">
+        <div class="rule_title">1. 到账时间</div>
+        <div class="rule_content">一般情况下支付成功后 1-5 分钟内到账，月末月初高峰期可能会有轻微延迟，以运营商短信通知为准。</div>
+      </div>
+      <div class="rule_item">
+        <div class="rule_title">2. 充错号码处理</div>
+        <div class="rule_content">话费充值属于即时系统自动结算，一旦充值成功无法退款，请在点击充值前仔细核对号码。</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/shop.js"></script>
+</body>
+</html>

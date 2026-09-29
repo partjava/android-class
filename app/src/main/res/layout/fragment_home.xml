@@ -50,68 +50,50 @@
                 android:imeOptions="actionSearch"/>
         </LinearLayout>
 
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/bg_surface"
-            android:scrollbars="none">
-            <LinearLayout
-                android:id="@+id/ll_tab_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="@dimen/space_s">
+            android:layout_height="42dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@color/bg_surface">
 
-                <TextView
-                    android:id="@+id/tab_recommend"
+            <HorizontalScrollView
+                android:id="@+id/hsv_tab_bar"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/ll_tab_container"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="推荐"
-                    android:textColor="@color/brand_red"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_campus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="校园"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_video_small"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="小视频"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_beijing"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="北京"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_hot"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="热点"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-                <TextView
-                    android:id="@+id/tab_entertain"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="娱乐"
-                    android:textColor="@color/tab_inactive"
-                    android:textSize="@dimen/text_title"
-                    android:paddingHorizontal="@dimen/space_m"/>
-            </LinearLayout>
-        </HorizontalScrollView>
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="@dimen/space_s"
+                    android:paddingEnd="@dimen/space_s"/>
+            </HorizontalScrollView>
+
+            <!-- 右侧频道管理入口 (汉堡菜单图标) -->
+            <FrameLayout
+                android:id="@+id/btn_channel_manage"
+                android:layout_width="44dp"
+                android:layout_height="match_parent"
+                android:background="@color/bg_surface"
+                android:foreground="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_menu_channels"
+                    app:tint="@color/text_primary"
+                    android:contentDescription="频道管理"/>
+            </FrameLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -171,6 +153,23 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/ll_campus_banner"
         app:layout_constraintBottom_toTopOf="@id/ll_campus_footer"/>
+
+    <ProgressBar
+        android:id="@+id/pb_school_loading"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/ll_top_bar"/>
+
+    <WebView
+        android:id="@+id/wv_school_page"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/pb_school_loading"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <TextView
         android:id="@+id/tv_search_empty"
