@@ -47,6 +47,8 @@ public class MineFragment extends PageFragment {
     private TextView btnMicroWork;
     private TextView tvWorksCount;
     private LinearLayout llWorksContainer;
+    private TextView tvAssetCoinsNum;
+    private TextView tvAssetCouponsNum;
 
     private final List<VideoItem> userVideos = new ArrayList<>();
 
@@ -61,6 +63,14 @@ public class MineFragment extends PageFragment {
 
         initViews();
         initDefaultData();
+        refreshWalletAssets();
+
+        // 我的资产与钱包入口
+        click(R.id.ll_asset_coins, () -> WebActivity.open(requireContext(), "红包签到与金币", "file:///android_asset/web/signin.html"));
+        click(R.id.ll_asset_coupons, () -> WebActivity.open(requireContext(), "领券中心", "file:///android_asset/web/coupons.html"));
+        click(R.id.ll_asset_redpack, () -> WebActivity.open(requireContext(), "天天领红包", "file:///android_asset/web/gifts.html"));
+        click(R.id.ll_asset_vip, () -> WebActivity.open(requireContext(), "会员权益中心", "file:///android_asset/web/vip.html"));
+        click(R.id.tv_wallet_more, () -> WebActivity.open(requireContext(), "新人免单福利", "file:///android_asset/web/newuser.html"));
 
         // 设置
         click(R.id.iv_setting, () -> startActivity(new Intent(requireContext(), SettingsActivity.class)));
@@ -165,6 +175,25 @@ public class MineFragment extends PageFragment {
         btnMicroWork = findViewById(R.id.btn_micro_work);
         tvWorksCount = findViewById(R.id.tv_works_count);
         llWorksContainer = findViewById(R.id.ll_works_container);
+        tvAssetCoinsNum = findViewById(R.id.tv_asset_coins_num);
+        tvAssetCouponsNum = findViewById(R.id.tv_asset_coupons_num);
+    }
+
+    private void refreshWalletAssets() {
+        if (!isAdded()) return;
+        ProfileStore profile = new ProfileStore(requireContext());
+        int coins = profile.getCoins();
+        if (tvAssetCoinsNum != null) {
+            tvAssetCoinsNum.setText(String.valueOf(coins));
+        }
+        ShopStore shop = new ShopStore(requireContext());
+        int validCoupons = 0;
+        for (ShopStore.CouponItem c : shop.getCoupons()) {
+            if (!c.used) validCoupons++;
+        }
+        if (tvAssetCouponsNum != null) {
+            tvAssetCouponsNum.setText(validCoupons + " 张");
+        }
     }
 
     private void initDefaultData() {
@@ -778,6 +807,7 @@ public class MineFragment extends PageFragment {
         if (avatar != null) {
             avatar.setImageResource(profile.getAvatarRes());
         }
+        refreshWalletAssets();
         renderContent();
     }
 }

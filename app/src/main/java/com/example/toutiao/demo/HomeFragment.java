@@ -588,7 +588,7 @@ public class HomeFragment extends PageFragment {
 
                 isCampusLoadingMore = false;
                 if (!hasMoreCampusNews) {
-                    updateCampusFooterUI("🎉 已加载全部 " + campusList.size() + " 条校园要闻", false);
+                    updateCampusFooterUI("—— 已经到底啦，去看看其他内容吧 ——", false);
                 } else {
                     updateCampusFooterUI("📖 已加载至第 " + campusCurrentPage + " 页 (累计 " + campusList.size() + " 条) · 下滑自动加载更多", false);
                 }

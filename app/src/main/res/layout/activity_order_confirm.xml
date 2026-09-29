@@ -163,13 +163,16 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/ll_coupon_selector"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:layout_marginBottom="12dp"
+                    android:background="?attr/selectableItemBackground"
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_coupon_label"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -178,14 +181,16 @@
                         android:text="店铺优惠券" />
 
                     <TextView
+                        android:id="@+id/tv_coupon_discount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="14sp"
                         android:textColor="@color/brand_red"
-                        android:text="-¥10.00" />
+                        android:text="选择优惠券 >" />
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/ll_coin_selector"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
@@ -193,6 +198,7 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        android:id="@+id/tv_coin_label"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
@@ -201,11 +207,12 @@
                         android:text="淘金币抵扣" />
 
                     <TextView
+                        android:id="@+id/tv_coin_discount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="14sp"
                         android:textColor="@color/brand_red"
-                        android:text="-¥5.00" />
+                        android:text="-¥0.00" />
                 </LinearLayout>
 
                 <View

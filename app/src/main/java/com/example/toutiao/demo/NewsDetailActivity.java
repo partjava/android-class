@@ -24,6 +24,13 @@ public class NewsDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_news_detail);
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(android.graphics.Color.WHITE);
+            androidx.core.view.WindowInsetsControllerCompat controller =
+                    new androidx.core.view.WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+            controller.setAppearanceLightStatusBars(true);
+        }
+
         // 取出列表页传过来的数据
         String title = getIntent().getStringExtra("title");
         String info = getIntent().getStringExtra("info");
@@ -205,7 +212,52 @@ public class NewsDetailActivity extends AppCompatActivity {
         } else if (imgSpec instanceof String) {
             RemoteImage.load(iv, (String) imgSpec);
         }
+
+        // 交互优化：点击图片唤起全屏沉浸式大图预览
+        iv.setOnClickListener(v -> showImagePreviewDialog(imgSpec));
+
         container.addView(iv);
+    }
+
+    private void showImagePreviewDialog(Object imgSpec) {
+        android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        android.widget.FrameLayout layout = new android.widget.FrameLayout(this);
+        layout.setBackgroundColor(android.graphics.Color.BLACK);
+
+        ImageView previewIv = new ImageView(this);
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT
+        );
+        previewIv.setLayoutParams(lp);
+        previewIv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        if (imgSpec instanceof Integer) {
+            previewIv.setImageResource((Integer) imgSpec);
+        } else if (imgSpec instanceof String) {
+            RemoteImage.load(previewIv, (String) imgSpec);
+        }
+
+        TextView tip = new TextView(this);
+        tip.setText("轻触任意位置退出原图预览");
+        tip.setTextColor(android.graphics.Color.parseColor("#B0FFFFFF"));
+        tip.setTextSize(13);
+        android.widget.FrameLayout.LayoutParams tipLp = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+        );
+        tipLp.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL;
+        tipLp.bottomMargin = dpToPx(36);
+        tip.setLayoutParams(tipLp);
+
+        layout.addView(previewIv);
+        layout.addView(tip);
+
+        layout.setOnClickListener(v -> dialog.dismiss());
+        previewIv.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.setContentView(layout);
+        dialog.show();
     }
 
     private int dpToPx(int dp) {

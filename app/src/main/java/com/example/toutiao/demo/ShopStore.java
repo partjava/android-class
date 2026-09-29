@@ -18,6 +18,54 @@ public final class ShopStore {
     private static final String PREF_NAME = "shop_store_v2";
     private static final String KEY_CART = "cart_items";
     private static final String KEY_ORDERS = "order_items";
+    private static final String KEY_COUPONS = "user_coupons_v1";
+
+    public static class CouponItem {
+        public String id;
+        public String title;
+        public int discountAmount; // 抵扣金额 (元)
+        public int minSpend; // 门槛金额 (元)
+        public String desc;
+        public boolean used;
+        public long receiveTime;
+
+        public CouponItem(String id, String title, int discountAmount, int minSpend, String desc, boolean used, long receiveTime) {
+            this.id = id;
+            this.title = title;
+            this.discountAmount = discountAmount;
+            this.minSpend = minSpend;
+            this.desc = desc;
+            this.used = used;
+            this.receiveTime = receiveTime;
+        }
+
+        public JSONObject toJson() {
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("id", id);
+                obj.put("title", title);
+                obj.put("discountAmount", discountAmount);
+                obj.put("minSpend", minSpend);
+                obj.put("desc", desc);
+                obj.put("used", used);
+                obj.put("receiveTime", receiveTime);
+            } catch (Exception ignored) {}
+            return obj;
+        }
+
+        public static CouponItem fromJson(JSONObject obj) {
+            if (obj == null) return null;
+            return new CouponItem(
+                    obj.optString("id", ""),
+                    obj.optString("title", ""),
+                    obj.optInt("discountAmount", 0),
+                    obj.optInt("minSpend", 0),
+                    obj.optString("desc", ""),
+                    obj.optBoolean("used", false),
+                    obj.optLong("receiveTime", System.currentTimeMillis())
+            );
+        }
+    }
 
     public static class CartItem {
         public String title;
@@ -385,5 +433,71 @@ public final class ShopStore {
             }
         }
         saveOrders(list);
+    }
+
+    public synchronized List<CouponItem> getCoupons() {
+        String json = prefs.getString(KEY_COUPONS, null);
+        List<CouponItem> list = new ArrayList<>();
+        if (json != null && !json.isEmpty()) {
+            try {
+                JSONArray arr = new JSONArray(json);
+                for (int i = 0; i < arr.length(); i++) {
+                    CouponItem item = CouponItem.fromJson(arr.getJSONObject(i));
+                    if (item != null) list.add(item);
+                }
+            } catch (Exception ignored) {}
+        }
+        if (list.isEmpty()) {
+            CouponItem welcome = new CouponItem("c_welcome", "新人首单全品类立减券", 10, 0, "商城新人专享全场立减", false, System.currentTimeMillis());
+            list.add(welcome);
+            saveCoupons(list);
+        }
+        return list;
+    }
+
+    public synchronized void saveCoupons(List<CouponItem> list) {
+        JSONArray arr = new JSONArray();
+        for (CouponItem item : list) {
+            arr.put(item.toJson());
+        }
+        prefs.edit().putString(KEY_COUPONS, arr.toString()).apply();
+    }
+
+    public synchronized boolean addCoupon(int discountAmount, String title, int minSpend, String desc) {
+        List<CouponItem> list = getCoupons();
+        for (CouponItem it : list) {
+            if (it.title.equals(title) && !it.used) {
+                return false;
+            }
+        }
+        String id = "c_" + System.currentTimeMillis();
+        CouponItem newItem = new CouponItem(id, title, discountAmount, minSpend, desc, false, System.currentTimeMillis());
+        list.add(0, newItem);
+        saveCoupons(list);
+        return true;
+    }
+
+    public synchronized void markCouponUsed(String couponId) {
+        if (couponId == null) return;
+        List<CouponItem> list = getCoupons();
+        for (CouponItem it : list) {
+            if (it.id.equals(couponId)) {
+                it.used = true;
+                break;
+            }
+        }
+        saveCoupons(list);
+    }
+
+    public synchronized List<CouponItem> getAvailableCoupons(long orderAmountCents) {
+        List<CouponItem> all = getCoupons();
+        List<CouponItem> available = new ArrayList<>();
+        double orderYuan = orderAmountCents / 100.0;
+        for (CouponItem c : all) {
+            if (!c.used && orderYuan >= c.minSpend) {
+                available.add(c);
+            }
+        }
+        return available;
     }
 }

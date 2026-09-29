@@ -407,6 +407,12 @@ public class ShopFragment extends PageFragment {
             btnCart.setOnClickListener(v -> ShoppingDialogs.showCart(requireContext()));
         }
 
+        View tvShopFooter = findViewById(R.id.tv_shop_footer);
+        if (tvShopFooter != null) {
+            tvShopFooter.setOnClickListener(v ->
+                    WebActivity.open(requireContext(), "领券中心", "file:///android_asset/web/coupons.html"));
+        }
+
         TextView tvSearchHint = findViewById(R.id.tv_search_hint);
         tvSearchHint.setOnClickListener(v -> {
             android.widget.EditText input = new android.widget.EditText(requireContext());

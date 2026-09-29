@@ -52,6 +52,14 @@ public class WebActivity extends AppCompatActivity {
         String initialTitle = getIntent().getStringExtra(EXTRA_TITLE);
         String url = getIntent().getStringExtra(EXTRA_URL);
 
+        // 沉浸式状态栏与主题统一：状态栏统一设置为头条主题红，浅色文字图标
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(android.graphics.Color.parseColor("#E53935"));
+            androidx.core.view.WindowInsetsControllerCompat controller =
+                    new androidx.core.view.WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+            controller.setAppearanceLightStatusBars(false);
+        }
+
         if (initialTitle != null && !initialTitle.isEmpty()) {
             tvTitle.setText(initialTitle);
         }
@@ -176,6 +184,9 @@ public class WebActivity extends AppCompatActivity {
         if (webView != null) {
             webView.stopLoading();
             webView.clearHistory();
+            if (webView.getParent() instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) webView.getParent()).removeView(webView);
+            }
             webView.destroy();
             webView = null;
         }
@@ -212,6 +223,45 @@ public class WebActivity extends AppCompatActivity {
         @JavascriptInterface
         public void openUrl(String title, String url) {
             runOnUiThread(() -> WebActivity.open(WebActivity.this, title, url));
+        }
+
+        @JavascriptInterface
+        public void saveCoupon(int discountAmount, String title, int minSpend, String desc) {
+            runOnUiThread(() -> {
+                ShopStore store = new ShopStore(WebActivity.this);
+                boolean added = store.addCoupon(discountAmount, title, minSpend, desc);
+                vibrate(50);
+                if (added) {
+                    Toast.makeText(WebActivity.this, "🎉 领券成功！满 ¥" + minSpend + " 减 ¥" + discountAmount + "，已放入卡包", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(WebActivity.this, "该优惠券已在您的卡包中", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void addCoins(int count) {
+            runOnUiThread(() -> {
+                ProfileStore store = new ProfileStore(WebActivity.this);
+                store.addCoins(count);
+                vibrate(50);
+                Toast.makeText(WebActivity.this, "✨ 签到打卡成功！金币 +" + count + " (当前余额: " + store.getCoins() + ")", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        @JavascriptInterface
+        public int getCoins() {
+            return new ProfileStore(WebActivity.this).getCoins();
+        }
+
+        @JavascriptInterface
+        public String getClaimedCoupons() {
+            java.util.List<ShopStore.CouponItem> coupons = new ShopStore(WebActivity.this).getCoupons();
+            org.json.JSONArray arr = new org.json.JSONArray();
+            for (ShopStore.CouponItem c : coupons) {
+                arr.put(c.title);
+            }
+            return arr.toString();
         }
     }
 }

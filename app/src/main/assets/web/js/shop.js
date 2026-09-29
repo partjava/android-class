@@ -1,6 +1,7 @@
 /**
  * 商城通用交互脚本，打通 Android 原生交互与纯网页动效
  */
+console.log(">>> shop.js loaded successfully <<<");
 
 // 原生触觉反馈震动
 function vibrate(ms) {
@@ -11,6 +12,7 @@ function vibrate(ms) {
 
 // 优雅提示框（优先调用 Android 原生 Toast，原生不可用时降级为浮动动画 Toast）
 function showToast(message) {
+    console.log("showToast: " + message);
     vibrate(40);
     if (window.Android && typeof window.Android.showToast === 'function') {
         window.Android.showToast(message);
@@ -28,21 +30,43 @@ function showToast(message) {
     }, 2100);
 }
 
-// 模拟领券
-function claimCoupon(btn, amount) {
+// 领券打通 Android 原生持久化与状态同步
+function claimCoupon(btn, amount, title, minSpend, desc) {
+    console.log(">>> claimCoupon called with amount=" + amount + ", title=" + title);
     if (btn.classList.contains('claimed')) {
-        showToast("该优惠券您已领取过了");
+        showToast("该优惠券您已领取过了，已在您的卡包中");
         return;
     }
+    var card = btn.closest ? btn.closest('.coupon_card') : null;
+    if (!title && card) {
+        var nameEl = card.querySelector('.coupon_name');
+        if (nameEl) title = nameEl.innerText.trim();
+        var condEl = card.querySelector('.coupon_cond');
+        if (condEl) {
+            var match = condEl.innerText.match(/\d+/);
+            if (match) minSpend = parseInt(match[0]);
+        }
+        var descEl = card.querySelector('.coupon_desc');
+        if (descEl) desc = descEl.innerText.trim();
+    }
+    if (!title) title = "全品类立减优惠券";
+    if (!minSpend) minSpend = amount >= 50 ? 199 : 49;
+    if (!desc) desc = "商城全场通用立减券";
+
     btn.classList.add('claimed');
-    btn.innerText = "已领取";
+    btn.innerText = "已放入卡包";
     btn.style.background = "#E0E0E0";
     btn.style.color = "#9E9E9E";
     btn.style.boxShadow = "none";
-    showToast("🎉 恭喜获得 " + amount + " 元优惠券！下单自动立减");
+
+    if (window.Android && typeof window.Android.saveCoupon === 'function') {
+        window.Android.saveCoupon(amount, title, minSpend, desc);
+    } else {
+        showToast("🎉 恭喜获得 " + amount + " 元优惠券！满 " + minSpend + " 减 " + amount);
+    }
 }
 
-// 模拟签到领金币
+// 签到领金币打通 Android 原生账户
 function doSignin(btn) {
     if (btn.classList.contains('signed')) {
         showToast("今日已打卡签到，明天再来领更多金币吧！");
@@ -64,8 +88,46 @@ function doSignin(btn) {
         var cur = parseInt(goldEl.innerText) || 0;
         goldEl.innerText = cur + 50;
     }
-    showToast("✨ 签到成功！淘金币 +50，当前可抵 0.50 元");
+
+    if (window.Android && typeof window.Android.addCoins === 'function') {
+        window.Android.addCoins(50);
+    } else {
+        showToast("✨ 签到成功！淘金币 +50，当前可抵 0.50 元");
+    }
 }
+
+// 页面加载完成后自动与 Android 原生数据双向同步
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Android && typeof window.Android.getCoins === 'function') {
+        try {
+            var coins = window.Android.getCoins();
+            var goldEl = document.getElementById('my_gold_count');
+            if (goldEl && coins >= 0) {
+                goldEl.innerText = coins;
+            }
+        } catch (e) {}
+    }
+    if (window.Android && typeof window.Android.getClaimedCoupons === 'function') {
+        try {
+            var json = window.Android.getClaimedCoupons();
+            var claimedList = JSON.parse(json);
+            if (Array.isArray(claimedList)) {
+                var cards = document.querySelectorAll('.coupon_card');
+                cards.forEach(function(card) {
+                    var nameEl = card.querySelector('.coupon_name');
+                    var btn = card.querySelector('.coupon_btn');
+                    if (nameEl && btn && claimedList.indexOf(nameEl.innerText.trim()) !== -1) {
+                        btn.classList.add('claimed');
+                        btn.innerText = "已放入卡包";
+                        btn.style.background = "#E0E0E0";
+                        btn.style.color = "#9E9E9E";
+                        btn.style.boxShadow = "none";
+                    }
+                });
+            }
+        } catch (e) {}
+    }
+});
 
 // 话费充值选择
 var selectedRechargePrice = 98.5;

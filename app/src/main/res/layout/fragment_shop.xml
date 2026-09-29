@@ -120,6 +120,17 @@
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
                 android:scrollbars="none"/>
+
+            <TextView
+                android:id="@+id/tv_shop_footer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingVertical="18dp"
+                android:text="—— 已经到底啦，去领券中心看看吧 🎟️ ——"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:background="?attr/selectableItemBackground" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

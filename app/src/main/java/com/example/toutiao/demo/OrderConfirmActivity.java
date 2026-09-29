@@ -39,18 +39,40 @@ public class OrderConfirmActivity extends AppCompatActivity {
     private TextView tvPayAmount;
     private Button btnSubmitOrder;
 
+    private LinearLayout llCouponSelector;
+    private TextView tvCouponLabel;
+    private TextView tvCouponDiscount;
+    private TextView tvCoinLabel;
+    private TextView tvCoinDiscount;
+
     private ShopStore store;
+    private ProfileStore profileStore;
     private final List<ShopStore.CartItem> buyItems = new ArrayList<>();
-    private long discountCents = 1500; // 默认满减与淘金币优惠 15.00 元
+    private List<ShopStore.CouponItem> availableCoupons = new ArrayList<>();
+    private ShopStore.CouponItem selectedCoupon = null;
+
+    private long subtotalCents = 0;
+    private long couponDiscountCents = 0;
+    private long coinDiscountCents = 0;
+    private int coinsToDeduct = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_confirm);
 
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(android.graphics.Color.parseColor("#E53935"));
+            androidx.core.view.WindowInsetsControllerCompat controller =
+                    new androidx.core.view.WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+            controller.setAppearanceLightStatusBars(false);
+        }
+
         store = new ShopStore(this);
+        profileStore = new ProfileStore(this);
         initViews();
         loadItems();
+        initCouponsAndCoins();
         renderOrder();
         setupEvents();
     }
@@ -67,6 +89,12 @@ public class OrderConfirmActivity extends AppCompatActivity {
         tvDiscountAmount = findViewById(R.id.tv_discount_amount);
         tvPayAmount = findViewById(R.id.tv_pay_amount);
         btnSubmitOrder = findViewById(R.id.btn_submit_order);
+
+        llCouponSelector = findViewById(R.id.ll_coupon_selector);
+        tvCouponLabel = findViewById(R.id.tv_coupon_label);
+        tvCouponDiscount = findViewById(R.id.tv_coupon_discount);
+        tvCoinLabel = findViewById(R.id.tv_coin_label);
+        tvCoinDiscount = findViewById(R.id.tv_coin_discount);
     }
 
     private void loadItems() {
@@ -86,6 +114,23 @@ public class OrderConfirmActivity extends AppCompatActivity {
         }
     }
 
+    private void initCouponsAndCoins() {
+        subtotalCents = 0;
+        for (ShopStore.CartItem it : buyItems) {
+            subtotalCents += (it.priceCents * it.quantity);
+        }
+        availableCoupons = store.getAvailableCoupons(subtotalCents);
+        if (!availableCoupons.isEmpty()) {
+            // 默认自动优选抵扣金额最高的大额神券
+            selectedCoupon = availableCoupons.get(0);
+            for (ShopStore.CouponItem c : availableCoupons) {
+                if (c.discountAmount > selectedCoupon.discountAmount) {
+                    selectedCoupon = c;
+                }
+            }
+        }
+    }
+
     private void renderOrder() {
         if (buyItems.isEmpty()) {
             Toast.makeText(this, "暂无待结算商品", Toast.LENGTH_SHORT).show();
@@ -94,13 +139,10 @@ public class OrderConfirmActivity extends AppCompatActivity {
         }
 
         llOrderProducts.removeAllViews();
-        long subtotal = 0;
         LayoutInflater inflater = LayoutInflater.from(this);
 
         for (ShopStore.CartItem it : buyItems) {
-            subtotal += (it.priceCents * it.quantity);
             View row = inflater.inflate(R.layout.item_cart_product, llOrderProducts, false);
-            // 隐藏 CheckBox 与 +/- 步进器，只做只读展示
             row.findViewById(R.id.cb_select).setVisibility(View.GONE);
             row.findViewById(R.id.btn_minus).setVisibility(View.GONE);
             row.findViewById(R.id.btn_plus).setVisibility(View.GONE);
@@ -120,13 +162,89 @@ public class OrderConfirmActivity extends AppCompatActivity {
             llOrderProducts.addView(row);
         }
 
-        // 计算优惠与最终实付款
-        long finalDiscount = Math.min(discountCents, subtotal > 2000 ? discountCents : 0);
-        long actualPay = Math.max(0, subtotal - finalDiscount);
+        recalculateDiscounts();
+    }
 
-        tvItemsSubtotal.setText("¥" + String.format(Locale.CHINA, "%.2f", subtotal / 100.0));
-        tvDiscountAmount.setText("-¥" + String.format(Locale.CHINA, "%.2f", finalDiscount / 100.0));
+    private void recalculateDiscounts() {
+        // 1. 优惠券计算
+        if (selectedCoupon != null) {
+            couponDiscountCents = selectedCoupon.discountAmount * 100L;
+            if (tvCouponLabel != null) tvCouponLabel.setText("店铺优惠券 · " + selectedCoupon.title);
+            if (tvCouponDiscount != null) tvCouponDiscount.setText("-¥" + String.format(Locale.CHINA, "%.2f", couponDiscountCents / 100.0) + " >");
+        } else {
+            couponDiscountCents = 0;
+            if (tvCouponLabel != null) tvCouponLabel.setText("店铺优惠券");
+            if (tvCouponDiscount != null) {
+                tvCouponDiscount.setText(availableCoupons.isEmpty() ? "暂无可用券 >" : availableCoupons.size() + " 张可用 >");
+            }
+        }
+
+        // 2. 淘金币抵扣计算 (100金币 = 1元，最高抵扣 500 金币即 5 元)
+        int userCoins = profileStore.getCoins();
+        long remaining = Math.max(0, subtotalCents - couponDiscountCents);
+        int maxUsableCoins = Math.min(userCoins, 500);
+        // 不超过剩余金额
+        int cappedCoins = (int) Math.min(maxUsableCoins, (remaining / 100) * 100);
+        coinsToDeduct = Math.max(0, (cappedCoins / 100) * 100);
+        coinDiscountCents = (coinsToDeduct / 100) * 100L;
+
+        if (tvCoinLabel != null) {
+            tvCoinLabel.setText("淘金币抵扣 (可用 " + userCoins + " 金币)");
+        }
+        if (tvCoinDiscount != null) {
+            if (coinDiscountCents > 0) {
+                tvCoinDiscount.setText("-¥" + String.format(Locale.CHINA, "%.2f", coinDiscountCents / 100.0) + " (耗" + coinsToDeduct + "币)");
+            } else {
+                tvCoinDiscount.setText("-¥0.00");
+            }
+        }
+
+        // 3. 最终实付
+        long totalDiscount = couponDiscountCents + coinDiscountCents;
+        long actualPay = Math.max(0, subtotalCents - totalDiscount);
+
+        tvItemsSubtotal.setText("¥" + String.format(Locale.CHINA, "%.2f", subtotalCents / 100.0));
+        tvDiscountAmount.setText("-¥" + String.format(Locale.CHINA, "%.2f", totalDiscount / 100.0));
         tvPayAmount.setText("¥" + String.format(Locale.CHINA, "%.2f", actualPay / 100.0));
+    }
+
+    private void showCouponSelectorDialog() {
+        if (availableCoupons.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("优惠券选择")
+                    .setMessage("当前订单金额未达到您所拥有优惠券的使用门槛，或暂无可用优惠券。\n\n提示：可在商城【领券中心】免费领取无门槛与大额神券！")
+                    .setPositiveButton("我知道了", null)
+                    .setNeutralButton("去领券中心", (d, w) -> {
+                        WebActivity.open(this, "领券中心", "file:///android_asset/web/coupons.html");
+                    })
+                    .show();
+            return;
+        }
+
+        String[] items = new String[availableCoupons.size() + 1];
+        items[0] = "不使用优惠券";
+        int checkedItem = 0;
+        for (int i = 0; i < availableCoupons.size(); i++) {
+            ShopStore.CouponItem c = availableCoupons.get(i);
+            items[i + 1] = "立减 ¥" + c.discountAmount + " (" + c.title + " · 满" + c.minSpend + "可用)";
+            if (selectedCoupon != null && selectedCoupon.id.equals(c.id)) {
+                checkedItem = i + 1;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("选择店铺优惠券")
+                .setSingleChoiceItems(items, checkedItem, (dialog, which) -> {
+                    if (which == 0) {
+                        selectedCoupon = null;
+                    } else {
+                        selectedCoupon = availableCoupons.get(which - 1);
+                    }
+                    recalculateDiscounts();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void setupEvents() {
@@ -138,14 +256,37 @@ public class OrderConfirmActivity extends AppCompatActivity {
         }
         btnEditAddress.setOnClickListener(v -> showEditAddressDialog());
 
+        if (llCouponSelector != null) {
+            llCouponSelector.setOnClickListener(v -> showCouponSelectorDialog());
+        }
+
         btnSubmitOrder.setOnClickListener(v -> {
             String name = tvReceiverName.getText().toString();
             String phone = tvReceiverPhone.getText().toString();
             String addr = tvReceiverAddress.getText().toString();
             String note = etBuyerNote.getText().toString().trim();
 
-            ShopStore.OrderItem order = store.createOrder(buyItems, name, phone, addr, discountCents);
-            Toast.makeText(this, "模拟支付成功！订单已生成", Toast.LENGTH_SHORT).show();
+            long totalDiscount = couponDiscountCents + coinDiscountCents;
+
+            // 1. 业务闭环：核销已使用的优惠券
+            if (selectedCoupon != null) {
+                store.markCouponUsed(selectedCoupon.id);
+            }
+
+            // 2. 业务闭环：扣减已抵扣的淘金币
+            if (coinsToDeduct > 0) {
+                profileStore.deductCoins(coinsToDeduct);
+            }
+
+            ShopStore.OrderItem order = store.createOrder(buyItems, name, phone, addr, totalDiscount);
+            String successMsg = "模拟支付成功！实付 ¥" + String.format(Locale.CHINA, "%.2f", order.actualCents / 100.0);
+            if (selectedCoupon != null) {
+                successMsg += " (券省¥" + selectedCoupon.discountAmount + ")";
+            }
+            if (coinsToDeduct > 0) {
+                successMsg += " (币抵¥" + (coinDiscountCents / 100.0) + ")";
+            }
+            Toast.makeText(this, successMsg, Toast.LENGTH_LONG).show();
 
             Intent intent = new Intent(this, OrderDetailActivity.class);
             intent.putExtra(OrderDetailActivity.EXTRA_ORDER_ID, order.orderId);

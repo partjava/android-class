@@ -21,4 +21,20 @@ public final class ProfileStore {
     public void setAvatarRes(int resId) {
         prefs.edit().putInt("avatar_res", resId).apply();
     }
+    public int getCoins() {
+        return prefs.getInt("user_coins", 680);
+    }
+    public void addCoins(int count) {
+        if (count <= 0) return;
+        prefs.edit().putInt("user_coins", getCoins() + count).apply();
+    }
+    public boolean deductCoins(int count) {
+        if (count <= 0) return true;
+        int current = getCoins();
+        if (current >= count) {
+            prefs.edit().putInt("user_coins", current - count).apply();
+            return true;
+        }
+        return false;
+    }
 }
