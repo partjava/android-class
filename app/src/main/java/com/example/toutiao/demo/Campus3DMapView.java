@@ -71,6 +71,7 @@ public class Campus3DMapView extends FrameLayout {
 
     private void init(Context context) {
         setBackgroundColor(Color.parseColor("#1A202C"));
+        mTouchSlop = android.view.ViewConfiguration.get(context).getScaledTouchSlop();
 
         mContentContainer = new FrameLayout(context);
         LayoutParams contentLp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -135,9 +136,9 @@ public class Campus3DMapView extends FrameLayout {
             TextView tvTitle = pinView.findViewById(R.id.tv_pin_title);
             tvTitle.setText(lm.name);
 
-            // 呼吸悬浮微动效
-            ObjectAnimator floatAnim = ObjectAnimator.ofFloat(pinView, "translationY", 0f, -6f, 0f);
-            floatAnim.setDuration(2400 + (long) (Math.random() * 800));
+            // 呼吸悬浮微动效（动画施加在 tvTitle 上，不影响 pinView 的坐标定位）
+            ObjectAnimator floatAnim = ObjectAnimator.ofFloat(tvTitle, "translationY", 0f, -5f, 0f);
+            floatAnim.setDuration(2200 + (long) (Math.random() * 800));
             floatAnim.setRepeatCount(ValueAnimator.INFINITE);
             floatAnim.setRepeatMode(ValueAnimator.REVERSE);
             floatAnim.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -159,9 +160,20 @@ public class Campus3DMapView extends FrameLayout {
     }
 
     private void layoutPins() {
-        int mapW = mIvMap.getWidth();
-        int mapH = mIvMap.getHeight();
-        if (mapW <= 0 || mapH <= 0 || mLandmarks == null) return;
+        if (mIvMap.getDrawable() == null || mLandmarks == null) return;
+        int viewW = mIvMap.getWidth();
+        int viewH = mIvMap.getHeight();
+        if (viewW <= 0 || viewH <= 0) return;
+
+        float drawableW = mIvMap.getDrawable().getIntrinsicWidth();
+        float drawableH = mIvMap.getDrawable().getIntrinsicHeight();
+        if (drawableW <= 0 || drawableH <= 0) return;
+
+        float scale = Math.min((float) viewW / drawableW, (float) viewH / drawableH);
+        float actualW = drawableW * scale;
+        float actualH = drawableH * scale;
+        float offsetX = (viewW - actualW) / 2.0f;
+        float offsetY = (viewH - actualH) / 2.0f;
 
         for (CampusLandmark lm : mLandmarks) {
             View pin = mPinViewMap.get(lm.id);
@@ -172,11 +184,16 @@ public class Campus3DMapView extends FrameLayout {
             int pw = pin.getMeasuredWidth();
             int ph = pin.getMeasuredHeight();
 
-            float px = lm.normX * mapW - pw / 2.0f;
-            float py = lm.normY * mapH - ph;
+            float px = offsetX + lm.normX * actualW - pw / 2.0f;
+            float py = offsetY + lm.normY * actualH - ph;
 
-            pin.setX(px);
-            pin.setY(py);
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) pin.getLayoutParams();
+            if (lp == null) {
+                lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
+            lp.leftMargin = (int) px;
+            lp.topMargin = (int) py;
+            pin.setLayoutParams(lp);
         }
     }
 
@@ -217,15 +234,23 @@ public class Campus3DMapView extends FrameLayout {
     }
 
     public void animateToLandmark(CampusLandmark lm) {
-        if (lm == null || mIvMap.getWidth() <= 0) return;
+        if (lm == null || mIvMap.getWidth() <= 0 || mIvMap.getDrawable() == null) return;
         int viewW = getWidth();
         int viewH = getHeight();
-        int mapW = mIvMap.getWidth();
-        int mapH = mIvMap.getHeight();
+
+        float drawableW = mIvMap.getDrawable().getIntrinsicWidth();
+        float drawableH = mIvMap.getDrawable().getIntrinsicHeight();
+        if (drawableW <= 0 || drawableH <= 0) return;
+
+        float fitScale = Math.min((float) viewW / drawableW, (float) viewH / drawableH);
+        float actualW = drawableW * fitScale;
+        float actualH = drawableH * fitScale;
+        float offsetX = (viewW - actualW) / 2.0f;
+        float offsetY = (viewH - actualH) / 2.0f;
 
         float targetScale = Math.max(mScale, 2.0f);
-        float targetPinX = lm.normX * mapW;
-        float targetPinY = lm.normY * mapH;
+        float targetPinX = offsetX + lm.normX * actualW;
+        float targetPinY = offsetY + lm.normY * actualH;
 
         float targetTransX = (viewW / 2.0f) - targetPinX * targetScale;
         float targetTransY = (viewH / 2.0f) - targetPinY * targetScale;
@@ -321,9 +346,33 @@ public class Campus3DMapView extends FrameLayout {
         mContentContainer.setTranslationY(mTranslationY);
     }
 
+    private float mDownX, mDownY;
+    private int mTouchSlop;
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return true;
+        if (ev.getPointerCount() > 1) {
+            return true;
+        }
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                mDownX = ev.getX();
+                mDownY = ev.getY();
+                mLastTouchX = ev.getX();
+                mLastTouchY = ev.getY();
+                mIsDragging = false;
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                float dx = ev.getX() - mDownX;
+                float dy = ev.getY() - mDownY;
+                if (Math.hypot(dx, dy) > (mTouchSlop > 0 ? mTouchSlop : 16)) {
+                    mIsDragging = true;
+                    return true;
+                }
+                break;
+        }
+        return false;
     }
 
     @Override
