@@ -35,10 +35,11 @@
 ### 架构改造：统一 Fragment 容器与局部更新
 
 为满足课程设计关于「主界面用 Fragment 实现界面局部更新」的核心要求，项目重构为：
-- **`MainActivity`**：作为顶层单一宿主容器，统一调度底部导航栏（`BottomNavigationView`），管理主页面回退栈（`history`）。
-- **`HomeFragment` / `VideoFragment` / `ShopFragment` / `MineFragment`**：分别承载首页、视频、商城、我的四大核心页面，继承通用基类 `PageFragment`。
-- **页面切换策略**：采用 `FragmentManager` 的 `show()` / `hide()` 结合 `setMaxLifecycle(RESUMED / STARTED)` 事务调度，只更新内容区域、不销毁重建模版，完美保留各页面滚动位置、频道状态与播放进度，避免反复切页白屏与闪烁。
-- **平滑兼容**：保留 `HomeActivity`、`VideoActivity`、`ShopActivity`、`MineActivity` 等传统入口，均继承自 `MainActivity`，老 Intent 跳转无缝衔接。
+- **`MainActivity`**：作为顶层单一宿主容器，统一调度自定义底部导航栏（`CampusBottomNavigationView`），管理主页面回退栈（`history`）。
+- **`HomeFragment` / `VideoFragment` / `CampusGuideFragment` / `ShopFragment` / `MineFragment`**：分别承载首页、视频、晴川导览（新增核心三维地图）、商城、我的五大核心页面，继承通用基类 `PageFragment`。
+- **页面切换策略**：采用 `FragmentManager` 的 `show()` / `hide()` 结合 `setMaxLifecycle(RESUMED / STARTED)` 事务调度，只更新内容区域、不销毁重建模版，完美保留各页面滚动位置、频道状态、地图缩放手势与播放进度，避免反复切页白屏与闪烁。
+- **底层架构突破（突破 Material 5 项限制）**：针对 Google Material 原生 `BottomNavigationView` 在超过 5 个菜单项时因内部私有数组越界崩溃（`ArrayIndexOutOfBoundsException: length=5; index=5`）的问题，自主实现了 `CampusBottomNavigationView`，利用 Java 反射动态扩容 `BottomNavigationMenuView.tempChildWidths`，实现 6 个 Tab 的均匀平滑展示。
+- **平滑兼容**：保留 `HomeActivity`、`VideoActivity`、`CampusGuideActivity`、`ShopActivity`、`MineActivity` 等传统入口，均继承自 `MainActivity`，老 Intent 跳转无缝衔接。
 
 ### 登录
 
@@ -73,7 +74,7 @@
   - 点击列表任意新闻无缝转场进入图文详情页，展示完整报道标题、来源时间元数据、大图及长篇格式化段落正文
   - 内置本地阅读历史自动记录、一键「收藏文章 / 取消收藏」及系统原生「分享文章」功能
 - **热点**频道：`ListView` + `ArrayAdapter` 渲染的大国工匠列表，点击条目弹出人物生动事迹详情弹窗
-- 底部 5 项导航：首页 / 视频 / 添加（创作发布） / 商城 / 我的
+- 底部 6 项导航：首页 / 视频 / 导览（新增核心三维模块） / 添加（创作发布） / 商城 / 我的
 
 ### 创作发布与内容库（Add 模块深度优化）
 
@@ -95,6 +96,37 @@
   - 顶部三大 Tab 分类滑动切换：「我的作品」、「我的收藏」、「浏览历史」。
   - 卡片式内容流展示，呈现作品标题、摘要正文、发布时间及属地信息。
   - 支持单篇作品本地删除（二次确认防误触）与空状态友好占位提示，右上角配备直达「+ 发布」快捷键。
+
+### 三维立体全景校园导览（晴川交互地图系统，核心新增模块）
+
+为给武汉晴川学院（QCUWH）师生提供沉浸式三维立体校园漫游与地标建筑导引，本项目深度自研了**轻量级、无第三方地图 SDK 依赖的三维立体全景校园导览与地标系统（`CampusGuideFragment`）**，无缝嵌入在主底栏第 3 个 Tab【导览】：
+
+- **原生级自研 2D/3D 画布手势渲染引擎（`Campus3DMapView`）**：
+  - **零第三方 SDK 依赖**：无需引入体积臃肿、需要高额商业授权且断网无法加载的外部商业地图 SDK，纯基于 Android 原生 `Canvas` 与 `Matrix` 矩阵变换自主研发；
+  - **极致流畅的双指缩放与拖拽平移**：融合 `ScaleGestureDetector` 与 `GestureDetector`，实现 `1.0x ~ 3.5x` 平滑无级双指捏合缩放与惯性拖拽平移；
+  - **智能视口边界阻尼与约束（Clamping）**：严密计算地图缩放后的有效边界，拖拽到达边缘自动施加阻尼并阻止留白黑边；
+  - **双击与快捷操作**：支持双击屏幕智能在 1.0x 与 2.2x 之间弹性平滑缩放，右上角常驻「复位视角」悬浮按键，一键还原全局鸟瞰全景。
+- **归一化百分比坐标系与亚像素级投影**：
+  - 彻底解耦不同设备物理分辨率与屏幕长宽比的差异，所有 18 个建筑地标均采用归一化相对坐标体系（`normX: 0.0 ~ 1.0`, `normY: 0.0 ~ 1.0`）；
+  - 在 `onDraw` 绘制周期内，通过底图显示区域矩阵逆向换算实时屏幕像素坐标，确保图钉与建筑屋顶物理锚点在缩放、平移过程中始终紧密贴合、分毫不差。
+- **18 大核心地标建筑全覆盖与特征校准（`CampusLandmark`）**：
+  - 覆盖全校核心教学区、办公区与生活区：
+    - 🏫 **综合教学楼群**：主教学楼一~四教（精细区分 1~5 楼各专业学院分布）、问天楼/电子电气工程学院、计算机与软件学院、文科大楼；
+    - 📚 **学术文化中心**：晴川图书馆、学术报告厅、大礼堂、行政办公大楼；
+    - 🏀 **文体场馆**：综合体育馆、标准田径运动场、室外篮球排球场；
+    - 🛏️ **学生公寓生活区**：学生宿舍区（寝1~10栋全部组团、独立小宿舍区）、后勤保障中心、晴川餐厅与商业生活街。
+  - **特征精细标定**：针对占地面积庞大、楼宇结构复杂的宿舍群与教学区，基于多角度实景照片与全景特征匹配，标定至亚像素级屋顶中心。
+- **立体悬浮图钉与交互反馈**：
+  - 🎨 3D 水滴图钉 + 椭圆立体投影阴影 + 动态半透明脉冲光圈（Pulsing Halo）；
+  - 🏷️ 自适应地标文字铭牌，根据类别自动着色（红/蓝/绿/橙）；
+  - 🎯 **精准触控碰撞检测（Hit-Testing）**：用户轻触地图任意地标，系统即刻高亮选中并触发微触觉反馈。
+- **沉浸式地标详情卡片与独创「实景 / 楼层分布」即时切换（`dialog_campus_landmark_detail.xml`）**：
+  - 点击任意地标，自底向上呼出带圆角质感的地标详情弹窗，展示建筑名称、拼音/英文标识、功能定位与开放时间；
+  - 🔄 **独创图文切换机制**：针对教学楼等复合建筑，支持一键在**「高清实景纯净照片」**与**「标注版楼层功能平面示意图」**（如 1楼多媒体教室、2楼自动化实验室、3楼软件教研室、4楼人工智能中心、5楼行政办公室等）之间无缝切换；
+  - 🚀 **一键聚焦（Focus）**：卡片右侧提供「在地图中定位」按钮，点击自动将地图平滑滚动并将该建筑物居中缩放至最佳观赏视角。
+- **全项目离线自包含与零环境依赖（`map_assets/`）**：
+  - 解决跨机开发时“路径硬编码”与“图片丢失”的痛点：所有地图全景源图与各个方位的实拍截图已统一整合进工程内部的 `map_assets/每个方位/`，并在编译期通过相对路径转为无损 `drawable`；
+  - 任何新电脑只需 `git clone` 即可直接一键构建编译，无需配置外网图床，无需修改任何绝对路径，彻底杜绝资源失效。
 
 ### 商城与完整电商闭环
 
@@ -308,6 +340,18 @@ implementation 'com.google.android.material:material:1.5.0'
    * 异步获取到内容后，自动将最新抓取的新闻无缝拼接在列表后方，当前页数自动 `+1`，实现无限流流畅浏览；
    * 顶部横幅提供「🔄 刷新第1页」按钮，可随时重置并重新爬取首页最新要闻。
 
+#### 🗺️ 晴川三维全景校园导览与地标交互演示
+1. **进入导览模块**：在底部主导航栏点击第 3 个 Tab **【导览】**，即刻加载晴川三维全景交互地图；
+2. **手势捏合与漫游**：
+   - 双指在屏幕上捏合缩放（Pinch-in / Pinch-out），地图在 `1.0x ~ 3.5x` 范围内丝滑平滑缩放；
+   - 单指拖拽平移，浏览教学区、文体区与学生宿舍群等各大组团，松手自动阻尼吸附，杜绝越界；
+   - 双击屏幕快速在局部放大与全景之间切换；点击右上角 **「复位」** 悬浮按钮随时回到原始全局视角；
+3. **地标点击与高亮**：轻触地图中任意 3D 图钉（如图书馆、体育馆、一至四教、学生宿舍区等），地标即刻激发出脉冲光晕与高亮阴影，自底向上平滑唤起地标详情弹窗；
+4. **实景与楼层平面图切换**：
+   - 在弹窗中可查阅建筑物名称、所属分类、开放时间与楼层功能定位；
+   - 点击 **「查看楼层示意图 / 查看实景照片」** 切换按键，可无缝对照真实建筑外观与标注有各学院教研室的楼层平面示意图；
+   - 点击 **「地图定位」** 按钮，地图将以平滑插值自动平移并缩放聚焦至该建筑屋顶正中央。
+
 #### 🛍️ 商城与全链路闭环演示
 1. 底部切换到【商城】，浏览横向宫格（左右翻页）与双列瀑布流实物商品；
 2. 点击商品进入商品详情页，支持查看轮播图、评价、详情说明，点击「加入购物车」或「立即购买」唤起动态 SKU 规格选择器；
@@ -323,67 +367,76 @@ implementation 'com.google.android.material:material:1.5.0'
 ## 项目结构
 
 ```
-app/src/
-├── androidTest/java/com/example/toutiao/demo/
-│   ├── ExampleInstrumentedTest.java         应用基础上下文测试
-│   ├── MainNavigationTest.java              四主页面 Fragment 切换、回退栈与状态恢复测试
-│   ├── HomeNewsContentTest.java             首页深度报道数量与多段落内容质量测试
-│   ├── OfflineVideoTest.java                离线短视频解码、互动状态与播放器生命周期测试
-│   ├── ProfileChatPersistenceTest.java      个人资料与聊天持久化回归测试
-│   ├── ShopCartOrderTest.java               购物车生命周期、金额核算与订单持久化测试
-│   └── PublishFlowTest.java                 创作发布、首页动态插入与内容库管理测试
+├── map_assets/                              全景图源图与各方位实景截图（项目内置，离线自包含）
+│   ├── 全景图.png                            晴川学院三维全景高分辨率底图
+│   └── 每个方位/                            19 个地标方位实拍图（宿舍区、教学楼、体育馆等）
 │
-└── main/
-    ├── java/com/example/toutiao/demo/
-    │   ├── MainActivity.java                顶层宿主，单 Activity + 4 Fragment 导航调度
-    │   ├── PageFragment.java                主页面 Fragment 基类
-    │   ├── HomeFragment.java                首页 Fragment（信息流 + 搜索过滤 + 工匠列表 + 发帖同步）
-    │   ├── VideoFragment.java               视频 Fragment（ViewPager2 多频道 + 抖音式全屏流）
-    │   ├── ShopFragment.java                商城 Fragment（横向两页宫格 + 两列瀑布流）
-    │   ├── MineFragment.java                我的 Fragment（个人信息 + 九宫格 + 资料联动）
-    │   ├── HomeActivity.java                兼容入口（继承自 MainActivity）
-    │   ├── VideoActivity.java               兼容入口（继承自 MainActivity）
-    │   ├── ShopActivity.java                兼容入口（继承自 MainActivity）
-    │   ├── MineActivity.java                兼容入口（继承自 MainActivity）
-    │   ├── LoginOneKeyActivity.java         启动页，一键登录与本地登录态
-    │   ├── LoginPwdActivity.java            密码登录
-    │   ├── NewsDetailActivity.java          新闻图文详情
-    │   ├── VideoDetailActivity.java         全屏沉浸播放页（离线短片播放 + 相关推荐）
-    │   ├── CartActivity.java                独立购物车页面（数量加减、多选、批量管理）
-    │   ├── OrderConfirmActivity.java        订单确认与结算页（地址编辑、抵扣明细）
-    │   ├── OrderListActivity.java           订单管理中心（五态 Tab、发货提醒、退款、再次购买）
-    │   ├── OrderDetailActivity.java         订单详情页（物流轨迹跟踪、单号复制、联系客服）
-    │   ├── PublishDialog.java               底部沉浸式发布弹窗选择器（四大创作形态）
-    │   ├── PublishActivity.java             独立全功能创作中心（多模式、配图预览、话题、定位）
-    │   ├── ContentLibraryActivity.java      现代化内容中心（我的作品、我的收藏、浏览历史）
-    │   ├── MsgActivity.java                 消息会话列表（未读状态与已读同步）
-    │   ├── ChatActivity.java                本地聊天室（支持会话隔离持久化与自动应答）
-    │   ├── SettingsActivity.java            系统与偏好设置
-    │   ├── EditProfileActivity.java         编辑资料（持久化存储与完整度计算）
-    │   ├── OfflinePlayer.java               本地离线短视频播放控制器
-    │   ├── ProfileStore.java                用户资料 SharedPreferences 持久化封装
-    │   ├── ChatStore.java                   聊天记录持久化封装
-    │   ├── VideoStore.java                  视频点赞/收藏状态持久化封装
-    │   ├── ContentStore.java                作品、收藏与浏览历史本地持久化存储
-    │   ├── ShopStore.java                   购物车与订单全流程持久化引擎
-    │   ├── ShoppingDialogs.java             购物车与订单本地交互弹窗
-    │   ├── VideoChannelAdapter.java         视频 ViewPager2 频道适配器
-    │   ├── VideoFeedAdapter.java            推荐流全屏吸附适配器（手势与点赞动画）
-    │   ├── VideoAdapter.java                双列视频网格适配器
-    │   ├── NewsMultiAdapter.java            4 种布局新闻 RecyclerView 适配器
-    │   ├── ShopAdapter.java                 瀑布流商品适配器
-    │   ├── MsgAdapter.java                  消息会话适配器
-    │   └── ChatAdapter.java                 聊天气泡适配器
+└── app/src/
+    ├── androidTest/java/com/example/toutiao/demo/
+    │   ├── ExampleInstrumentedTest.java         应用基础上下文测试
+    │   ├── MainNavigationTest.java              主页面 Fragment 切换、回退栈与状态恢复测试
+    │   ├── HomeNewsContentTest.java             首页深度报道数量与多段落内容质量测试
+    │   ├── OfflineVideoTest.java                离线短视频解码、互动状态与播放器生命周期测试
+    │   ├── ProfileChatPersistenceTest.java      个人资料与聊天持久化回归测试
+    │   ├── ShopCartOrderTest.java               购物车生命周期、金额核算与订单持久化测试
+    │   └── PublishFlowTest.java                 创作发布、首页动态插入与内容库管理测试
     │
-    └── res/
-        ├── layout/          44 个布局文件（含 activity_main, fragment_*, activity_publish 等）
-        ├── raw/             3 个项目内置离线课程短片 (course_motion_1~3.mp4)
-        ├── drawable/        65 个矢量图标与图形 Shape 资源
-        ├── drawable-nodpi/  87 个高清位图（精选商品图、宫格图标、摄影大图）
-        ├── values/          colors(35 tokens) / dimens(20) / styles(27) / themes / strings
-        ├── values-night/    深色模式防御性主题定义
-        ├── color/           按钮与底部导航动态着色选择器
-        └── menu/            底部导航菜单 (bottom_menu.xml)
+    └── main/
+        ├── java/com/example/toutiao/demo/
+        │   ├── MainActivity.java                顶层宿主，单 Activity + 5 Fragment 导航调度
+        │   ├── PageFragment.java                主页面 Fragment 基类
+        │   ├── HomeFragment.java                首页 Fragment（信息流 + 搜索过滤 + 工匠列表 + 发帖同步）
+        │   ├── VideoFragment.java               视频 Fragment（ViewPager2 多频道 + 抖音式全屏流）
+        │   ├── CampusGuideFragment.java         晴川导览 Fragment（自研三维交互地图与地标联动）
+        │   ├── Campus3DMapView.java             自研 2D/3D 画布手势渲染引擎（双指缩放、拖拽、地标图钉）
+        │   ├── CampusBottomNavigationView.java  突破 Material 5 项限制的反射扩展底部导航控件
+        │   ├── CampusLandmark.java              校园 18 大核心地标建筑实体模型与坐标校准
+        │   ├── CampusGuideActivity.java         导览兼容入口（继承自 MainActivity）
+        │   ├── ShopFragment.java                商城 Fragment（横向两页宫格 + 两列瀑布流）
+        │   ├── MineFragment.java                我的 Fragment（个人信息 + 九宫格 + 资料联动）
+        │   ├── HomeActivity.java                兼容入口（继承自 MainActivity）
+        │   ├── VideoActivity.java               兼容入口（继承自 MainActivity）
+        │   ├── ShopActivity.java                兼容入口（继承自 MainActivity）
+        │   ├── MineActivity.java                兼容入口（继承自 MainActivity）
+        │   ├── LoginOneKeyActivity.java         启动页，一键登录与本地登录态
+        │   ├── LoginPwdActivity.java            密码登录
+        │   ├── NewsDetailActivity.java          新闻图文详情
+        │   ├── VideoDetailActivity.java         全屏沉浸播放页（离线短片播放 + 相关推荐）
+        │   ├── CartActivity.java                独立购物车页面（数量加减、多选、批量管理）
+        │   ├── OrderConfirmActivity.java        订单确认与结算页（地址编辑、抵扣明细）
+        │   ├── OrderListActivity.java           订单管理中心（五态 Tab、发货提醒、退款、再次购买）
+        │   ├── OrderDetailActivity.java         订单详情页（物流轨迹跟踪、单号复制、联系客服）
+        │   ├── PublishDialog.java               底部沉浸式发布弹窗选择器（四大创作形态）
+        │   ├── PublishActivity.java             独立全功能创作中心（多模式、配图预览、话题、定位）
+        │   ├── ContentLibraryActivity.java      现代化内容中心（我的作品、我的收藏、浏览历史）
+        │   ├── MsgActivity.java                 消息会话列表（未读状态与已读同步）
+        │   ├── ChatActivity.java                本地聊天室（支持会话隔离持久化与自动应答）
+        │   ├── SettingsActivity.java            系统与偏好设置
+        │   ├── EditProfileActivity.java         编辑资料（持久化存储与完整度计算）
+        │   ├── OfflinePlayer.java               本地离线短视频播放控制器
+        │   ├── ProfileStore.java                用户资料 SharedPreferences 持久化封装
+        │   ├── ChatStore.java                   聊天记录持久化封装
+        │   ├── VideoStore.java                  视频点赞/收藏状态持久化封装
+        │   ├── ContentStore.java                作品、收藏与浏览历史本地持久化存储
+        │   ├── ShopStore.java                   购物车与订单全流程持久化引擎
+        │   ├── ShoppingDialogs.java             购物车与订单本地交互弹窗
+        │   ├── VideoChannelAdapter.java         视频 ViewPager2 频道适配器
+        │   ├── VideoFeedAdapter.java            推荐流全屏吸附适配器（手势与点赞动画）
+        │   ├── VideoAdapter.java                双列视频网格适配器
+        │   ├── NewsMultiAdapter.java            4 种布局新闻 RecyclerView 适配器
+        │   ├── ShopAdapter.java                 瀑布流商品适配器
+        │   ├── MsgAdapter.java                  消息会话适配器
+        │   └── ChatAdapter.java                 聊天气泡适配器
+        │
+        └── res/
+            ├── layout/          62 个布局文件（含 fragment_campus_guide, dialog_campus_landmark_detail 等）
+            ├── raw/             3 个项目内置离线课程短片 (course_motion_1~3.mp4)
+            ├── drawable/        119 个矢量图标、Shape 资源与校准实景图 (user_crop_*.jpg 等)
+            ├── drawable-nodpi/  87 个高清位图（精选商品图、宫格图标、摄影大图）
+            ├── values/          colors(35 tokens) / dimens(20) / styles(27) / themes / strings
+            ├── values-night/    深色模式防御性主题定义
+            ├── color/           按钮与底部导航动态着色选择器
+            └── menu/            底部导航菜单 (bottom_menu.xml，支持 6 个 Tab 项)
 ```
 
 ---
@@ -475,6 +528,29 @@ app/src/
 
 - **筛选胶囊**改用 `<TextView>`，绕开 `MaterialButton` 的这套逻辑
 - **主按钮**改用 `MaterialButton` 自己的属性表达：`backgroundTint` 指向一个 ColorStateList（`res/color/button_primary_tint.xml`）承载常态 / 按压 / 禁用三态，`cornerRadius` 负责圆角
+
+### Material BottomNavigationView 5 项限制与反射扩容（重大工程攻坚）
+
+在新增【导览】Tab 后，底部导航栏扩展为 6 项（首页、视频、导览、发布、商城、我的）。但 Google 原生 `com.google.android.material.bottomnavigation.BottomNavigationView` 在测量阶段（`onMeasure`）会直接崩溃，抛出：
+```text
+java.lang.ArrayIndexOutOfBoundsException: length=5; index=5
+    at com.google.android.material.bottomnavigation.BottomNavigationMenuView.onMeasure(BottomNavigationMenuView.java:...)
+```
+
+**底层机制深度剖析**：
+Google Material Design 设计规范严格规定底部导航栏最多容纳 3~5 个 Tab。在其源码 `BottomNavigationMenuView` 中，宽度计算缓存数组 `tempChildWidths` 被直接硬编码为：
+```java
+private final int[] tempChildWidths = new int[5];
+```
+当菜单项为 6 个时，循环 `for (int i = 0; i < totalCount; i++) tempChildWidths[i] = ...` 必然触发第 6 项（`index = 5`）数组下标越界异常。
+
+**优雅解法（`CampusBottomNavigationView`）**：
+为了不侵入或私自修改 Google Material 库二进制文件，我们继承 `BottomNavigationView` 封装出 `CampusBottomNavigationView`，在每轮布局测量（`onMeasure`）调用父类逻辑之前，利用 Java 反射动态介入：
+1. 通过 `getChildAt(0)` 获取底层的 `BottomNavigationMenuView` 实例；
+2. 反射获取私有字段 `tempChildWidths` 并解除访问限制（`field.setAccessible(true)`）；
+3. 检测其实际长度是否小于当前菜单真实项数（6）；
+4. 若不足，直接为其分配动态大小的新数组（`new int[childCount]`）并重新注入回私有字段；
+5. 同时配合 XML 中显式指定 `app:labelVisibilityMode="labeled"` 与 `app:itemHorizontalTranslationEnabled="false"`，彻底绕开动态位移模式（Shifting Mode），让 6 个 Tab 均匀平摊屏幕宽度，图标与文字兼备且丝滑稳定。
 
 ### 沉浸式为什么没在 API 29 上崩
 
