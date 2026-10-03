@@ -11,9 +11,29 @@ import java.util.List;
 
 public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<News> newsList;
+    private String highlightQuery = "";
 
     public NewsMultiAdapter(List<News> list) {
         this.newsList = list;
+    }
+
+    public void setHighlightQuery(String query) {
+        this.highlightQuery = (query == null ? "" : query.trim());
+        notifyDataSetChanged();
+    }
+
+    private CharSequence formatHighlight(String text, android.content.Context context) {
+        if (text == null || highlightQuery.isEmpty()) return text == null ? "" : text;
+        int idx = text.toLowerCase(java.util.Locale.ROOT).indexOf(highlightQuery.toLowerCase(java.util.Locale.ROOT));
+        if (idx == -1) return text;
+        android.text.SpannableString ss = new android.text.SpannableString(text);
+        int color = androidx.core.content.ContextCompat.getColor(context, R.color.brand_red);
+        while (idx >= 0) {
+            ss.setSpan(new android.text.style.ForegroundColorSpan(color), idx, idx + highlightQuery.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ss.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), idx, idx + highlightQuery.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            idx = text.toLowerCase(java.util.Locale.ROOT).indexOf(highlightQuery.toLowerCase(java.util.Locale.ROOT), idx + highlightQuery.length());
+        }
+        return ss;
     }
 
     //点击回调。
@@ -132,16 +152,19 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
         });
         int type = news.getType();
+        android.content.Context ctx = holder.itemView.getContext();
+        CharSequence highlightedTitle = formatHighlight(news.getTitle(), ctx);
+
         switch (type){
             case News.TYPE_TEXT:
                 TextViewHolder textHolder = (TextViewHolder) holder;
-                textHolder.tvTitle.setText(news.getTitle());
+                textHolder.tvTitle.setText(highlightedTitle);
                 textHolder.tvSource.setText(news.getSource());
                 textHolder.tvTime.setText(news.getTime());
                 break;
             case News.TYPE_SINGLE_IMG:
                 SingleImgViewHolder singleHolder = (SingleImgViewHolder) holder;
-                singleHolder.tvTitle.setText(news.getTitle());
+                singleHolder.tvTitle.setText(highlightedTitle);
                 singleHolder.tvSource.setText(news.getSource());
                 singleHolder.tvTime.setText(news.getTime());
                 if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
@@ -152,7 +175,7 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 break;
             case News.TYPE_BIG_IMG:
                 BigImgViewHolder bigHolder = (BigImgViewHolder) holder;
-                bigHolder.tvTitle.setText(news.getTitle());
+                bigHolder.tvTitle.setText(highlightedTitle);
                 bigHolder.tvSource.setText(news.getSource());
                 bigHolder.tvTime.setText(news.getTime());
                 if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
@@ -163,7 +186,7 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 break;
             case News.TYPE_THREE_IMG:
                 ThreeImgViewHolder threeHolder = (ThreeImgViewHolder) holder;
-                threeHolder.tvTitle.setText(news.getTitle());
+                threeHolder.tvTitle.setText(highlightedTitle);
                 threeHolder.tvSource.setText(news.getSource());
                 threeHolder.tvTime.setText(news.getTime());
                 if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {
@@ -184,7 +207,7 @@ public class NewsMultiAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 break;
             case News.TYPE_VIDEO:
                 VideoViewHolder videoHolder = (VideoViewHolder) holder;
-                videoHolder.tvTitle.setText(news.getTitle());
+                videoHolder.tvTitle.setText(highlightedTitle);
                 videoHolder.tvSource.setText(news.getSource());
                 videoHolder.tvTime.setText(news.getTime());
                 if (news.getImageUrl() != null && !news.getImageUrl().isEmpty()) {

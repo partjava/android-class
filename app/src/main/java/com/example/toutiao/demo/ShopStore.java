@@ -19,6 +19,50 @@ public final class ShopStore {
     private static final String KEY_CART = "cart_items";
     private static final String KEY_ORDERS = "order_items";
     private static final String KEY_COUPONS = "user_coupons_v1";
+    private static final String KEY_ADDRESSES = "user_addresses_v1";
+
+    public static class AddressItem {
+        public String id;
+        public String name;
+        public String phone;
+        public String tag; // "宿舍", "快递点", "教学楼"
+        public String fullAddress;
+        public boolean isDefault;
+
+        public AddressItem(String id, String name, String phone, String tag, String fullAddress, boolean isDefault) {
+            this.id = id;
+            this.name = name;
+            this.phone = phone;
+            this.tag = tag;
+            this.fullAddress = fullAddress;
+            this.isDefault = isDefault;
+        }
+
+        public JSONObject toJson() {
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("id", id);
+                obj.put("name", name);
+                obj.put("phone", phone);
+                obj.put("tag", tag);
+                obj.put("fullAddress", fullAddress);
+                obj.put("isDefault", isDefault);
+            } catch (Exception ignored) {}
+            return obj;
+        }
+
+        public static AddressItem fromJson(JSONObject obj) {
+            if (obj == null) return null;
+            return new AddressItem(
+                    obj.optString("id", ""),
+                    obj.optString("name", ""),
+                    obj.optString("phone", ""),
+                    obj.optString("tag", "宿舍"),
+                    obj.optString("fullAddress", ""),
+                    obj.optBoolean("isDefault", false)
+            );
+        }
+    }
 
     public static class CouponItem {
         public String id;
@@ -131,10 +175,16 @@ public final class ShopStore {
         public String receiverAddress;
         public String expressCompany;
         public String expressNumber;
+        public boolean isEvaluated;
+        public int rating; // 1-5星
+        public String comment;
         public List<CartItem> items;
 
         public OrderItem() {
             items = new ArrayList<>();
+            isEvaluated = false;
+            rating = 5;
+            comment = "";
         }
 
         public double getTotal() {
@@ -163,6 +213,9 @@ public final class ShopStore {
                 obj.put("receiverAddress", receiverAddress);
                 obj.put("expressCompany", expressCompany);
                 obj.put("expressNumber", expressNumber);
+                obj.put("isEvaluated", isEvaluated);
+                obj.put("rating", rating);
+                obj.put("comment", comment);
 
                 JSONArray arr = new JSONArray();
                 for (CartItem it : items) {
@@ -185,9 +238,12 @@ public final class ShopStore {
             item.actualCents = obj.optLong("actualCents", 0);
             item.receiverName = obj.optString("receiverName", "张同学");
             item.receiverPhone = obj.optString("receiverPhone", "138****0001");
-            item.receiverAddress = obj.optString("receiverAddress", "北京市海淀区中关村南大街1号");
+            item.receiverAddress = obj.optString("receiverAddress", "湖北省武汉市江夏区 武汉晴川学院 5号宿舍楼402室");
             item.expressCompany = obj.optString("expressCompany", "顺丰速运");
             item.expressNumber = obj.optString("expressNumber", "SF" + System.currentTimeMillis() % 1000000000L);
+            item.isEvaluated = obj.optBoolean("isEvaluated", false);
+            item.rating = obj.optInt("rating", 5);
+            item.comment = obj.optString("comment", "");
 
             JSONArray arr = obj.optJSONArray("items");
             if (arr != null) {
@@ -499,5 +555,90 @@ public final class ShopStore {
             }
         }
         return available;
+    }
+
+    // ====== 收货地址管理 ======
+
+    public synchronized List<AddressItem> getAddresses() {
+        String json = prefs.getString(KEY_ADDRESSES, null);
+        List<AddressItem> list = new ArrayList<>();
+        if (json != null && !json.isEmpty()) {
+            try {
+                JSONArray arr = new JSONArray(json);
+                for (int i = 0; i < arr.length(); i++) {
+                    AddressItem item = AddressItem.fromJson(arr.getJSONObject(i));
+                    if (item != null) list.add(item);
+                }
+            } catch (Exception ignored) {}
+        }
+        if (list.isEmpty()) {
+            list.add(new AddressItem("addr_1", "晴川学子", "13888886666", "宿舍", "武汉市江夏区中华科技产业园 武汉晴川学院 5号宿舍楼402室", true));
+            list.add(new AddressItem("addr_2", "李同学", "13912345678", "快递点", "武汉市江夏区 武汉晴川学院 大学生活动中心菜鸟驿站", false));
+            list.add(new AddressItem("addr_3", "王同学", "15099887766", "教学楼", "武汉市江夏区 武汉晴川学院 行政教学楼A栋102室", false));
+            saveAddresses(list);
+        }
+        return list;
+    }
+
+    public synchronized void saveAddresses(List<AddressItem> list) {
+        JSONArray arr = new JSONArray();
+        for (AddressItem item : list) {
+            arr.put(item.toJson());
+        }
+        prefs.edit().putString(KEY_ADDRESSES, arr.toString()).apply();
+    }
+
+    public synchronized void addAddress(String name, String phone, String tag, String fullAddress, boolean isDefault) {
+        List<AddressItem> list = getAddresses();
+        String id = "addr_" + System.currentTimeMillis();
+        if (isDefault) {
+            for (AddressItem a : list) a.isDefault = false;
+        }
+        list.add(0, new AddressItem(id, name, phone, tag, fullAddress, isDefault));
+        saveAddresses(list);
+    }
+
+    public synchronized AddressItem getDefaultAddress() {
+        List<AddressItem> list = getAddresses();
+        for (AddressItem a : list) {
+            if (a.isDefault) return a;
+        }
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    public synchronized void setDefaultAddress(String addressId) {
+        List<AddressItem> list = getAddresses();
+        for (AddressItem a : list) {
+            a.isDefault = a.id.equals(addressId);
+        }
+        saveAddresses(list);
+    }
+
+    // ====== 订单全生命周期流转 ======
+
+    public synchronized void shipOrder(String orderId) {
+        List<OrderItem> list = getOrders();
+        for (OrderItem it : list) {
+            if (it.orderId.equals(orderId)) {
+                it.status = "待收货";
+                it.expressCompany = "顺丰速运";
+                it.expressNumber = "SF" + (System.currentTimeMillis() % 10000000000L);
+                break;
+            }
+        }
+        saveOrders(list);
+    }
+
+    public synchronized void evaluateOrder(String orderId, int rating, String comment) {
+        List<OrderItem> list = getOrders();
+        for (OrderItem it : list) {
+            if (it.orderId.equals(orderId)) {
+                it.isEvaluated = true;
+                it.rating = Math.max(1, Math.min(5, rating));
+                it.comment = (comment == null ? "" : comment.trim());
+                break;
+            }
+        }
+        saveOrders(list);
     }
 }

@@ -71,10 +71,20 @@ public class OrderConfirmActivity extends AppCompatActivity {
         store = new ShopStore(this);
         profileStore = new ProfileStore(this);
         initViews();
+        loadDefaultAddress();
         loadItems();
         initCouponsAndCoins();
         renderOrder();
         setupEvents();
+    }
+
+    private void loadDefaultAddress() {
+        ShopStore.AddressItem defaultAddr = store.getDefaultAddress();
+        if (defaultAddr != null) {
+            tvReceiverName.setText(defaultAddr.name);
+            tvReceiverPhone.setText(defaultAddr.phone);
+            tvReceiverAddress.setText("[" + defaultAddr.tag + "] " + defaultAddr.fullAddress);
+        }
     }
 
     private void initViews() {
@@ -296,36 +306,83 @@ public class OrderConfirmActivity extends AppCompatActivity {
     }
 
     private void showEditAddressDialog() {
+        List<ShopStore.AddressItem> addresses = store.getAddresses();
+        String[] items = new String[addresses.size() + 1];
+        int selectedIndex = 0;
+        String currentAddr = tvReceiverAddress.getText().toString();
+
+        for (int i = 0; i < addresses.size(); i++) {
+            ShopStore.AddressItem a = addresses.get(i);
+            String label = "[" + a.tag + "] " + a.name + " (" + a.phone + ")\n" + a.fullAddress + (a.isDefault ? " 【默认】" : "");
+            items[i] = label;
+            if (currentAddr.contains(a.fullAddress)) {
+                selectedIndex = i;
+            }
+        }
+        items[addresses.size()] = "➕ 新增晴川收货地址…";
+
+        new AlertDialog.Builder(this)
+                .setTitle("选择晴川收货地址")
+                .setSingleChoiceItems(items, selectedIndex, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which == addresses.size()) {
+                        showAddNewAddressDialog();
+                    } else {
+                        ShopStore.AddressItem selected = addresses.get(which);
+                        tvReceiverName.setText(selected.name);
+                        tvReceiverPhone.setText(selected.phone);
+                        tvReceiverAddress.setText("[" + selected.tag + "] " + selected.fullAddress);
+                        store.setDefaultAddress(selected.id);
+                        Toast.makeText(this, "已切换为：" + selected.name + " (" + selected.tag + ")", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void showAddNewAddressDialog() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         int pad = (int) (16 * getResources().getDisplayMetrics().density);
         layout.setPadding(pad, pad, pad, pad);
 
         EditText etName = new EditText(this);
-        etName.setHint("收货人姓名");
-        etName.setText(tvReceiverName.getText());
+        etName.setHint("收货人姓名 (如：张同学)");
         layout.addView(etName);
 
         EditText etPhone = new EditText(this);
-        etPhone.setHint("手机号码");
-        etPhone.setText(tvReceiverPhone.getText());
+        etPhone.setHint("手机号码 (如：13800138000)");
+        etPhone.setInputType(android.text.InputType.TYPE_CLASS_PHONE);
         layout.addView(etPhone);
 
+        EditText etTag = new EditText(this);
+        etTag.setHint("地址标签 (如：宿舍 / 教学楼 / 快递点)");
+        etTag.setText("宿舍");
+        layout.addView(etTag);
+
         EditText etAddr = new EditText(this);
-        etAddr.setHint("详细地址");
-        etAddr.setText(tvReceiverAddress.getText());
+        etAddr.setHint("晴川校内详细地址 (如：6号楼502室)");
         layout.addView(etAddr);
 
         new AlertDialog.Builder(this)
-                .setTitle("修改收货地址")
+                .setTitle("新增晴川收货地址")
                 .setView(layout)
-                .setPositiveButton("保存", (d, w) -> {
+                .setPositiveButton("保存并使用", (d, w) -> {
                     String n = etName.getText().toString().trim();
                     String p = etPhone.getText().toString().trim();
+                    String t = etTag.getText().toString().trim();
                     String a = etAddr.getText().toString().trim();
-                    if (!n.isEmpty()) tvReceiverName.setText(n);
-                    if (!p.isEmpty()) tvReceiverPhone.setText(p);
-                    if (!a.isEmpty()) tvReceiverAddress.setText(a);
+                    if (n.isEmpty()) n = "晴川学子";
+                    if (p.isEmpty()) p = "13800138000";
+                    if (t.isEmpty()) t = "宿舍";
+                    if (a.isEmpty()) a = "武汉晴川学院 学生公寓";
+                    String fullAddr = a.contains("武汉晴川学院") ? a : "武汉市东湖高新区 武汉晴川学院 " + a;
+
+                    store.addAddress(n, p, t, fullAddr, true);
+                    tvReceiverName.setText(n);
+                    tvReceiverPhone.setText(p);
+                    tvReceiverAddress.setText("[" + t + "] " + fullAddr);
+                    Toast.makeText(this, "新增地址成功并已设为默认！", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("取消", null)
                 .show();

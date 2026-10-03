@@ -782,7 +782,7 @@ public class HomeFragment extends PageFragment {
             newsList.clear();
             if (activeNews != null) for (News item : activeNews)
                 if ((item.getTitle()+item.getSource()).toLowerCase(java.util.Locale.ROOT).contains(key)) newsList.add(item);
-            newsAdapter.notifyDataSetChanged();
+            newsAdapter.setHighlightQuery(key);
             empty.setVisibility(newsList.isEmpty() ? View.VISIBLE : View.GONE);
         }
     }

@@ -65,9 +65,51 @@ public class VideoDetailActivity extends AppCompatActivity {
         bindView();
         bindData();
         applyWindowInsets();
+        setupGestureControls();
 
-        rlCover.setOnClickListener(v -> togglePlay());
         findViewById(R.id.iv_detail_back).setOnClickListener(v -> finish());
+    }
+
+    private void setupGestureControls() {
+        android.view.GestureDetector gestureDetector = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapConfirmed(android.view.MotionEvent e) {
+                togglePlay();
+                return true;
+            }
+
+            @Override
+            public boolean onDoubleTap(android.view.MotionEvent e) {
+                showDoubleTapLikeHeart(e.getX(), e.getY());
+                return true;
+            }
+
+            @Override
+            public boolean onScroll(android.view.MotionEvent e1, android.view.MotionEvent e2, float distanceX, float distanceY) {
+                if (e1 == null || e2 == null) return false;
+                int viewWidth = rlCover.getWidth();
+                int viewHeight = rlCover.getHeight();
+                if (viewWidth <= 0 || viewHeight <= 0) return false;
+
+                if (Math.abs(distanceY) > Math.abs(distanceX)) {
+                    if (e1.getX() < viewWidth / 2.0f) {
+                        adjustBrightness(distanceY / viewHeight);
+                    } else {
+                        adjustVolume(distanceY / viewHeight);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        rlCover.setOnTouchListener((v, event) -> {
+            boolean handled = gestureDetector.onTouchEvent(event);
+            if (!handled && event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                v.performClick();
+            }
+            return true;
+        });
     }
 
     
@@ -265,5 +307,80 @@ public class VideoDetailActivity extends AppCompatActivity {
 
         handler.removeCallbacksAndMessages(null);
         player.release();
+    }
+
+    private void showDoubleTapLikeHeart(float x, float y) {
+        ImageView heart = new ImageView(this);
+        heart.setImageResource(R.drawable.ic_like);
+        heart.setColorFilter(Color.parseColor("#E63939"));
+        int size = dpToPx(72);
+        android.widget.RelativeLayout.LayoutParams lp = new android.widget.RelativeLayout.LayoutParams(size, size);
+        heart.setLayoutParams(lp);
+        heart.setX(x - size / 2.0f);
+        heart.setY(y - size / 2.0f);
+        heart.setRotation(-15f + (float) (Math.random() * 30f));
+        heart.setScaleX(0.3f);
+        heart.setScaleY(0.3f);
+        heart.setAlpha(0.9f);
+
+        ((ViewGroup) rlCover).addView(heart);
+
+        heart.animate()
+                .scaleX(1.3f)
+                .scaleY(1.3f)
+                .alpha(1.0f)
+                .setDuration(200)
+                .withEndAction(() -> heart.animate()
+                        .scaleX(1.0f)
+                        .scaleY(1.0f)
+                        .translationYBy(-dpToPx(60))
+                        .alpha(0.0f)
+                        .setDuration(350)
+                        .withEndAction(() -> ((ViewGroup) rlCover).removeView(heart))
+                        .start())
+                .start();
+
+        showGestureTip("❤️ 双击点赞！");
+    }
+
+    private void adjustBrightness(float percent) {
+        android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+        float current = lp.screenBrightness;
+        if (current < 0) current = 0.5f;
+        current += percent;
+        if (current > 1.0f) current = 1.0f;
+        if (current < 0.05f) current = 0.05f;
+        lp.screenBrightness = current;
+        getWindow().setAttributes(lp);
+        int brightnessPercent = (int) (current * 100);
+        showGestureTip("🔆 亮度：" + brightnessPercent + "%");
+    }
+
+    private void adjustVolume(float percent) {
+        android.media.AudioManager am = (android.media.AudioManager) getSystemService(android.content.Context.AUDIO_SERVICE);
+        if (am != null) {
+            int maxVol = am.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
+            int currentVol = am.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
+            int delta = (int) (percent * maxVol * 1.5f);
+            if (delta == 0 && Math.abs(percent) > 0.01f) {
+                delta = percent > 0 ? 1 : -1;
+            }
+            int newVol = Math.max(0, Math.min(maxVol, currentVol + delta));
+            am.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, newVol, 0);
+            int volPercent = (int) ((newVol * 100.0f) / maxVol);
+            showGestureTip("🔊 音量：" + volPercent + "%");
+        }
+    }
+
+    private android.widget.Toast gestureToast;
+
+    private void showGestureTip(String msg) {
+        if (gestureToast != null) gestureToast.cancel();
+        gestureToast = android.widget.Toast.makeText(this, msg, android.widget.Toast.LENGTH_SHORT);
+        gestureToast.show();
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
     }
 }

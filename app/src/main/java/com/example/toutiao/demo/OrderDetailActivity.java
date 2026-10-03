@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -195,9 +196,21 @@ public class OrderDetailActivity extends AppCompatActivity {
                             .show();
                 });
 
-                btnActionPrimary.setText("提醒发货");
+                btnActionPrimary.setText("模拟发货");
                 btnActionPrimary.setOnClickListener(v -> {
-                    Toast.makeText(this, "已向商家发出催发货通知！", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(this)
+                            .setTitle("发货与催单操作")
+                            .setMessage("订单当前处于待发货状态，您可以：")
+                            .setPositiveButton("模拟商家极速发货", (d, w) -> {
+                                store.shipOrder(orderId);
+                                Toast.makeText(this, "商家已发货！顺丰速运单号已分配并派送中", Toast.LENGTH_LONG).show();
+                                loadOrderDetail();
+                            })
+                            .setNeutralButton("提醒商家尽快发货", (d, w) -> {
+                                Toast.makeText(this, "已向商家发出催发货通知！", Toast.LENGTH_SHORT).show();
+                            })
+                            .setNegativeButton("取消", null)
+                            .show();
                 });
                 break;
 
@@ -215,7 +228,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                             .setMessage("请在确认收到商品且外观完好后再进行操作。")
                             .setPositiveButton("确认收货", (d, w) -> {
                                 store.updateOrderStatus(orderId, "已完成");
-                                Toast.makeText(this, "已确认收货，交易完成！", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "已确认收货，交易完成！评价可领10金币！", Toast.LENGTH_SHORT).show();
                                 loadOrderDetail();
                             })
                             .setNegativeButton("取消", null)
@@ -225,28 +238,29 @@ public class OrderDetailActivity extends AppCompatActivity {
 
             case "已完成":
                 btnActionSecondary.setVisibility(View.VISIBLE);
-                btnActionSecondary.setText("删除订单");
+                btnActionSecondary.setText("再次购买");
                 btnActionSecondary.setOnClickListener(v -> {
-                    new AlertDialog.Builder(this)
-                            .setTitle("删除订单")
-                            .setMessage("确定要删除这条订单吗？")
-                            .setPositiveButton("删除", (d, w) -> {
-                                store.deleteOrder(orderId);
-                                Toast.makeText(this, "订单已删除", Toast.LENGTH_SHORT).show();
-                                finish();
-                            })
-                            .setNegativeButton("取消", null)
-                            .show();
-                });
-
-                btnActionPrimary.setText("再次购买");
-                btnActionPrimary.setOnClickListener(v -> {
                     for (ShopStore.CartItem ci : currentOrder.items) {
                         store.addToCart(ci.title, ci.priceCents, ci.imgRes, ci.category, ci.quantity);
                     }
                     Toast.makeText(this, "商品已重新加入购物车", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, CartActivity.class));
                 });
+
+                if (currentOrder.isEvaluated) {
+                    btnActionPrimary.setText("已评价 ★★★★★");
+                    btnActionPrimary.setOnClickListener(v -> {
+                        String c = (currentOrder.comment != null && !currentOrder.comment.isEmpty()) ? currentOrder.comment : "非常好，正品保证！";
+                        new AlertDialog.Builder(this)
+                                .setTitle("我的评价")
+                                .setMessage("评分：★★★★★ (" + currentOrder.rating + "星好评)\n评价心得：" + c)
+                                .setPositiveButton("知道了", null)
+                                .show();
+                    });
+                } else {
+                    btnActionPrimary.setText("评价得10金币");
+                    btnActionPrimary.setOnClickListener(v -> showEvaluationDialog());
+                }
                 break;
 
             default: // 已退款
@@ -288,5 +302,48 @@ public class OrderDetailActivity extends AppCompatActivity {
             intent.putExtra(ChatActivity.EXTRA_PEER_NAME, "商城官方客服");
             startActivity(intent);
         });
+    }
+
+    private void showEvaluationDialog() {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad, pad, pad);
+
+        TextView tvHint = new TextView(this);
+        tvHint.setText("✨ 感谢您的购买！发表心得即赠 10 淘金币 ✨\n请选择综合满意度：");
+        tvHint.setTextSize(14);
+        tvHint.setTextColor(Color.parseColor("#222222"));
+        layout.addView(tvHint);
+
+        String[] stars = {"⭐⭐⭐⭐⭐ 5星超赞 (力荐)", "⭐⭐⭐⭐ 4星满意", "⭐⭐⭐ 3星一般"};
+        android.widget.Spinner spinner = new android.widget.Spinner(this);
+        android.widget.ArrayAdapter<String> adapter = new android.widget.ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, stars);
+        spinner.setAdapter(adapter);
+        layout.addView(spinner);
+
+        EditText etComment = new EditText(this);
+        etComment.setHint("写下心得帮助其他晴川校友吧…");
+        etComment.setLines(3);
+        etComment.setText("包装严实，正品官方保障，物流速度超快，晴川师生专享特别划算！");
+        layout.addView(etComment);
+
+        new AlertDialog.Builder(this)
+                .setTitle("订单商品评价")
+                .setView(layout)
+                .setPositiveButton("提交并领金币", (dialog, which) -> {
+            int pos = spinner.getSelectedItemPosition();
+            int rating = (pos == 0) ? 5 : (pos == 1 ? 4 : 3);
+            String comment = etComment.getText().toString().trim();
+            if (comment.isEmpty()) comment = "非常满意，值得推荐！";
+
+            store.evaluateOrder(orderId, rating, comment);
+            new ProfileStore(this).addCoins(10);
+            Toast.makeText(this, "🎉 评价发表成功！已成功领取 10 淘金币！", Toast.LENGTH_LONG).show();
+            loadOrderDetail();
+        })
+                .setNegativeButton("取消", null)
+                .show();
     }
 }

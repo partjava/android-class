@@ -172,8 +172,9 @@
                 style="@style/Widget.Toutiao.SettingLabel"
                 android:text="清理缓存"/>
             <TextView
+                android:id="@+id/tv_cache_size"
                 style="@style/Widget.Toutiao.SettingValue"
-                android:text="暂未实现"/>
+                android:text="计算中..."/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>

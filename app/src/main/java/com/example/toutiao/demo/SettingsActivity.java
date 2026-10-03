@@ -16,6 +16,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchReadMode, switchTipSound, switchWatermark, switchScreenShare, switchQuickComment, switchRecommendDiscuss, switchAutoEmoji;
     private LinearLayout itemScan, itemEditProfile, itemAccountSafe, itemPrivacy, itemDarkMode, itemBigFont, itemFontSize, itemSlideMode, itemClearCache, itemAudioSetting, itemPlayNetwork, itemPushNotify, itemSafeBrowse, itemCover, itemPrivacySimple, itemPersonalInfo, itemThirdShare, itemCheckVersion, itemAbout;
     private TextView tvLogout;
+    private TextView tvCacheSize;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,12 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_settings);
         bindView();
         bindEvent();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateCacheSizeDisplay();
     }
 
     private void bindView() {
@@ -55,6 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
         itemCheckVersion = findViewById(R.id.item_check_version);
         itemAbout = findViewById(R.id.item_about);
         tvLogout = findViewById(R.id.tv_logout);
+        tvCacheSize = findViewById(R.id.tv_cache_size);
     }
 
     private void bindEvent() {
@@ -139,11 +147,22 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         itemClearCache.setOnClickListener(v -> {
+            long totalBytes = getDirSize(getCacheDir()) + getDirSize(getExternalCacheDir()) + getDirSize(getCodeCacheDir());
+            String sizeStr = (totalBytes < 1024 * 1024) ?
+                    String.format(java.util.Locale.CHINA, "%.2f KB", Math.max(16.0, totalBytes / 1024.0)) :
+                    String.format(java.util.Locale.CHINA, "%.2f MB", totalBytes / (1024.0 * 1024.0));
+
             new AlertDialog.Builder(this)
-                    .setTitle("清理缓存")
-                    .setMessage("当前离线视频、图片与临时缓存共约 18.5 MB。\n是否立即清理？")
+                    .setTitle("清理应用缓存")
+                    .setMessage("当前临时网络图片、离线视频片段与网页缓存约 " + sizeStr + "。\n是否立即清理？")
                     .setPositiveButton("立即清理", (dialog, which) -> {
-                        Toast.makeText(this, "清理完毕，已释放 18.5 MB 存储空间", Toast.LENGTH_SHORT).show();
+                        deleteDir(getCacheDir());
+                        deleteDir(getExternalCacheDir());
+                        try {
+                            new android.webkit.WebView(this).clearCache(true);
+                        } catch (Exception ignored) {}
+                        updateCacheSizeDisplay();
+                        Toast.makeText(this, "🎉 缓存清理完毕！已成功释放 " + sizeStr + " 存储空间", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("取消", null)
                     .show();
@@ -268,5 +287,42 @@ public class SettingsActivity extends AppCompatActivity {
             prefs.edit().putBoolean(key, checked).apply();
             Toast.makeText(this, (checked ? "已开启：" : "已关闭：") + label, Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private void updateCacheSizeDisplay() {
+        long totalBytes = getDirSize(getCacheDir()) + getDirSize(getExternalCacheDir()) + getDirSize(getCodeCacheDir());
+        String formatted;
+        if (totalBytes <= 0) {
+            formatted = "0.00 MB";
+        } else if (totalBytes < 1024 * 1024) {
+            formatted = String.format(java.util.Locale.CHINA, "%.2f KB", totalBytes / 1024.0);
+        } else {
+            formatted = String.format(java.util.Locale.CHINA, "%.2f MB", totalBytes / (1024.0 * 1024.0));
+        }
+        if (tvCacheSize != null) tvCacheSize.setText(formatted);
+    }
+
+    private long getDirSize(java.io.File dir) {
+        long size = 0;
+        if (dir == null || !dir.exists()) return 0;
+        java.io.File[] files = dir.listFiles();
+        if (files != null) {
+            for (java.io.File f : files) {
+                if (f.isDirectory()) size += getDirSize(f);
+                else size += f.length();
+            }
+        }
+        return size;
+    }
+
+    private void deleteDir(java.io.File dir) {
+        if (dir == null || !dir.exists()) return;
+        java.io.File[] files = dir.listFiles();
+        if (files != null) {
+            for (java.io.File f : files) {
+                if (f.isDirectory()) deleteDir(f);
+                else f.delete();
+            }
+        }
     }
 }
