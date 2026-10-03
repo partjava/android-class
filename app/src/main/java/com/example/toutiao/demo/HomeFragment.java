@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -171,6 +174,11 @@ public class HomeFragment extends PageFragment {
         android.widget.ViewFlipper vfBroadcast = findViewById(R.id.vf_campus_broadcast);
         if (vfBroadcast != null) {
             vfBroadcast.setOnClickListener(v -> showCampusNoticeDialog(vfBroadcast.getDisplayedChild()));
+        }
+
+        View llBroadcastBar = findViewById(R.id.ll_broadcast_bar);
+        if (llBroadcastBar != null) {
+            setupBroadcastSwipeToDismiss(llBroadcastBar, vfBroadcast);
         }
     }
 
@@ -917,5 +925,95 @@ public class HomeFragment extends PageFragment {
                 .setMessage("发文单位：" + departments[idx] + "\n发布日期：" + dates[idx] + "\n\n" + contents[idx])
                 .setPositiveButton("我知道了", null)
                 .show();
+    }
+
+    private void setupBroadcastSwipeToDismiss(View bar, View vfBroadcast) {
+        View ivClose = bar.findViewById(R.id.iv_close_broadcast);
+        if (ivClose != null) {
+            ivClose.setOnClickListener(v -> dismissBroadcastBar(bar, true));
+        }
+
+        bar.setClickable(true);
+        int touchSlop = ViewConfiguration.get(bar.getContext()).getScaledTouchSlop();
+
+        View.OnTouchListener swipeListener = new View.OnTouchListener() {
+            private float downX, downY;
+            private boolean isSwiping = false;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                        isSwiping = false;
+                        return false;
+
+                    case MotionEvent.ACTION_MOVE:
+                        float dx = event.getRawX() - downX;
+                        float dy = event.getRawY() - downY;
+                        if (!isSwiping) {
+                            if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy) * 1.2f) {
+                                isSwiping = true;
+                                ViewParent parent = bar.getParent();
+                                if (parent != null) {
+                                    parent.requestDisallowInterceptTouchEvent(true);
+                                }
+                            }
+                        }
+                        if (isSwiping) {
+                            bar.setTranslationX(dx);
+                            float width = bar.getWidth();
+                            float alpha = 1.0f - Math.min(1.0f, Math.abs(dx) / (width > 0 ? width : 1.0f)) * 0.7f;
+                            bar.setAlpha(Math.max(0.2f, alpha));
+                            return true;
+                        }
+                        break;
+
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (isSwiping) {
+                            float totalDx = event.getRawX() - downX;
+                            float threshold = bar.getWidth() * 0.25f;
+                            if (Math.abs(totalDx) > threshold) {
+                                dismissBroadcastBar(bar, totalDx > 0);
+                            } else {
+                                bar.animate()
+                                        .translationX(0f)
+                                        .alpha(1.0f)
+                                        .setDuration(180)
+                                        .start();
+                            }
+                            isSwiping = false;
+                            return true;
+                        }
+                        break;
+                }
+                return false;
+            }
+        };
+
+        bar.setOnTouchListener(swipeListener);
+        if (vfBroadcast != null) {
+            vfBroadcast.setOnTouchListener(swipeListener);
+        }
+    }
+
+    private void dismissBroadcastBar(View bar, boolean toRight) {
+        float width = bar.getWidth() > 0 ? bar.getWidth() : 800f;
+        float targetX = toRight ? (width + 300f) : -(width + 300f);
+        bar.animate()
+                .translationX(targetX)
+                .alpha(0f)
+                .setDuration(220)
+                .withEndAction(() -> {
+                    bar.setVisibility(View.GONE);
+                    bar.setTranslationX(0f);
+                    bar.setAlpha(1.0f);
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "已移除校园快讯", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .start();
     }
 }

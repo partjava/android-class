@@ -230,6 +230,19 @@
                 android:textSize="11sp"
                 android:textStyle="bold"/>
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/iv_close_broadcast"
+            android:layout_width="22dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:padding="5dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/text_hint"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="关闭快讯"/>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
