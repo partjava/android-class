@@ -5,7 +5,14 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.view.LayoutInflater;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ScrollView;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +25,16 @@ import java.util.List;
  * 3. 完整显示长篇新闻全部自然段落，排版清爽，支持收藏与分享。
  */
 public class NewsDetailActivity extends AppCompatActivity {
+
+    private CommentStore commentStore;
+    private ScrollView svNewsScroll;
+    private View llCommentsHeader;
+    private LinearLayout llCommentsContainer;
+    private TextView tvCommentHeaderCount;
+    private TextView tvBottomCommentBadge;
+    private ImageView ivBottomLike;
+    private TextView tvBottomLikeCount;
+    private ImageView ivBottomCollect;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,6 +200,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                 store.put("saved", article);
             }
             save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+            updateCollectUi(title, store);
         });
 
         android.widget.Button share = new android.widget.Button(this);
@@ -210,6 +228,75 @@ public class NewsDetailActivity extends AppCompatActivity {
 
         // 左上角返回
         ivBack.setOnClickListener(v -> finish());
+
+        // 初始化评论与互动组件
+        commentStore = new CommentStore(this);
+        svNewsScroll = findViewById(R.id.sv_news_scroll);
+        llCommentsHeader = findViewById(R.id.ll_comments_header);
+        llCommentsContainer = findViewById(R.id.ll_comments_container);
+        tvCommentHeaderCount = findViewById(R.id.tv_comment_header_count);
+        tvBottomCommentBadge = findViewById(R.id.tv_bottom_comment_badge);
+        ivBottomLike = findViewById(R.id.iv_bottom_like);
+        tvBottomLikeCount = findViewById(R.id.tv_bottom_like_count);
+        ivBottomCollect = findViewById(R.id.iv_bottom_collect);
+
+        renderComments(title);
+        updateLikeUi(title);
+        updateCollectUi(title, store);
+
+        // 底部评论输入触发
+        View llCommentInputTrigger = findViewById(R.id.ll_comment_input_trigger);
+        if (llCommentInputTrigger != null) {
+            llCommentInputTrigger.setOnClickListener(v -> showCommentInputDialog(title));
+        }
+
+        // 底部评论跳转
+        View flBottomCommentBtn = findViewById(R.id.fl_bottom_comment_btn);
+        if (flBottomCommentBtn != null) {
+            flBottomCommentBtn.setOnClickListener(v -> {
+                if (svNewsScroll != null && llCommentsHeader != null) {
+                    svNewsScroll.smoothScrollTo(0, llCommentsHeader.getTop());
+                }
+            });
+        }
+
+        // 底部点赞
+        View llBottomLikeBtn = findViewById(R.id.ll_bottom_like_btn);
+        if (llBottomLikeBtn != null) {
+            llBottomLikeBtn.setOnClickListener(v -> {
+                boolean wasLiked = commentStore.isArticleLiked(title);
+                commentStore.toggleArticleLike(title);
+                updateLikeUi(title);
+                if (ivBottomLike != null) {
+                    ivBottomLike.animate().scaleX(1.35f).scaleY(1.35f).setDuration(150)
+                            .withEndAction(() -> ivBottomLike.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start())
+                            .start();
+                }
+                Toast.makeText(this, !wasLiked ? "❤️ 点赞成功 +1" : "已取消点赞", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // 底部收藏
+        View flBottomCollectBtn = findViewById(R.id.fl_bottom_collect_btn);
+        if (flBottomCollectBtn != null) {
+            flBottomCollectBtn.setOnClickListener(v -> {
+                if (store.contains("saved", title)) {
+                    store.remove("saved", title);
+                    Toast.makeText(this, "已取消收藏", Toast.LENGTH_SHORT).show();
+                } else {
+                    store.put("saved", article);
+                    Toast.makeText(this, "⭐ 已加入我的收藏", Toast.LENGTH_SHORT).show();
+                }
+                updateCollectUi(title, store);
+                save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+            });
+        }
+
+        // 底部分享
+        View flBottomShareBtn = findViewById(R.id.fl_bottom_share_btn);
+        if (flBottomShareBtn != null) {
+            flBottomShareBtn.setOnClickListener(v -> doShareArticle(title, info, finalShareText, finalLink));
+        }
     }
 
     private final List<TextView> paragraphViews = new ArrayList<>();
@@ -332,5 +419,110 @@ public class NewsDetailActivity extends AppCompatActivity {
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density + 0.5f);
+    }
+
+    private void renderComments(String newsTitle) {
+        if (llCommentsContainer == null) return;
+        llCommentsContainer.removeAllViews();
+        List<CommentStore.Comment> list = commentStore.getComments(newsTitle);
+        int count = list.size();
+        if (tvCommentHeaderCount != null) tvCommentHeaderCount.setText("(" + count + ")");
+        if (tvBottomCommentBadge != null) tvBottomCommentBadge.setText(String.valueOf(count));
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        for (CommentStore.Comment c : list) {
+            View itemView = inflater.inflate(R.layout.item_news_comment, llCommentsContainer, false);
+            ImageView ivAvatar = itemView.findViewById(R.id.iv_comment_avatar);
+            TextView tvAuthor = itemView.findViewById(R.id.tv_comment_author);
+            TextView tvTag = itemView.findViewById(R.id.tv_comment_tag);
+            TextView tvTime = itemView.findViewById(R.id.tv_comment_time);
+            TextView tvContent = itemView.findViewById(R.id.tv_comment_content);
+            View llLike = itemView.findViewById(R.id.ll_comment_like);
+            ImageView ivLike = itemView.findViewById(R.id.iv_comment_like);
+            TextView tvLikeCount = itemView.findViewById(R.id.tv_comment_like_count);
+
+            tvAuthor.setText(c.author);
+            tvTag.setText(c.tag != null ? c.tag : "晴川认证用户");
+            tvTime.setText(c.time);
+            tvContent.setText(c.content);
+            tvLikeCount.setText(String.valueOf(c.likeCount));
+
+            int[] avatars = {R.drawable.avatar_blue, R.drawable.avatar_green, R.drawable.avatar_orange, R.drawable.avatar_purple};
+            int avatarIdx = Math.abs(c.author.hashCode()) % avatars.length;
+            ivAvatar.setImageResource(avatars[avatarIdx]);
+
+            updateCommentLikeIcon(ivLike, tvLikeCount, c.isLiked, c.likeCount);
+
+            llLike.setOnClickListener(v -> {
+                boolean nowLiked = commentStore.toggleCommentLike(newsTitle, c.id);
+                c.isLiked = nowLiked;
+                c.likeCount += (nowLiked ? 1 : -1);
+                if (c.likeCount < 0) c.likeCount = 0;
+                updateCommentLikeIcon(ivLike, tvLikeCount, c.isLiked, c.likeCount);
+            });
+
+            llCommentsContainer.addView(itemView);
+        }
+    }
+
+    private void updateCommentLikeIcon(ImageView ivLike, TextView tvLikeCount, boolean isLiked, int count) {
+        ivLike.setColorFilter(ContextCompat.getColor(this,
+                isLiked ? R.color.brand_red : R.color.text_tertiary));
+        tvLikeCount.setText(String.valueOf(count));
+        tvLikeCount.setTextColor(ContextCompat.getColor(this,
+                isLiked ? R.color.brand_red : R.color.text_tertiary));
+    }
+
+    private void updateLikeUi(String newsTitle) {
+        if (ivBottomLike == null || tvBottomLikeCount == null) return;
+        boolean liked = commentStore.isArticleLiked(newsTitle);
+        int count = commentStore.getArticleLikes(newsTitle);
+        ivBottomLike.setColorFilter(ContextCompat.getColor(this,
+                liked ? R.color.brand_red : R.color.icon_primary));
+        tvBottomLikeCount.setText(String.valueOf(count));
+        tvBottomLikeCount.setTextColor(ContextCompat.getColor(this,
+                liked ? R.color.brand_red : R.color.text_secondary));
+    }
+
+    private void updateCollectUi(String newsTitle, ContentStore store) {
+        if (ivBottomCollect == null) return;
+        boolean isSaved = store.contains("saved", newsTitle);
+        ivBottomCollect.setColorFilter(ContextCompat.getColor(this,
+                isSaved ? R.color.brand_red : R.color.icon_primary));
+    }
+
+    private void showCommentInputDialog(String newsTitle) {
+        final EditText etInput = new EditText(this);
+        etInput.setHint("说点什么吧，文明发言交流...");
+        etInput.setTextSize(15f);
+        etInput.setMinLines(3);
+        etInput.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
+        etInput.setBackgroundResource(R.drawable.bg_search);
+        etInput.setPadding(dpToPx(12), dpToPx(10), dpToPx(12), dpToPx(10));
+
+        FrameLayout container = new FrameLayout(this);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(dpToPx(16), dpToPx(12), dpToPx(16), dpToPx(8));
+        container.addView(etInput, lp);
+
+        new AlertDialog.Builder(this)
+                .setTitle("发表我的讨论")
+                .setView(container)
+                .setPositiveButton("发布", (dialog, which) -> {
+                    String text = etInput.getText().toString().trim();
+                    if (text.isEmpty()) {
+                        Toast.makeText(this, "请输入要发表的评论内容", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    commentStore.addComment(newsTitle, text);
+                    renderComments(newsTitle);
+                    Toast.makeText(this, "🎉 评论发表成功！", Toast.LENGTH_SHORT).show();
+                    if (svNewsScroll != null && llCommentsHeader != null) {
+                        svNewsScroll.post(() -> svNewsScroll.smoothScrollTo(0, llCommentsHeader.getTop()));
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 }

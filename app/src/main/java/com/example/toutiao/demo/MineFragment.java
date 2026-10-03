@@ -111,10 +111,11 @@ public class MineFragment extends PageFragment {
         // 客服中心 -> 帮助中心与客服网页
         click(R.id.ll_service, () -> WebActivity.open(requireContext(), "帮助中心与客服", "file:///android_asset/web/help.html"));
 
-        // 浏览历史与书架
-        for (int id : new int[]{R.id.ll_history, R.id.ll_book}) {
-            click(id, () -> ContentLibraryActivity.open(requireContext(), "history"));
-        }
+        // 浏览历史
+        click(R.id.ll_history, () -> ContentLibraryActivity.open(requireContext(), "history"));
+
+        // 晴川校园导览
+        click(R.id.ll_book, () -> CampusGuideActivity.start(requireContext()));
 
         // 创作中心快捷入口
         click(R.id.ll_create, () -> ContentLibraryActivity.open(requireContext(), "posts"));

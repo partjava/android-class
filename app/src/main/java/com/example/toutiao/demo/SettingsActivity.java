@@ -98,6 +98,13 @@ public class SettingsActivity extends AppCompatActivity {
                     .setTitle("深色模式")
                     .setSingleChoiceItems(modes, current, (dialog, which) -> {
                         sp.edit().putInt("dark_mode_idx", which).apply();
+                        if (which == 1) {
+                            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+                        } else if (which == 2) {
+                            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+                        } else {
+                            androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                        }
                         Toast.makeText(this, "已设置深色模式为：" + modes[which], Toast.LENGTH_SHORT).show();
                         dialog.dismiss();
                     })

@@ -162,6 +162,16 @@ public class HomeFragment extends PageFragment {
         hsvTabBar = findViewById(R.id.hsv_tab_bar);
         llTabContainer = findViewById(R.id.ll_tab_container);
         btnChannelManage = findViewById(R.id.btn_channel_manage);
+
+        View btnGuide = findViewById(R.id.btn_home_campus_guide);
+        if (btnGuide != null) {
+            btnGuide.setOnClickListener(v -> CampusGuideActivity.start(requireContext()));
+        }
+
+        android.widget.ViewFlipper vfBroadcast = findViewById(R.id.vf_campus_broadcast);
+        if (vfBroadcast != null) {
+            vfBroadcast.setOnClickListener(v -> showCampusNoticeDialog(vfBroadcast.getDisplayedChild()));
+        }
     }
 
     @android.annotation.SuppressLint("SetJavaScriptEnabled")
@@ -878,5 +888,34 @@ public class HomeFragment extends PageFragment {
             TextView tvName;
             TextView tvShort;
         }
+    }
+
+    private void showCampusNoticeDialog(int index) {
+        String[] titles = {
+                "【教务处】2026年春季学期选课与学分重修认定的通知",
+                "【学工在线】第十二届晴川校园樱花文化艺术节即将启幕",
+                "【图书馆】春季新书上架，24小时考研研读室开放预约",
+                "【后勤保卫】关于春季校园电动车规范停放与安全用电提示"
+        };
+        String[] departments = {
+                "教务处 · 教学运行科",
+                "党委学工部 · 校团委",
+                "晴川图书馆 · 读者服务部",
+                "后勤保卫处 · 校园治安综合治理科"
+        };
+        String[] dates = {"2026-03-28", "2026-03-25", "2026-03-20", "2026-03-18"};
+        String[] contents = {
+                "全体本科生同学：\n\n　　2026年春季学期通识必修课、学科基础课及专业核心课选课工作已正式启动。请各位同学登录教务管理系统核对个人培养方案，在规定选课窗口期内完成退选与确认。\n\n　　重修及学分置换申请截止时间为4月15日17:00，逾期不予补报。\n\n教务处办公电话：027-87934455",
+                "全校师生员工：\n\n　　春和景明，万株樱花盛开。学校定于本周五在龙泉山下樱花大道及晴川大剧场隆重举办‘第十二届晴川校园樱花文化艺术节’。\n\n　　活动包含草坪音乐节、晴川文创游园会、书画摄影展及汉服游园巡展，欢迎全校师生、广大校友及家长朋友们共赴春日盛会！",
+                "各位读者：\n\n　　晴川图书馆新采购的5000余册前沿学科图书、考研指定教材及数字资源数据库现已正式上架。同时，二楼南侧考研研读专区已开启智慧预约系统，请同学们通过‘晴川智慧校园’刷卡选座，自觉保持安静整洁。",
+                "全校师生：\n\n　　为切实维护校园交通秩序和消防安全，严禁在教学楼门厅、宿舍走廊及疏散通道停放电动车或飞线充电。请将车辆整齐停放于各宿舍楼下指定智能充电车棚内。感谢大家的配合与支持！"
+        };
+
+        int idx = (index >= 0 && index < titles.length) ? index : 0;
+        new AlertDialog.Builder(requireContext())
+                .setTitle(titles[idx])
+                .setMessage("发文单位：" + departments[idx] + "\n发布日期：" + dates[idx] + "\n\n" + contents[idx])
+                .setPositiveButton("我知道了", null)
+                .show();
     }
 }

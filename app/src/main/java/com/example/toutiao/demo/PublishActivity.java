@@ -56,10 +56,12 @@ public class PublishActivity extends AppCompatActivity {
     private final List<Integer> selectedPhotos = new ArrayList<>();
     private int locationIndex = 0;
     private final String[] locations = new String[]{
-            "📍 北京市·海淀区",
-            "📍 深圳市·南山区",
-            "📍 上海市·陆家嘴",
-            "📍 广州市·天河区",
+            "📍 晴川图书馆·静音自习室",
+            "📍 晴川综合楼·学术报告厅",
+            "📍 田径运动场·阳光跑道",
+            "📍 龙泉山下·汤逊湖畔",
+            "📍 晴川樱花园·花海小径",
+            "📍 晴川学生第一食堂",
             "📍 不显示位置"
     };
 
@@ -150,14 +152,28 @@ public class PublishActivity extends AppCompatActivity {
         ivToolPhoto.setOnClickListener(v -> showPhotoPicker());
 
         // 话题点击追加
-        bindTopicChip(R.id.chip_topic_1, "#深中通道世界奇迹#");
-        bindTopicChip(R.id.chip_topic_2, "#中国空间站科研突破#");
-        bindTopicChip(R.id.chip_topic_3, "#科技数码前沿#");
-        bindTopicChip(R.id.chip_topic_4, "#大国工匠的日常#");
-        bindTopicChip(R.id.chip_topic_5, "#今天吃什么#");
-        bindTopicChip(R.id.chip_topic_6, "#生活碎碎念#");
+        bindTopicChip(R.id.chip_topic_1, "#晴川樱花季#");
+        bindTopicChip(R.id.chip_topic_2, "#晴川考研上岸#");
+        bindTopicChip(R.id.chip_topic_3, "#期末复习打卡#");
+        bindTopicChip(R.id.chip_topic_4, "#晴川二手市集#");
+        bindTopicChip(R.id.chip_topic_5, "#晴川日常碎碎念#");
+        bindTopicChip(R.id.chip_topic_6, "#晴川美食探店#");
 
-        ivToolTopic.setOnClickListener(v -> insertTopic("#今日新鲜事#"));
+        ivToolTopic.setOnClickListener(v -> {
+            final String[] campusTopics = {
+                    "#晴川樱花季#",
+                    "#晴川考研上岸#",
+                    "#期末复习打卡#",
+                    "#晴川二手市集#",
+                    "#晴川日常碎碎念#",
+                    "#晴川美食探店#"
+            };
+            new AlertDialog.Builder(this)
+                    .setTitle("选择晴川专属话题")
+                    .setItems(campusTopics, (dialog, which) -> insertTopic(campusTopics[which]))
+                    .setNegativeButton("取消", null)
+                    .show();
+        });
 
         tvLocation.setOnClickListener(v -> cycleLocation());
         ivToolLocation.setOnClickListener(v -> cycleLocation());
@@ -329,7 +345,7 @@ public class PublishActivity extends AppCompatActivity {
 
         String timeStr = new SimpleDateFormat("MM-dd HH:mm", Locale.CHINA).format(new Date());
         String locStr = locations[locationIndex].replace("📍 ", "");
-        String info = "本地发布 · " + timeStr + ("不显示位置".equals(locStr) ? "" : " · " + locStr);
+        String info = "晴川圈 · " + timeStr + ("不显示位置".equals(locStr) ? "" : " · " + locStr);
 
         int img1 = selectedPhotos.isEmpty() ? 0 : selectedPhotos.get(0);
         int img2 = selectedPhotos.size() > 1 ? selectedPhotos.get(1) : 0;

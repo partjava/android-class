@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_shop_card"
+    android:padding="14dp"
+    android:layout_marginBottom="12dp"
+    android:elevation="2dp">
+
+    <!-- 标题与类别标签 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tv_landmark_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="📚 晴川图书馆"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tv_landmark_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:text="研学圣地"
+            android:textColor="@color/white"
+            android:textSize="10sp"/>
+    </LinearLayout>
+
+    <!-- 简介描述 -->
+    <TextView
+        android:id="@+id/tv_landmark_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="藏书百万册，依山傍水，内设静音自习区、考研研讨室与学术报告厅。"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp"
+        android:lineSpacingExtra="3dp"/>
+
+    <!-- 开放时间与位置 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_landmark_hours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⏰ 开放时间：08:00 - 22:00"
+            android:textColor="@color/text_tertiary"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/tv_landmark_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="📍 校园方位：核心教学区东侧"
+            android:textColor="@color/text_tertiary"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/divider"/>
+
+    <!-- 查看详细导引按钮 -->
+    <LinearLayout
+        android:id="@+id/btn_landmark_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical|end"
+        android:orientation="horizontal"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="查看详细导引与贴士"
+            android:textColor="@color/brand_red"
+            android:textSize="12sp"
+            android:textStyle="bold"/>
+
+        <ImageView
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginStart="4dp"
+            android:src="@drawable/ic_arrow_right"
+            app:tint="@color/brand_red"
+            android:contentDescription="进入"/>
+    </LinearLayout>
+
+</LinearLayout>

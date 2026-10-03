@@ -435,13 +435,13 @@
                         <ImageView
                             android:layout_width="@dimen/icon_feature"
                             android:layout_height="@dimen/icon_feature"
-                            android:src="@drawable/ic_book"
-                            android:contentDescription="书架"/>
+                            android:src="@drawable/ic_location"
+                            android:contentDescription="晴川导览"/>
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/space_s"
-                            android:text="阅读记录"
+                            android:text="晴川导览"
                             android:textColor="@color/text_primary"
                             android:textSize="@dimen/text_body_small"/>
                     </LinearLayout>
