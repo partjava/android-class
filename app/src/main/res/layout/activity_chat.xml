@@ -72,6 +72,24 @@
             android:layout_height="1dp"
             android:background="@color/divider"/>
 
+        <!-- 校园智能咨询快捷问题 Chips 胶囊滚动栏 -->
+        <HorizontalScrollView
+            android:id="@+id/hsv_quick_questions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:paddingHorizontal="@dimen/page_padding"
+            android:paddingVertical="6dp">
+
+            <LinearLayout
+                android:id="@+id/ll_quick_chips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"/>
+        </HorizontalScrollView>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

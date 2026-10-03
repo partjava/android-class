@@ -98,6 +98,11 @@ public class ContentLibraryActivity extends AppCompatActivity {
             intent.putExtra("content", item.optString("content"));
             intent.putExtra("img", item.optInt("img", 0));
             intent.putExtra("type", item.optInt("type", News.TYPE_TEXT));
+            if (item.has("img_url")) intent.putExtra("img_url", item.optString("img_url"));
+            if (item.has("img_url_2")) intent.putExtra("img_url_2", item.optString("img_url_2"));
+            if (item.has("img_url_3")) intent.putExtra("img_url_3", item.optString("img_url_3"));
+            if (item.has("blocks_json")) intent.putExtra("blocks_json", item.optString("blocks_json"));
+            if (item.has("link")) intent.putExtra("link", item.optString("link"));
             startActivity(intent);
         });
     }
@@ -172,6 +177,7 @@ public class ContentLibraryActivity extends AppCompatActivity {
                 holder.tvSnippet = convertView.findViewById(R.id.tv_item_content_snippet);
                 holder.tvInfo = convertView.findViewById(R.id.tv_item_info);
                 holder.tvDelete = convertView.findViewById(R.id.tv_item_delete);
+                holder.ivThumb = convertView.findViewById(R.id.iv_item_thumb);
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
@@ -184,6 +190,18 @@ public class ContentLibraryActivity extends AppCompatActivity {
             holder.tvSnippet.setText(content);
             holder.tvInfo.setText(item.optString("info"));
 
+            String imgUrl = item.optString("img_url", "");
+            int imgRes = item.optInt("img", 0);
+            if (!imgUrl.isEmpty()) {
+                holder.ivThumb.setVisibility(View.VISIBLE);
+                RemoteImage.load(holder.ivThumb, imgUrl);
+            } else if (imgRes != 0) {
+                holder.ivThumb.setVisibility(View.VISIBLE);
+                holder.ivThumb.setImageResource(imgRes);
+            } else {
+                holder.ivThumb.setVisibility(View.GONE);
+            }
+
             holder.tvDelete.setOnClickListener(v -> confirmDelete(item));
 
             return convertView;
@@ -191,6 +209,7 @@ public class ContentLibraryActivity extends AppCompatActivity {
 
         class ViewHolder {
             TextView tvTitle, tvSnippet, tvInfo, tvDelete;
+            ImageView ivThumb;
         }
     }
 }

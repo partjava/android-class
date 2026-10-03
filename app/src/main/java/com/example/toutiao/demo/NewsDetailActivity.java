@@ -43,6 +43,7 @@ public class NewsDetailActivity extends AppCompatActivity {
         String imgUrl2 = getIntent().getStringExtra("img_url_2");
         String imgUrl3 = getIntent().getStringExtra("img_url_3");
         String blocksJson = getIntent().getStringExtra("blocks_json");
+        String link = getIntent().getStringExtra("link");
 
         // 查询正文全文
         if (content == null || content.trim().isEmpty()) {
@@ -57,9 +58,13 @@ public class NewsDetailActivity extends AppCompatActivity {
         TextView tvInfo = findViewById(R.id.tv_news_info);
         LinearLayout llRichContent = findViewById(R.id.ll_rich_content);
         ImageView ivBack = findViewById(R.id.iv_news_back);
+        TextView tvFontSize = findViewById(R.id.tv_news_font_size);
+        ImageView ivTopShare = findViewById(R.id.iv_news_top_share);
 
         tvTitle.setText(title);
         tvInfo.setText(info);
+
+        float currentFontSize = getSharedPreferences("user_settings", MODE_PRIVATE).getFloat("news_font_size", 16.5f);
 
         boolean renderedBlocks = false;
         if (blocksJson != null && !blocksJson.trim().isEmpty()) {
@@ -74,7 +79,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                             if (!pText.isEmpty()) {
                                 TextView tvP = new TextView(this);
                                 tvP.setText(pText.startsWith("　　") ? pText : "　　" + pText);
-                                tvP.setTextSize(16.5f);
+                                tvP.setTextSize(currentFontSize);
                                 tvP.setTextColor(getResources().getColor(R.color.text_primary));
                                 tvP.setLineSpacing(dpToPx(8), 1.0f);
                                 LinearLayout.LayoutParams lpText = new LinearLayout.LayoutParams(
@@ -82,6 +87,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                                 lpText.bottomMargin = dpToPx(14);
                                 tvP.setLayoutParams(lpText);
                                 llRichContent.addView(tvP);
+                                paragraphViews.add(tvP);
                             }
                         } else if ("image".equals(bType)) {
                             String url = obj.optString("url", "").trim();
@@ -133,7 +139,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                 String pText = paragraphs.get(i);
                 TextView tvP = new TextView(this);
                 tvP.setText(pText.startsWith("　　") ? pText : "　　" + pText);
-                tvP.setTextSize(16.5f);
+                tvP.setTextSize(currentFontSize);
                 tvP.setTextColor(getResources().getColor(R.color.text_primary));
                 tvP.setLineSpacing(dpToPx(8), 1.0f);
                 LinearLayout.LayoutParams lpText = new LinearLayout.LayoutParams(
@@ -141,6 +147,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                 lpText.bottomMargin = dpToPx(14);
                 tvP.setLayoutParams(lpText);
                 llRichContent.addView(tvP);
+                paragraphViews.add(tvP);
 
                 if (i < imageList.size()) {
                     Object imgSpec = imageList.get(i);
@@ -154,9 +161,9 @@ public class NewsDetailActivity extends AppCompatActivity {
             }
         }
 
-        // 底部动作栏：收藏与分享
+        // 底部动作栏：收藏与分享，完整持久化网络配图与图文流
         ContentStore store = new ContentStore(this);
-        org.json.JSONObject article = ContentStore.article(title, info, content, img1, type);
+        org.json.JSONObject article = ContentStore.article(title, info, content, img1, type, imgUrl, imgUrl2, imgUrl3, blocksJson, link);
         store.put("history", article);
 
         LinearLayout actions = new LinearLayout(this);
@@ -170,16 +177,19 @@ public class NewsDetailActivity extends AppCompatActivity {
         android.widget.Button save = new android.widget.Button(this);
         save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
         save.setOnClickListener(v -> {
-            if (store.contains("saved", title)) store.remove("saved", title); else store.put("saved", article);
+            if (store.contains("saved", title)) {
+                store.remove("saved", title);
+            } else {
+                store.put("saved", article);
+            }
             save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
         });
 
         android.widget.Button share = new android.widget.Button(this);
-        share.setText("分享");
+        share.setText("分享文章");
         final String finalShareText = content;
-        share.setOnClickListener(v -> startActivity(android.content.Intent.createChooser(
-                new android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
-                        .putExtra(android.content.Intent.EXTRA_TEXT, title + "\n" + finalShareText), "分享文章")));
+        final String finalLink = link;
+        share.setOnClickListener(v -> doShareArticle(title, info, finalShareText, finalLink));
 
         LinearLayout.LayoutParams btnLp1 = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
         btnLp1.rightMargin = dpToPx(8);
@@ -190,8 +200,68 @@ public class NewsDetailActivity extends AppCompatActivity {
         actions.addView(share, btnLp2);
         llRichContent.addView(actions);
 
+        // 顶栏按钮事件
+        if (tvFontSize != null) {
+            tvFontSize.setOnClickListener(v -> showFontSizeDialog());
+        }
+        if (ivTopShare != null) {
+            ivTopShare.setOnClickListener(v -> doShareArticle(title, info, finalShareText, finalLink));
+        }
+
         // 左上角返回
         ivBack.setOnClickListener(v -> finish());
+    }
+
+    private final List<TextView> paragraphViews = new ArrayList<>();
+
+    private void showFontSizeDialog() {
+        final String[] items = {"小号字体 (14sp)", "标准字体 (16.5sp)", "大号字体 (19sp)", "特大字体 (22sp)"};
+        final float[] sizes = {14.0f, 16.5f, 19.0f, 22.0f};
+        int selectedIdx = 1;
+        float current = getSharedPreferences("user_settings", MODE_PRIVATE).getFloat("news_font_size", 16.5f);
+        for (int i = 0; i < sizes.length; i++) {
+            if (Math.abs(sizes[i] - current) < 0.2f) {
+                selectedIdx = i;
+                break;
+            }
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("调节阅读字号")
+                .setSingleChoiceItems(items, selectedIdx, (dialog, which) -> {
+                    float newSize = sizes[which];
+                    getSharedPreferences("user_settings", MODE_PRIVATE).edit().putFloat("news_font_size", newSize).apply();
+                    for (TextView tv : paragraphViews) {
+                        tv.setTextSize(newSize);
+                    }
+                    android.widget.Toast.makeText(this, "正文字号已设为：" + items[which], android.widget.Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void doShareArticle(String title, String info, String content, String link) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("【").append(title).append("】\n");
+        if (info != null && !info.trim().isEmpty()) {
+            sb.append("来源/时间：").append(info).append("\n");
+        }
+        if (link != null && !link.trim().isEmpty()) {
+            sb.append("官网原文直达：").append(link).append("\n");
+        }
+        sb.append("\n");
+        String snippet = (content != null ? content : "").replace("　", "").replace("\n", " ").trim();
+        if (snippet.length() > 160) {
+            snippet = snippet.substring(0, 160) + "……";
+        }
+        sb.append(snippet).append("\n\n(分享自今日头条 · 武汉晴川学院校园版)");
+
+        android.content.Intent sendIntent = new android.content.Intent(android.content.Intent.ACTION_SEND);
+        sendIntent.setType("text/plain");
+        sendIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
+        sendIntent.putExtra(android.content.Intent.EXTRA_TEXT, sb.toString());
+        startActivity(android.content.Intent.createChooser(sendIntent, "分享文章到"));
     }
 
     private void addImageView(LinearLayout container, Object imgSpec) {

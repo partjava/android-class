@@ -29,8 +29,23 @@ public final class ContentStore {
     }
     public void clear(String kind) { prefs.edit().remove(kind).apply(); }
     public static JSONObject article(String title,String info,String content,int image,int type) {
-        JSONObject result=new JSONObject();
-        try { result.put("title",title); result.put("info",info); result.put("content",content); result.put("img",image); result.put("type",type); } catch(Exception ignored) { }
+        return article(title, info, content, image, type, null, null, null, null, null);
+    }
+    public static JSONObject article(String title, String info, String content, int image, int type,
+                                     String imgUrl, String imgUrl2, String imgUrl3, String blocksJson, String link) {
+        JSONObject result = new JSONObject();
+        try {
+            result.put("title", title);
+            result.put("info", info);
+            result.put("content", content);
+            result.put("img", image);
+            result.put("type", type);
+            if (imgUrl != null && !imgUrl.isEmpty()) result.put("img_url", imgUrl);
+            if (imgUrl2 != null && !imgUrl2.isEmpty()) result.put("img_url_2", imgUrl2);
+            if (imgUrl3 != null && !imgUrl3.isEmpty()) result.put("img_url_3", imgUrl3);
+            if (blocksJson != null && !blocksJson.isEmpty()) result.put("blocks_json", blocksJson);
+            if (link != null && !link.isEmpty()) result.put("link", link);
+        } catch (Exception ignored) { }
         return result;
     }
 }

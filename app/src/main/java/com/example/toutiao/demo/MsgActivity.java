@@ -13,8 +13,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MsgActivity extends AppCompatActivity {
-    private static final String[] PEERS = {"系统通知", "头条小助手", "创作小助手", "凝墨", "数码闲聊站", "客服中心", "老王", "头条官方"};
-    private static final String[] SEEDS = {"[演示] 欢迎使用课程项目", "[演示] 你关注的内容有更新", "[演示] 欢迎交流创作心得", "[演示] 周末有空一起去看展吗？", "[演示] 欢迎交流数码话题", "[演示] 请描述你的问题", "[演示] 明天下午三点见", "[演示] 欢迎关注"};
+    private static final String[] PEERS = {"晴川小助手", "系统通知", "客服中心", "头条小助手", "创作小助手", "凝墨", "数码闲聊站", "老王", "头条官方"};
+    private static final String[] SEEDS = {
+            "您好！我是晴川智能小助手，有关图书借阅、教务成绩、宿舍作息可随时问我！",
+            "[晴川教务] 2026学年教学计划与选课通知已发布",
+            "[客服] 晴川商城购物与活动咨询",
+            "欢迎使用今日头条校园版",
+            "您的微头条作品已收录",
+            "周末有空一起去严东湖骑行吗？",
+            "晴川计科实验室新设备到了",
+            "明天下午三点图书馆自习室见",
+            "武汉晴川学院官方校园号"
+    };
     private final List<MsgItem> rows = new ArrayList<>();
     private ChatStore store;
     private MsgAdapter adapter;
@@ -43,8 +53,12 @@ public class MsgActivity extends AppCompatActivity {
         rows.clear(); int total = 0;
         for (String name : PEERS) {
             total += store.unread(name);
-            if (name.contains(query) || store.preview(name).contains(query))
-                rows.add(new MsgItem(name, store.preview(name), store.time(name), "系统通知".equals(name) ? R.drawable.avatar_system : R.drawable.avatar_blue, store.unread(name)));
+            if (name.contains(query) || store.preview(name).contains(query)) {
+                int avatar = "系统通知".equals(name) ? R.drawable.avatar_system :
+                             ("晴川小助手".equals(name) ? R.drawable.avatar_orange :
+                             ("客服中心".equals(name) ? R.drawable.avatar_green : R.drawable.avatar_blue));
+                rows.add(new MsgItem(name, store.preview(name), store.time(name), avatar, store.unread(name)));
+            }
         }
         adapter.notifyDataSetChanged();
         badge(R.id.badge_private, total - store.unread("系统通知")); badge(R.id.badge_system, store.unread("系统通知"));

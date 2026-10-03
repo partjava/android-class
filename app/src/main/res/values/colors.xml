@@ -12,6 +12,7 @@
     <color name="brand_red">#E63939</color>
     <color name="brand_red_dark">#C62828</color>
     <color name="on_brand">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
     <!-- 选中态胶囊的底色（我的页「全部」）。红主色的浅色版本，
          不能直接用 brand_red，那样文字会糊在底色里。 -->
     <color name="brand_red_light">#FDECEC</color>

@@ -314,6 +314,7 @@ public class HomeFragment extends PageFragment {
             intent.putExtra("img_url_2", news.getImageUrl2() == null ? "" : news.getImageUrl2());
             intent.putExtra("img_url_3", news.getImageUrl3() == null ? "" : news.getImageUrl3());
             intent.putExtra("blocks_json", news.getBlocksJson() == null ? "" : news.getBlocksJson());
+            intent.putExtra("link", news.getLinkUrl() == null ? "" : news.getLinkUrl());
             startActivity(intent);
         });
     }
