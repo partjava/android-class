@@ -1,0 +1,10 @@
+const assert = require('node:assert/strict');
+const {buildings} = require('../../app/src/main/assets/campus3d/campus-data.js');
+assert.equal(new Set(buildings.map(b=>b.id)).size, buildings.length);
+for(let n=1;n<=10;n++) assert.equal(buildings.find(b=>b.id==='dorm_'+n).floors,6);
+assert.equal(buildings.find(b=>b.id==='library').floors,4);
+assert.equal(buildings.find(b=>b.id==='library').basements,1);
+assert.equal(buildings.find(b=>b.id==='theater_market').floors,2);
+assert.equal(buildings.find(b=>b.id==='small_dorm').floors,3);
+for(const b of buildings) assert(b.x>=0 && b.x<=300 && b.z>=0 && b.z<=360 && b.w>0 && b.d>0);
+console.log('Campus geometry data checks passed');

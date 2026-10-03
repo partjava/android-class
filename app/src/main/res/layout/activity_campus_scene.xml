@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#E7EFEC">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+        android:orientation="horizontal" android:gravity="center_vertical" android:background="#215E48">
+        <TextView android:id="@+id/scene_back" android:layout_width="60dp" android:layout_height="match_parent"
+            android:gravity="center" android:text="‹ 返回" android:textColor="#FFFFFF" android:textSize="16sp"
+            android:contentDescription="返回航拍导览"/>
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="晴川 3D 校园" android:textSize="18sp" android:textStyle="bold" android:textColor="#FFFFFF"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp" android:text="离线沙盘" android:textSize="12sp" android:textColor="#CEE6D9"/>
+    </LinearLayout>
+    <WebView android:id="@+id/campus_scene_web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+</LinearLayout>

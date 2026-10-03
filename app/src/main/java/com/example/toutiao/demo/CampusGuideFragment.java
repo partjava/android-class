@@ -71,6 +71,9 @@ public class CampusGuideFragment extends PageFragment {
             Toast.makeText(getContext(), "已复位至全景视角", Toast.LENGTH_SHORT).show();
         });
 
+        view.findViewById(R.id.btn_map_3d).setOnClickListener(v ->
+                startActivity(new android.content.Intent(requireContext(), CampusSceneActivity.class)));
+
         // 切换对比原图
         btnSwitchMarked.setOnClickListener(v -> {
             mapView.toggleMarkedMap();

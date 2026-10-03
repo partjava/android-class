@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict');
+const {roofVertices,chooseLabels}=require('../../app/src/main/assets/campus3d/scene-utils.js');
+const vertices=roofVertices(30,40,4);
+assert.equal(vertices.length,18);
+assert.equal(Math.max(...vertices.filter((_,i)=>i%3===1)),4);
+assert.equal(Math.min(...vertices.filter((_,i)=>i%3===1)),0);
+const candidates=[{id:'a',priority:1,rect:[0,0,80,20]},{id:'chosen',priority:9,rect:[30,0,110,20]},{id:'b',priority:1,rect:[0,40,80,60]}];
+assert.deepEqual(chooseLabels(candidates),['chosen','b']);
+assert.deepEqual(chooseLabels([]),[]);
+console.log('Roof bounds and label overlap tests passed');
