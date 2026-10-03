@@ -16,7 +16,7 @@
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:background="#E2E8F0"
-        android:src="@drawable/img_campus_teaching"
+        android:src="@drawable/user_crop_library"
         android:contentDescription="地标略缩图"/>
 
     <LinearLayout

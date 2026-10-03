@@ -39,7 +39,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/img_campus_teaching"
+                    android:src="@drawable/user_crop_library"
                     android:contentDescription="建筑实景图"/>
 
                 <!-- 右上角切换标记对比原图 -->
