@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
+
+    <!-- 悬浮立体气泡 -->
+    <TextView
+        android:id="@+id/tv_pin_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_pin_3d_badge"
+        android:text="🎓 教1栋 · 5F"
+        android:textColor="#D32F2F"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:elevation="4dp"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:shadowColor="#33000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="2"/>
+
+    <!-- 立体支撑针 -->
+    <View
+        android:id="@+id/v_pin_stem"
+        android:layout_width="2dp"
+        android:layout_height="8dp"
+        android:background="#D32F2F"/>
+
+    <!-- 地面立体投影 -->
+    <View
+        android:id="@+id/v_pin_shadow"
+        android:layout_width="14dp"
+        android:layout_height="5dp"
+        android:background="@drawable/bg_pin_3d_shadow"/>
+
+</LinearLayout>

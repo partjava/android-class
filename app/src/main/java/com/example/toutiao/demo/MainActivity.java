@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void showPage(int id, boolean remember) {
         if (getSupportFragmentManager().isStateSaved()) return;
-        if (id != R.id.nav_home && id != R.id.nav_video && id != R.id.nav_shop && id != R.id.nav_mine) return;
+        if (id != R.id.nav_home && id != R.id.nav_video && id != R.id.nav_guide && id != R.id.nav_shop && id != R.id.nav_mine) return;
         if (remember && selected != id) {
             history.add(selected);
             if (history.size() > 30) history.remove(0);
@@ -55,8 +55,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         if (target == null) {
-            target = id == R.id.nav_video ? new VideoFragment() : id == R.id.nav_shop ? new ShopFragment()
-                    : id == R.id.nav_mine ? new MineFragment() : new HomeFragment();
+            if (id == R.id.nav_video) {
+                target = new VideoFragment();
+            } else if (id == R.id.nav_guide) {
+                target = new CampusGuideFragment();
+            } else if (id == R.id.nav_shop) {
+                target = new ShopFragment();
+            } else if (id == R.id.nav_mine) {
+                target = new MineFragment();
+            } else {
+                target = new HomeFragment();
+            }
             transaction.add(R.id.main_content, target, tag);
         }
         transaction.show(target).setMaxLifecycle(target, Lifecycle.State.RESUMED);
