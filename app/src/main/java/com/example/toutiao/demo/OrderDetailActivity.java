@@ -168,7 +168,7 @@ public class OrderDetailActivity extends AppCompatActivity {
             case "已完成":
                 llStatusHeader.setBackgroundColor(Color.parseColor("#4CAF50"));
                 tvDetailStatusTitle.setText("交易已完成");
-                tvDetailStatusDesc.setText("感谢您在头条商城选购商品，期待再次光临！");
+                tvDetailStatusDesc.setText("感谢您在晴川生活选购商品，期待再次光临！");
                 break;
             default: // 已退款
                 llStatusHeader.setBackgroundColor(Color.parseColor("#78909C"));

@@ -205,7 +205,7 @@ public class PublishActivity extends AppCompatActivity {
         int inactiveColor = ContextCompat.getColor(this, R.color.text_secondary);
 
         tvModeMicro.setTextColor(mode == MODE_MICRO || mode == MODE_QA ? activeColor : inactiveColor);
-        tvModeMicro.setText(mode == MODE_QA ? "发起问答" : "发微头条");
+        tvModeMicro.setText(mode == MODE_QA ? "发起问答" : "发校园动态");
 
         tvModeArticle.setTextColor(mode == MODE_ARTICLE ? activeColor : inactiveColor);
         tvModeVideo.setTextColor(mode == MODE_VIDEO ? activeColor : inactiveColor);

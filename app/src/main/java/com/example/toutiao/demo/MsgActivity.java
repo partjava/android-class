@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MsgActivity extends AppCompatActivity {
-    private static final String[] PEERS = {"晴川小助手", "系统通知", "客服中心", "头条小助手", "创作小助手", "凝墨", "数码闲聊站", "老王", "头条官方"};
+    private static final String[] PEERS = {"晴川小助手", "系统通知", "客服中心", "晴川小助手", "创作小助手", "凝墨", "数码闲聊站", "老王", "晴川校园助手"};
     private static final String[] SEEDS = {
             "您好！我是晴川智能小助手，有关图书借阅、教务成绩、宿舍作息可随时问我！",
             "[晴川教务] 2026学年教学计划与选课通知已发布",
             "[客服] 晴川商城购物与活动咨询",
-            "欢迎使用今日头条校园版",
-            "您的微头条作品已收录",
+            "欢迎使用晴川校园",
+            "您的校园动态作品已收录",
             "周末有空一起去严东湖骑行吗？",
             "晴川计科实验室新设备到了",
             "明天下午三点图书馆自习室见",

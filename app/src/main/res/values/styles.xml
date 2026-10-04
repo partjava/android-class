@@ -275,7 +275,7 @@
         <item name="android:insetBottom">0dp</item>
     </style>
 
-    <!-- 筛选项胶囊：我的页「全部 / 视频 / 微头条」。
+    <!-- 筛选项胶囊：我的页「全部 / 视频 / 校园动态」。
          改造前是三个写死 44dp 的默认灰按钮，看不出哪个是选中的。
 
          ⚠️ 这里刻意用 <TextView> 而不是 <Button>。
@@ -304,7 +304,7 @@
          我的页
          ================================================================ -->
 
-    <!-- 小节标题（"我的功能"、"头条聊天室"、"作品"） -->
+    <!-- 小节标题（"我的功能"、"晴川交流圈"、"作品"） -->
     <style name="Widget.Toutiao.SectionTitle">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

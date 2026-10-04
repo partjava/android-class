@@ -119,7 +119,7 @@ public class ContentLibraryActivity extends AppCompatActivity {
 
         if ("posts".equals(kind)) {
             tvTitle.setText("我的作品");
-            tvEmptyHint.setText("您还没有发布过作品，快点击右上角发布微头条或文章吧！");
+            tvEmptyHint.setText("您还没有发布过作品，快点击右上角发布校园动态或文章吧！");
         } else if ("saved".equals(kind)) {
             tvTitle.setText("我的收藏");
             tvEmptyHint.setText("暂无收藏文章，去首页阅读并收藏精彩资讯吧！");

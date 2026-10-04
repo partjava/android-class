@@ -1,146 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ============================================================
-         品牌色
-         全项目统一用这一个红：顶栏、主按钮、选中态、退出登录、链接。
-         改造前散落着 4 个不同的红（#E63939 / #F44336 / #FF3333 / #FF4444），
-         现已全部并入 brand_red。
-
-         ⚠️ 首页 tab 的选中色也走这个 token（HomeActivity 的 selectTab()
-            通过 ContextCompat 引用），改这里的值会全局生效，无需同步别处。
-         ============================================================ -->
-    <color name="brand_red">#E63939</color>
-    <color name="brand_red_dark">#C62828</color>
+    <color name="brand_red">#246B58</color>
+    <color name="brand_red_dark">#174C40</color>
     <color name="on_brand">#FFFFFF</color>
     <color name="white">#FFFFFF</color>
-    <!-- 选中态胶囊的底色（我的页「全部」）。红主色的浅色版本，
-         不能直接用 brand_red，那样文字会糊在底色里。 -->
-    <color name="brand_red_light">#FDECEC</color>
-    <!-- 商品详情页底部「加入购物车」按钮的橙色，和 brand_red 拼成
-         一条双段胶囊（电商页的惯用配色：橙加购、红购买）。
-         不复用 avatar_orange——那是会话头像圆底色板的一员，语义不同；
-         同值不同义必须分 token（与 divider_on_dark / press_on_dark 同一条理由）。 -->
-    <color name="brand_orange">#FF7A00</color>
-
-    <!-- ============================================================
-         文字
-         原来是 7 种灰（#000/#111/#222/#333/#666/#777/#888/#999），
-         收敛成 4 个语义层级。
-         ============================================================ -->
-    <color name="text_primary">#222222</color>
-    <color name="text_secondary">#666666</color>
-    <color name="text_tertiary">#999999</color>
-    <color name="text_hint">#BBBBBB</color>
-
-    <!-- ============================================================ -->
-    <color name="icon_primary">#333333</color>
+    <color name="brand_red_light">#E8F3EE</color>
+    <color name="brand_orange">#C59047</color>
+    <color name="text_primary">#213A33</color>
+    <color name="text_secondary">#61736B</color>
+    <color name="text_tertiary">#7F8F86</color>
+    <color name="text_hint">#84968D</color>
+    <color name="icon_primary">#304C40</color>
     <color name="icon_arrow">#C8C8C8</color>
-
-    <!-- 首页 tab 未选中色。
-         HomeActivity 的 resetTabColor() 同样通过 ContextCompat 引用这里，
-         值改了 Java 侧会自动跟着变。 -->
-    <color name="tab_inactive">#333333</color>
-
-    <!-- ============================================================ -->
-    <color name="bg_page">#F5F5F5</color>
+    <color name="tab_inactive">#61736B</color>
+    <color name="bg_page">#F2F5F1</color>
     <color name="bg_surface">#FFFFFF</color>
-    <color name="bg_subtle">#EEEEEE</color>
-    <color name="divider">#EEEEEE</color>
-    <!-- 输入框下面那条线。比列表分隔线深一点，否则在白底上看不清。 -->
+    <color name="bg_subtle">#EBF0EA</color>
+    <color name="divider">#E4EBE3</color>
     <color name="input_line">#DDDDDD</color>
-
-    <!-- ============================================================
-         底部导航
-         ============================================================ -->
     <color name="nav_selected">@color/brand_red</color>
-    <color name="nav_unselected">#999999</color>
-
-    <!-- 商城宫格入口的翻页指示点（当前页用 brand_red） -->
+    <color name="nav_unselected">#819188</color>
     <color name="dot_inactive">#DDDDDD</color>
-
-    <!-- ============================================================
-         默认头像 / 视频播放键遮罩
-         ============================================================ -->
     <color name="avatar_bg">#E0E0E0</color>
     <color name="avatar_fg">#FFFFFF</color>
-
-    <!-- 会话头像的圆底色板（消息页会话列表）。
-         每个会话一种颜色，互相之间能区分开；红色刻意不放进这组——
-         圆底红是留给「系统通知」这类平台身份会话的，见 avatar_system.xml。 -->
     <color name="avatar_blue">#5B8DEF</color>
     <color name="avatar_green">#3EAF7C</color>
     <color name="avatar_orange">#F2994A</color>
     <color name="avatar_purple">#9B7EDE</color>
-
-    <!-- 遮罩分两档，按"压住多大一块画面"分，不按色值分：
-
-         scrim_40 —— 小面积、要有明确边界：返回键的圆底、时长角标、播放键。
-                     40% 就够把白字/白图标从任意封面上拎出来。
-
-         scrim_heavy —— 大面积、要盖住一整条：全屏流的上下渐变遮罩
-                        （bg_scrim_top / bg_scrim_bottom）。
-                        70% 是算出来的，不是拍的：渐变从 70% 一路淡到透明，
-                        频道标签落在渐变还没淡完的那一段上，
-                        白字需要 ≥4.5:1，白字压 70% 黑约 8:1、#CCCCCC 约 5:1；
-                        50% 黑只有 3.9:1，撑不住。 -->
     <color name="scrim_40">#66000000</color>
     <color name="scrim_heavy">#B3000000</color>
-
-    <!-- ============================================================
-         提示横幅（编辑资料页顶部"再填 3 项资料 得头像挂件"）。
-         原来是 #FFDD88 的纯黄，在白底页面上很扎眼、也压不住黑字。
-         换成低饱和的琥珀底 + 深棕字。
-         ============================================================ -->
     <color name="banner_bg">#FFF4D6</color>
     <color name="banner_fg">#8A6A2F</color>
-
-    <!-- ============================================================
-         播放页（全屏黑底）
-         全项目唯一一个深色页面：视频播放页隐藏状态栏、整页黑底。
-         上面那套浅色 token 在这一页一个都用不了——
-         #222222 的字、#EEEEEE 的线，压到黑底上要么看不见要么刺眼。
-
-         和上面一样按语义分档、不按色值分档：
-         text_on_dark 和 on_brand 都是 #FFFFFF，
-         divider_on_dark 和 press_on_dark 都是 #1FFFFFFF，
-         但这四件事将来任何一个要调，都不该牵连另外三个。
-         （项目里已有别名型 token 的先例：nav_selected = @color/brand_red）
-
-         「来源 · 播放量」没有再开一个 token，复用了 text_tertiary：
-         #999999 在黑底上的对比度是 7.4:1，够看；
-         而且黑底上的灰阶顺序（白 > #CCCCCC > #999999）
-         和浅色底上的「深 > 中 > 浅」是同一条层级线，语义没破。
-         ============================================================ -->
-    <!-- 播放页底色。全项目唯一的纯黑——这不是"深一点的灰"，
-         是播放器的黑边，必须纯黑 -->
     <color name="bg_player">#000000</color>
-    <!-- 黑底上的主文字（播放页标题、相关视频条目标题） -->
     <color name="text_on_dark">#FFFFFF</color>
-    <!-- 黑底上的次级文字（简介）。整段纯白在黑底上发晕，也太抢眼 -->
     <color name="text_on_dark_secondary">#CCCCCC</color>
-    <!-- 黑底上的分隔线，12% 白。
-         浅色页面那条 #EEEEEE 在黑底上是一条刺眼的白线 -->
     <color name="divider_on_dark">#1FFFFFFF</color>
-    <!-- 黑底上的按压高亮。播放页「相关视频」整行原来用
-         ?attr/selectableItemBackground，它的高亮色是 Light 主题的
-         colorControlHighlight（12% 黑），压在黑底上完全看不见，
-         点上去像没反应——和设置页改造前"点上去完全没有反馈"是同一个问题。
-         和 divider_on_dark 同值但不同义，这是有意的 -->
     <color name="press_on_dark">#1FFFFFFF</color>
-    <!-- 模拟进度条的轨道（已播放部分复用 brand_red）。
-
-         ⚠️ 这条轨道**压在封面上**（进度条贴在播放区下沿，而播放区整个被
-            封面铺满），所以它是个遮罩，不是一条独立的线：必须保证
-            「红色填充条」和「未播放的轨道」在任何一张封面上都分得开。
-            60% 黑的效果是——亮封面上压出一段深灰、暗封面上几乎融进黑，
-            两种情况下红色填充条都还是红的。
-
-         ⚠️ 这里踩过一次坑，记下来：最初写的是 20% 白（#33FFFFFF），
-            理由是"12% 白在 3dp 细线上看不出进度条总长"。那是**把轨道
-            当成压在黑底上**想的，但它其实压在封面上。实测第一条视频
-            （image2，红色日历）播放到 50% 时，左半截的红色填充条和
-            右半截「20% 白 + 红封面」糊成一片红，整条进度条看不见。
-            也是这次核对时才发现：轨道色该按"底下是任意封面"来选，
-            不能按"底下是黑底"来选 -->
     <color name="progress_track">#99000000</color>
 </resources>

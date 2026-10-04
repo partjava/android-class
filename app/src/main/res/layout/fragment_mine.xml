@@ -39,6 +39,12 @@
                     android:layout_weight="1"/>
 
                 <ImageView
+                    android:id="@+id/iv_network"
+                    style="@style/Widget.Toutiao.NavIcon.Dark"
+                    android:src="@drawable/ic_network"
+                    android:contentDescription="校园网络配置"/>
+                <ImageView
+                    android:layout_marginStart="@dimen/space_s"
                     android:id="@+id/iv_friend"
                     style="@style/Widget.Toutiao.NavIcon.Dark"
                     android:src="@drawable/ic_friend"
@@ -574,7 +580,7 @@
                     <TextView
                         android:id="@+id/tv_chatroom_title"
                         style="@style/Widget.Toutiao.SectionTitle"
-                        android:text="头条聊天室"/>
+                        android:text="晴川交流圈"/>
 
                     <View
                         android:layout_width="0dp"
@@ -621,7 +627,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/space_xs"
-                            android:text="头条聊天室 正在热聊中>"
+                            android:text="晴川交流圈 正在热聊中>"
                             android:textColor="@color/text_secondary"
                             android:textSize="@dimen/text_body_small"
                             android:maxLines="1"
@@ -707,7 +713,7 @@
                         android:id="@+id/btn_micro_work"
                         style="@style/Widget.Toutiao.Chip"
                         android:layout_marginStart="@dimen/space_m"
-                        android:text="微头条"/>
+                        android:text="校园动态"/>
                 </LinearLayout>
 
                 <TextView

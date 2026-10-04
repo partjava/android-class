@@ -49,7 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_xl"
             android:gravity="center"
-            android:text="登录你的头条 精彩永不丢失"
+            android:text="你好，晴川同学"
             android:textColor="@color/text_primary"
             android:textSize="@dimen/text_display"
             android:textStyle="bold"/>

@@ -3,17 +3,17 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_home"
-        android:title="首页"/>
+        android:title="资讯"/>
 
     <item
         android:id="@+id/nav_video"
         android:icon="@drawable/ic_video"
-        android:title="视频"/>
+        android:title="影像"/>
 
     <item
         android:id="@+id/nav_add"
         android:icon="@drawable/ic_add"
-        android:title="添加"/>
+        android:title="发布"/>
 
     <item
         android:id="@+id/nav_guide"
@@ -23,7 +23,7 @@
     <item
         android:id="@+id/nav_shop"
         android:icon="@drawable/ic_shop"
-        android:title="商城"/>
+        android:title="生活"/>
 
     <item
         android:id="@+id/nav_mine"

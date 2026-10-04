@@ -75,7 +75,7 @@ public class EditProfileActivity extends AppCompatActivity {
                     }).show();
         });
         findViewById(R.id.item_avatar_frame).setOnClickListener(v -> {
-            String[] badges = {"无挂件", "卓越创作者", "头条资深读者", "技术专家", "活跃打卡达人"};
+            String[] badges = {"无挂件", "卓越创作者", "校园资深读者", "技术专家", "活跃打卡达人"};
             new AlertDialog.Builder(this).setTitle("选择头像挂件")
                     .setItems(badges, (d, which) -> {
                         store.set("avatar_frame", badges[which]);

@@ -10,7 +10,7 @@
         android:id="@+id/ll_top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/brand_red"
+        android:background="@drawable/bg_qingchuan_header"
         android:orientation="vertical"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -25,7 +25,7 @@
                 android:id="@+id/tv_home_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="仿今日头条"
+                android:text="@string/app_name"
                 android:textColor="@color/on_brand"
                 android:textSize="@dimen/text_headline"
                 android:textStyle="bold"/>
@@ -40,7 +40,7 @@
                 android:drawableStart="@drawable/ic_search"
                 android:drawableTint="@color/text_hint"
                 android:drawablePadding="@dimen/space_s"
-                android:hint="搜你想搜的"
+                android:hint="搜索校园资讯、公告"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
                 android:paddingHorizontal="@dimen/space_m"
@@ -48,6 +48,27 @@
                 android:inputType="text"
                 android:maxLines="1"
                 android:imeOptions="actionSearch"/>
+            <TextView android:id="@+id/qc_toggle_quick"
+                android:layout_width="44dp" android:layout_height="44dp"
+                android:layout_marginStart="4dp" android:gravity="center"
+                android:text="⌃" android:textSize="26sp" android:textColor="@color/on_brand"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true" android:focusable="true"
+                android:contentDescription="收起校园快捷入口"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/qc_quick_panel" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingHorizontal="16dp" android:paddingBottom="14dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:text="看见校园，连接生活" android:textColor="#E3EFE7" android:textSize="13sp"/>
+            <TextView android:id="@+id/qc_quick_guide" android:layout_width="wrap_content" android:layout_height="44dp"
+                android:paddingHorizontal="12dp" android:gravity="center" android:background="@drawable/bg_qingchuan_quick"
+                android:text="校园导览 ↗" android:textStyle="bold" android:textColor="@color/brand_red" android:textSize="13sp"/>
+            <TextView android:id="@+id/qc_quick_scene" android:layout_width="wrap_content" android:layout_height="44dp"
+                android:layout_marginStart="8dp" android:paddingHorizontal="12dp" android:gravity="center"
+                android:background="@drawable/bg_qingchuan_quick" android:text="3D 校园"
+                android:textColor="@color/brand_red" android:textStyle="bold" android:textSize="13sp"/>
         </LinearLayout>
 
         <LinearLayout

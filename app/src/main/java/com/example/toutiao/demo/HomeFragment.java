@@ -115,6 +115,25 @@ public class HomeFragment extends PageFragment {
         initNewsData();
         initCraftData();
         bindEvent();
+        View quickPanel = findViewById(R.id.qc_quick_panel);
+        TextView quickToggle = findViewById(R.id.qc_toggle_quick);
+        android.content.SharedPreferences homePrefs = requireContext().getSharedPreferences("qingchuan_home", android.content.Context.MODE_PRIVATE);
+        boolean collapsed = homePrefs.getBoolean("quick_collapsed", false);
+        quickPanel.setVisibility(collapsed ? View.GONE : View.VISIBLE);
+        quickToggle.setText(collapsed ? "⌄" : "⌃");
+        quickToggle.setContentDescription(collapsed ? "展开校园快捷入口" : "收起校园快捷入口");
+        quickToggle.setOnClickListener(v -> {
+            boolean hide = quickPanel.getVisibility() == View.VISIBLE;
+            android.transition.AutoTransition transition = new android.transition.AutoTransition();
+            transition.setDuration(160);
+            android.transition.TransitionManager.beginDelayedTransition((android.view.ViewGroup) findViewById(R.id.ll_top_bar), transition);
+            quickPanel.setVisibility(hide ? View.GONE : View.VISIBLE);
+            quickToggle.setText(hide ? "⌄" : "⌃");
+            quickToggle.setContentDescription(hide ? "展开校园快捷入口" : "收起校园快捷入口");
+            homePrefs.edit().putBoolean("quick_collapsed", hide).apply();
+        });
+        findViewById(R.id.qc_quick_guide).setOnClickListener(v -> CampusGuideActivity.start(requireContext()));
+        findViewById(R.id.qc_quick_scene).setOnClickListener(v -> startActivity(new android.content.Intent(requireContext(), CampusSceneActivity.class)));
 
         String restoreChannelId = savedInstanceState == null ? selectedChannelId : savedInstanceState.getString("channel_id", selectedChannelId);
         String query = savedInstanceState == null ? savedQuery : savedInstanceState.getString("query", "");
@@ -211,13 +230,13 @@ public class HomeFragment extends PageFragment {
 
             private boolean handleSchoolUrl(WebView view, String url) {
                 if (url != null) {
-                    if (url.startsWith("http://10.0.2.2:5000/school_page/") || url.startsWith("/school_page/")) {
-                        String full = url.startsWith("/") ? ("http://10.0.2.2:5000" + url) : url;
+                    if (url.startsWith((CampusNewsStore.getServerUrl() + "/school_page/")) || url.startsWith("/school_page/")) {
+                        String full = url.startsWith("/") ? (CampusNewsStore.getServerUrl() + url) : url;
                         view.loadUrl(full);
                         return true;
                     }
                     if (url.startsWith("https://www.qcuwh.cn/") || url.startsWith("http://www.qcuwh.cn/")) {
-                        view.loadUrl("http://10.0.2.2:5000/school_page/" + selectedChannelId + "?url=" + android.net.Uri.encode(url));
+                        view.loadUrl((CampusNewsStore.getServerUrl() + "/school_page/") + selectedChannelId + "?url=" + android.net.Uri.encode(url));
                         return true;
                     }
                 }
@@ -293,7 +312,7 @@ public class HomeFragment extends PageFragment {
                 }
                 refreshRecommend();
                 Toast.makeText(requireContext(),
-                        "已加载 " + items.size() + " 条实时头条", Toast.LENGTH_SHORT).show();
+                        "已加载 " + items.size() + " 条实时资讯", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -474,7 +493,7 @@ public class HomeFragment extends PageFragment {
             lvCraft.setVisibility(View.GONE);
             if (wvSchoolPage != null) {
                 wvSchoolPage.setVisibility(View.VISIBLE);
-                String schoolPageUrl = "http://10.0.2.2:5000/school_page/" + channel.getId();
+                String schoolPageUrl = (CampusNewsStore.getServerUrl() + "/school_page/") + channel.getId();
                 wvSchoolPage.loadUrl(schoolPageUrl);
             }
             TextView empty = findViewById(R.id.tv_search_empty);

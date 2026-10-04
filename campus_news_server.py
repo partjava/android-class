@@ -301,6 +301,11 @@ def crawl_qcu_page(category, page_num, host):
     print(f"[实时爬虫] 详情抓取完成！【{cat_info['name']}】第 {page_num} 页共 {len(detailed_items)} 篇官方资讯全部包含真实排版与实拍图片！")
     return detailed_items, total_pages, cat_info
 
+@app.route("/api/health", methods=["GET"])
+def network_health():
+    return jsonify({"code": 200, "service": "campus-news", "school": SCHOOL_NAME})
+
+
 @app.route("/xiaoyuan/<cat_name>/page/<int:page_num>", methods=["GET"])
 @app.route("/xiaoyuan/page/<int:page_num>", methods=["GET"])
 @app.route("/api/news", methods=["GET"])
@@ -569,7 +574,7 @@ def school_page(page_id):
             is_active = (tag["name"] == active_sub_name)
             active_class = "active" if is_active else ""
             encoded_url = urllib.parse.quote(tag["url"], safe="")
-            link_href = f"http://10.0.2.2:5000/school_page/{page_id}?url={encoded_url}"
+            link_href = f"/school_page/{page_id}?url={encoded_url}"
             pills.append(f'<a href="{link_href}" class="subtag_item {active_class}">{tag["name"]}</a>')
         subtags_html = f"""
   <nav class="subtag_bar">
@@ -620,7 +625,7 @@ def school_page(page_id):
             if href and not href.startswith("javascript:") and not href.startswith("#"):
                 abs_href = urllib.parse.urljoin(target_url, href)
                 if "qcuwh.cn" in abs_href:
-                    a["href"] = f"http://10.0.2.2:5000/school_page/{page_id}?url={urllib.parse.quote(abs_href, safe='')}"
+                    a["href"] = f"/school_page/{page_id}?url={urllib.parse.quote(abs_href, safe='')}"
 
         # 移除外链脚本
         for s in cont_el.find_all("script"):

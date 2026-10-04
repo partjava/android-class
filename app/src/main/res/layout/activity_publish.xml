@@ -40,7 +40,7 @@
                 android:id="@+id/tv_mode_micro"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="发微头条"
+                android:text="发校园动态"
                 android:textSize="16sp"
                 android:textColor="@color/brand_red"
                 android:textStyle="bold"

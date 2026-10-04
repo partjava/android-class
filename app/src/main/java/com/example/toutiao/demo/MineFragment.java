@@ -72,6 +72,8 @@ public class MineFragment extends PageFragment {
         click(R.id.ll_asset_vip, () -> WebActivity.open(requireContext(), "会员权益中心", "file:///android_asset/web/vip.html"));
         click(R.id.tv_wallet_more, () -> WebActivity.open(requireContext(), "新人免单福利", "file:///android_asset/web/newuser.html"));
 
+        click(R.id.iv_network, () -> CampusNetworkDialog.show(requireContext()));
+
         // 设置
         click(R.id.iv_setting, () -> startActivity(new Intent(requireContext(), SettingsActivity.class)));
 
@@ -214,7 +216,7 @@ public class MineFragment extends PageFragment {
                     "凝墨",
                     "00:08",
                     "8600次播放",
-                    "今日头条Demo项目实战作品分享，包含Fragment架构与离线组件设计。",
+                    "晴川Demo项目实战作品分享，包含Fragment架构与离线组件设计。",
                     R.drawable.image1,
                     42,
                     6
@@ -226,28 +228,28 @@ public class MineFragment extends PageFragment {
         if (store.list("posts").length() == 0) {
             store.put("posts", ContentStore.article(
                     "今日打卡：图书馆期末复习第一天，大家一起加油！",
-                    "本地微头条 · 06-18 10:30",
+                    "本地校园动态 · 06-18 10:30",
                     "今日打卡：图书馆期末复习第一天，大家一起加油！冲刺阶段保持良好作息，争取门门考高分～",
                     R.drawable.image1,
                     News.TYPE_TEXT
             ));
             store.put("posts", ContentStore.article(
                     "分享一组校园雨后的风景照，生活明朗，万物可爱。",
-                    "本地微头条 · 06-12 16:45",
+                    "本地校园动态 · 06-12 16:45",
                     "分享一组校园雨后的风景照，生活明朗，万物可爱。微风轻拂过树梢，雨后的空气格外清新惬意。",
                     R.drawable.image2,
                     News.TYPE_TEXT
             ));
             store.put("posts", ContentStore.article(
                     "初学Android Studio，终于把这个项目跑通了，很有成就感！",
-                    "本地微头条 · 06-05 21:10",
+                    "本地校园动态 · 06-05 21:10",
                     "初学Android Studio，终于把Fragment导航和离线视频跑通了，很有成就感！代码世界真的很有趣。",
                     0,
                     News.TYPE_TEXT
             ));
             store.put("posts", ContentStore.article(
                     "今日好天气，微风不燥，适合出去走走散散心～",
-                    "本地微头条 · 05-28 15:20",
+                    "本地校园动态 · 05-28 15:20",
                     "今日好天气，微风不燥，适合出去走走散散心～享受慢节奏的校园时光。",
                     0,
                     News.TYPE_TEXT
@@ -272,6 +274,17 @@ public class MineFragment extends PageFragment {
         Context c = requireContext();
         int brandRed = ContextCompat.getColor(c, R.color.brand_red);
         int textSecondary = ContextCompat.getColor(c, R.color.text_secondary);
+
+        ContentStore interactionStore = new ContentStore(c);
+        VideoStore interactionVideos = new VideoStore(c);
+        int savedCount = interactionStore.list("saved").length();
+        int likedCount = interactionStore.likedArticles().length();
+        for (VideoItem video : userVideos) {
+            if (interactionVideos.isCollected(video.getId())) savedCount++;
+            if (interactionVideos.isLiked(video.getId())) likedCount++;
+        }
+        tvCollectTab.setText("收藏（" + savedCount + "）");
+        tvLikeTab.setText("赞过（" + likedCount + "）");
 
         // 1. 刷新大 Tab 高亮状态
         tvWorksTitle.setTextColor(currentTab == TAB_WORKS ? brandRed : textSecondary);
@@ -345,7 +358,7 @@ public class MineFragment extends PageFragment {
         } else if (currentChip == CHIP_VIDEO) {
             tvWorksCount.setText(filteredVideos.size() + "个视频作品");
         } else {
-            tvWorksCount.setText(filteredPosts.size() + "个微头条作品");
+            tvWorksCount.setText(filteredPosts.size() + "个校园动态作品");
         }
 
         if (totalCount == 0) {
@@ -404,20 +417,17 @@ public class MineFragment extends PageFragment {
                 likedVideos.add(v);
             }
         }
-        // 如果用户尚未点赞本地自制视频，默认展示第一条视频作为点赞体验示例
-        if (likedVideos.isEmpty() && !userVideos.isEmpty()) {
-            likedVideos.add(userVideos.get(0));
-        }
-
-        tvWorksCount.setText(likedVideos.size() + "个赞过内容");
-
-        if (likedVideos.isEmpty()) {
-            addEmptyView(llWorksContainer, "暂无赞过的内容");
+        JSONArray likedArticles = new ContentStore(requireContext()).likedArticles();
+        int total = likedVideos.size() + likedArticles.length();
+        tvWorksCount.setText(total + "个赞过内容");
+        if (total == 0) {
+            addEmptyView(llWorksContainer, "暂无赞过的内容，去首页为校园资讯点赞吧～");
             return;
         }
-
-        for (VideoItem v : likedVideos) {
-            llWorksContainer.addView(createVideoCard(v));
+        for (VideoItem v : likedVideos) llWorksContainer.addView(createVideoCard(v));
+        for (int i = 0; i < likedArticles.length(); i++) {
+            JSONObject article = likedArticles.optJSONObject(i);
+            if (article != null) llWorksContainer.addView(createArticleCard(article));
         }
     }
 
@@ -552,7 +562,7 @@ public class MineFragment extends PageFragment {
         nameBox.addView(name);
 
         TextView time = new TextView(c);
-        time.setText(post.optString("info", "本地微头条"));
+        time.setText(post.optString("info", "本地校园动态"));
         time.setTextColor(ContextCompat.getColor(c, R.color.text_tertiary));
         time.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         nameBox.addView(time);
@@ -607,7 +617,7 @@ public class MineFragment extends PageFragment {
         delLp.leftMargin = dp(24);
         delTv.setLayoutParams(delLp);
         delTv.setOnClickListener(v -> new AlertDialog.Builder(c)
-                .setMessage("确定删除该微头条作品吗？")
+                .setMessage("确定删除该校园动态作品吗？")
                 .setPositiveButton("删除", (d, w) -> {
                     store.remove("posts", post.optString("title"));
                     renderContent();
@@ -672,13 +682,15 @@ public class MineFragment extends PageFragment {
         card.addView(infoBox);
 
         int imgRes = art.optInt("img", 0);
-        if (imgRes != 0) {
+        String remoteCover = art.optString("img_url");
+        if (imgRes != 0 || !remoteCover.isEmpty()) {
             ImageView cover = new ImageView(c);
             LinearLayout.LayoutParams imgLp = new LinearLayout.LayoutParams(dp(90), dp(60));
             imgLp.leftMargin = dp(10);
             cover.setLayoutParams(imgLp);
             cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            cover.setImageResource(imgRes);
+            if (!remoteCover.isEmpty()) RemoteImage.load(cover, remoteCover);
+            else cover.setImageResource(imgRes);
             card.addView(cover);
         }
 
@@ -689,6 +701,9 @@ public class MineFragment extends PageFragment {
             intent.putExtra("content", art.optString("content"));
             intent.putExtra("img", art.optInt("img"));
             intent.putExtra("type", art.optInt("type"));
+            for (String key : new String[]{"img_url", "img_url_2", "img_url_3", "blocks_json", "link"}) {
+                intent.putExtra(key, art.optString(key));
+            }
             startActivity(intent);
         });
 
@@ -730,7 +745,7 @@ public class MineFragment extends PageFragment {
                 "央视新闻 (官方认证)",
                 "新华社 (官方认证)",
                 "人民日报 (官方认证)",
-                "头条科技前沿",
+                "校园科技前沿",
                 "每日经济观察"
         };
         new AlertDialog.Builder(requireContext())
@@ -746,8 +761,8 @@ public class MineFragment extends PageFragment {
     private void showFansDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("我的粉丝 (1)")
-                .setMessage("头条官方小助手 (已关注你)\n关注时间：2026-03-01\n\n发微头条或参与评论互动，可以收获更多粉丝关注！")
-                .setPositiveButton("发微头条", (d, w) -> ContentLibraryActivity.compose(requireContext()))
+                .setMessage("晴川校园助手小助手 (已关注你)\n关注时间：2026-03-01\n\n发校园动态或参与评论互动，可以收获更多粉丝关注！")
+                .setPositiveButton("发校园动态", (d, w) -> ContentLibraryActivity.compose(requireContext()))
                 .setNeutralButton("私信助手", (d, w) -> startActivity(new Intent(requireContext(), MsgActivity.class)))
                 .setNegativeButton("关闭", null)
                 .show();
@@ -756,7 +771,7 @@ public class MineFragment extends PageFragment {
     private void showLikesDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("获赞统计")
-                .setMessage("累计获赞：1次\n\n点赞来自您在头条视频与微头条作品下的精彩发言。")
+                .setMessage("累计获赞：1次\n\n点赞来自您在校园视频与校园动态作品下的精彩发言。")
                 .setPositiveButton("查看赞过的作品", (d, w) -> selectTab(TAB_LIKES))
                 .setNegativeButton("关闭", null)
                 .show();

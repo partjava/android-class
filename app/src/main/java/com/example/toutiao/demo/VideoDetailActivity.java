@@ -312,7 +312,7 @@ public class VideoDetailActivity extends AppCompatActivity {
     private void showDoubleTapLikeHeart(float x, float y) {
         ImageView heart = new ImageView(this);
         heart.setImageResource(R.drawable.ic_like);
-        heart.setColorFilter(Color.parseColor("#E63939"));
+        heart.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.brand_red));
         int size = dpToPx(72);
         android.widget.RelativeLayout.LayoutParams lp = new android.widget.RelativeLayout.LayoutParams(size, size);
         heart.setLayoutParams(lp);

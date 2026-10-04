@@ -7,9 +7,27 @@ import org.json.JSONObject;
 /** 本地阅读记录、收藏和作品，以静态课程数据的标题去重。 */
 public final class ContentStore {
     private final SharedPreferences prefs;
-    public ContentStore(Context context) { prefs=context.getSharedPreferences("content",Context.MODE_PRIVATE); }
+    private final Context context;
+    public ContentStore(Context context) { this.context = context.getApplicationContext(); prefs=context.getSharedPreferences("content",Context.MODE_PRIVATE); }
     public JSONArray list(String kind) {
         try { return new JSONArray(prefs.getString(kind,"[]")); } catch(Exception e) { return new JSONArray(); }
+    }
+    /** Resolve old likes from saved/history snapshots, with CommentStore as truth. */
+    public JSONArray likedArticles() {
+        java.util.List<JSONObject> snapshots = new java.util.ArrayList<>();
+        CommentStore comments = new CommentStore(context);
+        for (String kind : new String[]{"liked", "saved", "history"}) {
+            JSONArray rows = list(kind);
+            for (int i = 0; i < rows.length(); i++) {
+                JSONObject row = rows.optJSONObject(i);
+                if (row == null) continue;
+                String title = row.optString("title");
+                snapshots.add(row);
+            }
+        }
+        JSONArray result = new JSONArray();
+        for (JSONObject row : LikedArticleSelection.select(snapshots, item -> item.optString("title"), comments::isArticleLiked)) result.put(row);
+        return result;
     }
     public boolean contains(String kind,String title) {
         JSONArray rows=list(kind);

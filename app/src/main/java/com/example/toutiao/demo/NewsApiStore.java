@@ -145,7 +145,7 @@ public final class NewsApiStore {
             String picUrl = o.optString("picUrl", "").trim();
             String linkUrl = o.optString("url", "").trim();
             String ctime = o.optString("ctime", "").trim();
-            String source = o.optString("source", o.optString("src", "实时头条")).trim();
+            String source = o.optString("source", o.optString("src", "实时资讯")).trim();
 
             News news = picUrl.isEmpty()
                     ? new News(News.TYPE_TEXT, title, source, ctime, 0, 0, 0)

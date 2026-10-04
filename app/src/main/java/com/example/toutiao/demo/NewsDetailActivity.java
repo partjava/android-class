@@ -241,6 +241,7 @@ public class NewsDetailActivity extends AppCompatActivity {
         ivBottomCollect = findViewById(R.id.iv_bottom_collect);
 
         renderComments(title);
+        if (commentStore.isArticleLiked(title)) store.put("liked", article);
         updateLikeUi(title);
         updateCollectUi(title, store);
 
@@ -266,6 +267,8 @@ public class NewsDetailActivity extends AppCompatActivity {
             llBottomLikeBtn.setOnClickListener(v -> {
                 boolean wasLiked = commentStore.isArticleLiked(title);
                 commentStore.toggleArticleLike(title);
+                if (commentStore.isArticleLiked(title)) store.put("liked", article);
+                else store.remove("liked", title);
                 updateLikeUi(title);
                 if (ivBottomLike != null) {
                     ivBottomLike.animate().scaleX(1.35f).scaleY(1.35f).setDuration(150)
@@ -342,7 +345,7 @@ public class NewsDetailActivity extends AppCompatActivity {
         if (snippet.length() > 160) {
             snippet = snippet.substring(0, 160) + "……";
         }
-        sb.append(snippet).append("\n\n(分享自今日头条 · 武汉晴川学院校园版)");
+        sb.append(snippet).append("\n\n(分享自晴川 · 武汉晴川学院校园版)");
 
         android.content.Intent sendIntent = new android.content.Intent(android.content.Intent.ACTION_SEND);
         sendIntent.setType("text/plain");

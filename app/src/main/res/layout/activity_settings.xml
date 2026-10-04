@@ -236,7 +236,7 @@
             style="@style/Widget.Toutiao.SettingRow">
             <TextView
                 style="@style/Widget.Toutiao.SettingLabel"
-                android:text="头条封面"/>
+                android:text="校园封面"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
@@ -349,7 +349,7 @@
             style="@style/Widget.Toutiao.SettingRow">
             <TextView
                 style="@style/Widget.Toutiao.SettingLabel"
-                android:text="关于头条"/>
+                android:text="关于晴川"/>
             <ImageView style="@style/Widget.Toutiao.SettingArrow"/>
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>

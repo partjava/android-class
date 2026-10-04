@@ -21,8 +21,8 @@ body {
     position: relative;
     padding: 24px 16px 28px;
     color: #FFFFFF;
-    background: linear-gradient(135deg, #FF4500 0%, #FF1493 100%);
-    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.25);
+    background: linear-gradient(135deg, #246B58 0%, #58917A 100%);
+    box-shadow: 0 4px 12px rgba(36, 107, 88, 0.15);
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
 }
@@ -72,7 +72,7 @@ body {
 .stat_num {
     font-size: 18px;
     font-weight: bold;
-    color: #FF3B30;
+    color: #246B58;
 }
 
 .stat_label {
@@ -150,8 +150,8 @@ body {
 
 .btn_outline {
     background: #FFFFFF;
-    color: #FF3B30;
-    border: 1px solid #FF3B30;
+    color: #246B58;
+    border: 1px solid #246B58;
 }
 
 .btn_block {
@@ -233,7 +233,7 @@ body {
 }
 
 .price_now {
-    color: #FF3B30;
+    color: #246B58;
     font-size: 16px;
     font-weight: bold;
 }
@@ -266,7 +266,7 @@ body {
 }
 
 .coupon_left {
-    background: #FF3B30;
+    background: #246B58;
     color: #FFFFFF;
     width: 90px;
     display: flex;
@@ -335,8 +335,8 @@ body {
 
 .signin_day.active {
     background: #FFF0F0;
-    border-color: #FF3B30;
-    color: #FF3B30;
+    border-color: #246B58;
+    color: #246B58;
 }
 
 .signin_day.done {
@@ -369,9 +369,9 @@ body {
 }
 
 .recharge_item.selected {
-    border-color: #FF3B30;
+    border-color: #246B58;
     background: #FFF5F5;
-    color: #FF3B30;
+    color: #246B58;
     box-shadow: 0 2px 8px rgba(255, 59, 48, 0.15);
 }
 
@@ -387,7 +387,7 @@ body {
 }
 
 .recharge_item.selected .recharge_price {
-    color: #FF3B30;
+    color: #246B58;
 }
 
 /* 弹窗 Toast */

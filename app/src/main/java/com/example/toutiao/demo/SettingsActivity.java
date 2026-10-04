@@ -261,7 +261,7 @@ public class SettingsActivity extends AppCompatActivity {
         });
 
         itemAbout.setOnClickListener(v -> {
-            WebActivity.open(this, "关于仿今日头条", "file:///android_asset/web/about.html");
+            WebActivity.open(this, "关于晴川", "file:///android_asset/web/about.html");
         });
 
         //退出登录

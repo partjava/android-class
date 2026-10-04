@@ -18,7 +18,7 @@
         android:id="@+id/ll_top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/brand_red"
+        android:background="@drawable/bg_qingchuan_header"
         android:orientation="vertical"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -33,7 +33,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="仿今日头条"
+                android:text="@string/app_name"
                 android:textColor="@color/on_brand"
                 android:textSize="@dimen/text_headline"
                 android:textStyle="bold"/>
@@ -49,7 +49,7 @@
                 android:drawableStart="@drawable/ic_search"
                 android:drawableTint="@color/text_hint"
                 android:drawablePadding="@dimen/space_s"
-                android:hint="搜你想搜的"
+                android:hint="搜索校园资讯、公告"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
                 android:paddingHorizontal="@dimen/space_m"

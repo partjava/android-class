@@ -43,19 +43,19 @@
             android:layout_marginTop="@dimen/space_l"
             android:gravity="center"
             android:maxLines="1"
-            android:text="登录你的头条 精彩永不丢失"
+            android:text="你好，晴川同学"
             android:textColor="@color/text_primary"
             android:textSize="@dimen/text_display"
             android:textStyle="bold"/>
 
-        <!--头条logo-->
+        <!--晴川标志-->
         <ImageView
             android:layout_width="72dp"
             android:layout_height="72dp"
             android:layout_gravity="center_horizontal"
             android:layout_marginTop="@dimen/space_l"
             android:src="@drawable/ic_toutiao_logo"
-            android:contentDescription="头条logo"/>
+            android:contentDescription="晴川标志"/>
 
         <!--一键登录按钮-->
         <Button

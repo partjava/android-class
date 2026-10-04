@@ -62,7 +62,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
         setContentView(R.layout.activity_order_confirm);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(android.graphics.Color.parseColor("#E53935"));
+            getWindow().setStatusBarColor(androidx.core.content.ContextCompat.getColor(this, R.color.brand_red));
             androidx.core.view.WindowInsetsControllerCompat controller =
                     new androidx.core.view.WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
             controller.setAppearanceLightStatusBars(false);
