@@ -62,12 +62,12 @@
    bar.rotation.y=angle;
   }
  }
- drawCrosswalk([818,1095],0,6);          // 南门广场前斑马线
- drawCrosswalk([818,735],0,5);           // 晴川广场北端湖滨斑马线
- drawCrosswalk([900,1070],Math.PI/2,5);  // 教学区西侧主路斑马线
- drawCrosswalk([340,1020],Math.PI/2,5);  // 宿舍生活大道交叉口斑马线
- drawCrosswalk([480,1035],Math.PI/2,5);  // 食堂超市前斑马线
- drawCrosswalk([640,1040],0,4);          // 小剧场与运动场斑马线
+ drawCrosswalk([818,1088],0,6);          // 南门广场前斑马线
+ drawCrosswalk([818,750],0,5);           // 晴川广场北端湖滨斑马线
+ drawCrosswalk([920,1088],Math.PI/2,5);  // 教学区西侧主路斑马线
+ drawCrosswalk([505,1065],Math.PI/2,5);  // 宿舍生活大道交叉口斑马线
+ drawCrosswalk([480,1065],Math.PI/2,5);  // 食堂超市前斑马线
+ drawCrosswalk([670,1070],0,4);          // 小剧场与运动场斑马线
 
  // Lake & Shimmering Waters
  const shore=new THREE.CatmullRomCurve3(L.lake.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
