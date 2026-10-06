@@ -27,11 +27,15 @@ public class CampusSceneActivity extends AppCompatActivity {
         WebView.setWebContentsDebuggingEnabled(true);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(false);
         settings.setAllowFileAccessFromFileURLs(true);
         settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setBlockNetworkLoads(true);
+        web.setWebChromeClient(new android.webkit.WebChromeClient());
+        web.addJavascriptInterface(new CampusNativeBridge(), "CampusNativeBridge");
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleUrl(request.getUrl());
@@ -41,6 +45,31 @@ public class CampusSceneActivity extends AppCompatActivity {
             }
         });
         web.loadUrl("file:///android_asset/campus3d/index.html");
+    }
+
+    public class CampusNativeBridge {
+        @android.webkit.JavascriptInterface
+        public void saveConfig(String key, String value) {
+            getSharedPreferences("campus3d_custom", MODE_PRIVATE)
+                    .edit().putString(key, value).apply();
+        }
+
+        @android.webkit.JavascriptInterface
+        public String loadConfig(String key) {
+            return getSharedPreferences("campus3d_custom", MODE_PRIVATE)
+                    .getString(key, null);
+        }
+
+        @android.webkit.JavascriptInterface
+        public void copyToClipboard(String text) {
+            runOnUiThread(() -> {
+                android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("campus_export", text));
+                    android.widget.Toast.makeText(CampusSceneActivity.this, "已复制到剪贴板！", android.widget.Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private boolean handleUrl(Uri uri) {

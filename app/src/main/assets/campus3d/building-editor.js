@@ -1,3 +1,46 @@
+
+  function showExportModal(title, jsonStr){
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.copyToClipboard === 'function'){
+    window.CampusNativeBridge.copyToClipboard(jsonStr);
+   }
+   let modal = document.getElementById('export-modal');
+   if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'export-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(5px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:auto;';
+    modal.innerHTML = `
+     <div style="background:white;border-radius:14px;max-width:92%;width:420px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 12px 32px rgba(0,0,0,0.3);overflow:hidden;">
+       <div style="display:flex;align-items:center;justify-content:between;padding:12px 16px;background:#f5f7f6;border-bottom:1px solid #e1e7e4;">
+         <span id="export-modal-title" style="font-weight:bold;font-size:14px;color:#1e4d3c;flex:1;">📋 数据导出</span>
+         <button id="export-modal-close" style="background:#eee;border:0;border-radius:50%;width:26px;height:26px;cursor:pointer;font-weight:bold;color:#666;">✕</button>
+       </div>
+       <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden;">
+         <span style="font-size:12px;color:#456657;line-height:1.4;">✅ 已为您自动复制到剪贴板！<br>若复制未成功，您也可长按下方文本框全选复制：</span>
+         <textarea id="export-modal-area" style="width:100%;height:200px;box-sizing:border-box;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccd6d0;border-radius:8px;resize:none;background:#fafafa;" readonly></textarea>
+         <button id="export-modal-copy" style="padding:10px;background:#215e48;color:white;font-weight:bold;border:0;border-radius:8px;cursor:pointer;font-size:13px;">📋 点击再次复制到剪贴板</button>
+       </div>
+     </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('export-modal-close').onclick = () => { modal.style.display = 'none'; };
+    document.getElementById('export-modal-copy').onclick = () => {
+     const ta = document.getElementById('export-modal-area');
+     ta.select();
+     if(window.CampusNativeBridge && typeof window.CampusNativeBridge.copyToClipboard === 'function'){
+      window.CampusNativeBridge.copyToClipboard(ta.value);
+     }else{
+      document.execCommand('copy');
+      alert('已复制到剪贴板！');
+     }
+    };
+   }
+   document.getElementById('export-modal-title').textContent = title;
+   const ta = document.getElementById('export-modal-area');
+   ta.value = jsonStr;
+   modal.style.display = 'flex';
+   ta.select();
+  }
+  window.showExportModal = showExportModal;
 /**
  * 晴川 3D 校园 · 建筑与场地全要素位移与旋转微调器 (Building & Venue Transform Editor)
  * 支持：
@@ -55,11 +98,16 @@
   }
 
   function loadTransforms(){
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.loadConfig === 'function'){
+    try{
+     const nativeStr = window.CampusNativeBridge.loadConfig('custom_building_transforms');
+     if(nativeStr){ transforms = JSON.parse(nativeStr); return; }
+    }catch(e){}
+   }
    try{
-    const stored=localStorage.getItem('custom_building_transforms');
-    if(stored){
-     transforms=JSON.parse(stored);
-     applyAllTransforms();
+    if(typeof localStorage !== 'undefined' && localStorage){
+     const stored = localStorage.getItem('custom_building_transforms');
+     if(stored) transforms = JSON.parse(stored);
     }
    }catch(e){}
   }

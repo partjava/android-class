@@ -26,13 +26,19 @@
  groundSchematic.add(roadGroup);
 
  // Load custom roads from storage if user customized them
- try{
-  const saved=localStorage.getItem('custom_campus_roads');
-  if(saved){
-   const parsed=JSON.parse(saved);
-   if(Array.isArray(parsed))L.roads=parsed;
-  }
- }catch(e){}
+  try{
+   let saved = null;
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.loadConfig === 'function'){
+    saved = window.CampusNativeBridge.loadConfig('custom_campus_roads');
+   }
+   if(!saved && typeof localStorage !== 'undefined' && localStorage){
+    saved = localStorage.getItem('custom_campus_roads');
+   }
+   if(saved !== null && saved !== undefined){
+    const parsed = JSON.parse(saved);
+    if(Array.isArray(parsed)) L.roads = parsed;
+   }
+  }catch(e){}
 
  // Realistic Asphalt Roads with Granite Curbs, Junction Caps & Center Lane Markings
  function drawRoad(points,width,y=.12){
@@ -78,7 +84,10 @@
   }
   for(const road of newRoads)drawRoad(road.points,road.width);
   L.roads=newRoads;
-  try{localStorage.setItem('custom_campus_roads',JSON.stringify(newRoads));}catch(e){}
+  if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
+    try{ window.CampusNativeBridge.saveConfig('custom_campus_roads', JSON.stringify(newRoads)); }catch(e){}
+   }
+   try{ if(typeof localStorage !== 'undefined' && localStorage) localStorage.setItem('custom_campus_roads', JSON.stringify(newRoads)); }catch(e){}
  };
 
  // Crosswalk zebra stripes at key pedestrian crossings

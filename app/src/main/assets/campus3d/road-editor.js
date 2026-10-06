@@ -69,11 +69,16 @@
   }
 
   function loadInitialRoads(){
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.loadConfig === 'function'){
+    try{
+     const nativeStr = window.CampusNativeBridge.loadConfig('custom_campus_roads');
+     if(nativeStr){ roads = JSON.parse(nativeStr); return; }
+    }catch(e){}
+   }
    try{
-    const stored=localStorage.getItem('custom_campus_roads');
-    if(stored!==null){
-     roads=JSON.parse(stored);
-     return;
+    if(typeof localStorage !== 'undefined' && localStorage){
+     const stored = localStorage.getItem('custom_campus_roads');
+     if(stored !== null){ roads = JSON.parse(stored); return; }
     }
    }catch(e){}
    if(window.CampusLayout&&window.CampusLayout.roads&&window.CampusLayout.roads.length>0){
@@ -463,10 +468,8 @@
    // 导出道路坐标 JSON
    document.getElementById('ed-export').onclick=()=>{
     const jsonStr=JSON.stringify(roads,null,1);
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-     navigator.clipboard.writeText(jsonStr).catch(()=>{});
-    }
-    prompt('当前绘制路网 JSON 数据（可复制保存到代码）：', jsonStr);
+    if(window.showExportModal) window.showExportModal('📋 道路路网数据导出 (' + roads.length + ' 段)', jsonStr);
+    else prompt('当前绘制路网 JSON 数据：', jsonStr);
    };
 
    // 保存并实时生成 3D 沥青/白板路网
