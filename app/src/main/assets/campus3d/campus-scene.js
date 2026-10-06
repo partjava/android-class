@@ -209,11 +209,12 @@ cruiseBtn.onclick=function(){
  if(isCruising)stopCruise();else startCruise();
 };
 
-let currentGroundMode='aerial';
+let currentGroundMode='schematic';
 const modeBtn=document.getElementById('mode');
 if(modeBtn){
+ modeBtn.textContent='沙盘';
  modeBtn.onclick=()=>{
-  currentGroundMode=currentGroundMode==='aerial'?'schematic':'aerial';
+  currentGroundMode=currentGroundMode==='schematic'?'aerial':'schematic';
   if(window.setGroundMode)window.setGroundMode(currentGroundMode);
   modeBtn.textContent=currentGroundMode==='aerial'?'实景':'沙盘';
   modeBtn.classList.toggle('active',currentGroundMode==='aerial');

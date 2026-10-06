@@ -6,32 +6,123 @@
  const polygon=(points,y,color)=>flat(points.map(W),y,color,groundSchematic);
  const base=new THREE.Shape(L.boundary.map(p=>new THREE.Vector2(p[0]/4,-p[1]/4)));
  const geo=new THREE.ExtrudeGeometry(base,{depth:4,bevelEnabled:false});geo.rotateX(-Math.PI/2);
- const land=new THREE.Mesh(geo,mat('#9eb98b'));land.position.y=-4;land.receiveShadow=true;groundSchematic.add(land);
- polygon(L.plaza,.06,'#d8ccb6');polygon([[335,170],[520,137],[549,445],[444,415],[360,365]],.06,'#dbd5c6');
- polygon(L.grass,.08,'#a5bf8c');
- function stroke(points,width,color='#e4dccc',y=.12){for(let i=1;i<points.length;i++){const a=W(points[i-1]),b=W(points[i]),dx=b[0]-a[0],dz=b[1]-a[1];const m=box(width,.08,Math.hypot(dx,dz), (a[0]+b[0])/2,y,(a[1]+b[1])/2,color,groundSchematic);m.rotation.y=Math.atan2(dx,dz);}}
- for(const road of L.roads)stroke(road.points,road.width);
+ 
+ // Base lawn - fresh vibrant collegiate green
+ const land=new THREE.Mesh(geo,mat('#5a9254'));
+ land.position.y=-4;land.receiveShadow=true;groundSchematic.add(land);
+
+ // South Gate Entrance Plaza & Ceremonial paving
+ polygon(L.plaza,.06,'#ded7c8');
+ polygon([[335,170],[520,137],[549,445],[444,415],[360,365]],.06,'#dfdbd0');
+ polygon(L.grass,.08,'#65a35e');
+
+ // Central Ceremonial White Marble Pathway (国旗大道主轴线)
+ const centralWalk=[[806,1150],[830,1150],[830,730],[806,730]];
+ polygon(centralWalk,.14,'#f7f5ee');
+ polygon([[796,1150],[806,1150],[806,730],[796,730]],.13,'#dcd5c7');
+ polygon([[830,1150],[840,1150],[840,730],[830,730]],.13,'#dcd5c7');
+
+ // Realistic Asphalt Roads with Granite Curbs & Center Lane Markings
+ function drawRoad(points,width,y=.12){
+  for(let i=1;i<points.length;i++){
+   const a=W(points[i-1]),b=W(points[i]);
+   const dx=b[0]-a[0],dz=b[1]-a[1];
+   const len=Math.hypot(dx,dz);
+   if(len<.1)continue;
+   const angle=Math.atan2(dx,dz);
+   const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
+
+   // Sidewalk curb base
+   const curb=box(width+1.4,.06,len,mx,y,mz,'#d5cfc2',groundSchematic);
+   curb.rotation.y=angle;
+
+   // Asphalt surface
+   const road=box(width,.08,len,mx,y+.02,mz,'#383d42',groundSchematic);
+   road.rotation.y=angle;
+
+   // Center white dashed dividing line on main roads
+   if(width>=4&&len>6){
+    const stripe=box(.24,.09,len*.94,mx,y+.03,mz,'#eae6dc',groundSchematic);
+    stripe.rotation.y=angle;
+   }
+  }
+ }
+ for(const road of L.roads)drawRoad(road.points,road.width);
+
+ // Teaching Quadrangle connecting walkways
+ const teachWalks=[
+  [[920,850],[1200,850]],
+  [[1060,710],[1060,1060]],
+  [[940,940],[1120,940]],
+ ];
+ for(const pts of teachWalks)drawRoad(pts,3.2);
+
+ // Lake & Shimmering Waters
  const shore=new THREE.CatmullRomCurve3(L.lake.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
- polygon(shore,.23,'#318e91');
- const line=(points,y=.4,color='#f2ecd9')=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0]/4,y,p[1]/4))),new THREE.LineBasicMaterial({color}));groundSchematic.add(mesh);};
- // Retain curved turns, without replacing the slanted athletic field by an axis-aligned capsule.
+ const lakeMesh=polygon(shore,.22,'#207e8a');
+ lakeMesh.material=new THREE.MeshStandardMaterial({
+  color:'#207e8a',
+  roughness:0.18,
+  metalness:0.75
+ });
+
+ // Lakeside Pedestrian Stone Promenade
+ const outerShore=new THREE.CatmullRomCurve3(L.lake.map(p=>{
+  const cx=650,cz=600;
+  return new THREE.Vector3(cx+(p[0]-cx)*1.07,0,cz+(p[1]-cz)*1.07);
+ }),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
+ const shorePath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outerShore.map(p=>new THREE.Vector3(p[0]/4,.26,p[1]/4))),new THREE.LineBasicMaterial({color:'#dfd9ce',linewidth:2}));
+ groundSchematic.add(shorePath);
+
+ const line=(points,y=.4,color='#f5f0e1')=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0]/4,y,p[1]/4))),new THREE.LineBasicMaterial({color}));groundSchematic.add(mesh);};
+ 
+ // Athletic Running Track - Vibrant Terracotta Red & White Lanes
  const curve=new THREE.CatmullRomCurve3(L.track.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal');
- const track=curve.getPoints(100).map(p=>[p.x,p.z]);polygon(track,.25,'#bb786d');
- const c=[638,266];for(const scale of [.98,.94,.9,.86])line(track.map(p=>[c[0]+(p[0]-c[0])*scale,c[1]+(p[1]-c[1])*scale]),.29,'#deb0a4');
- polygon(L.pitch,.32,'#648c66');line([...L.pitch,L.pitch[0]]);
+ const track=curve.getPoints(100).map(p=>[p.x,p.z]);
+ polygon(track,.25,'#ba4938');
+ const c=[638,266];
+ for(const scale of [.98,.94,.9,.86,.82])line(track.map(p=>[c[0]+(p[0]-c[0])*scale,c[1]+(p[1]-c[1])*scale]),.29,'#ffffff');
+ polygon(L.pitch,.32,'#4e8a52');line([...L.pitch,L.pitch[0]],.35,'#ffffff');
  const pitchPoint=(u,v)=>L.bilinear(L.pitch,u,v);
- line([pitchPoint(0,.5),pitchPoint(1,.5)]);
- const circle=[];for(let i=0;i<=60;i++)circle.push(pitchPoint(.5+.14*Math.cos(i*Math.PI/30),.5+.08*Math.sin(i*Math.PI/30)));line(circle);
- for(const v of [0,1]){const end=v===0?.17:.83;line([pitchPoint(.22,v),pitchPoint(.22,end),pitchPoint(.78,end),pitchPoint(.78,v)]);}
- L.courts.forEach((quad,index)=>{const rows=index===0?3:2,cols=2;polygon(quad,.25,index===2?'#6ea3aa':'#799e8f');for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const p=(u,v)=>L.bilinear(quad,(c+u)/cols,(r+v)/rows);const rect=[p(.09,.08),p(.91,.08),p(.91,.92),p(.09,.92)];line([...rect,rect[0]]);line([p(.09,.5),p(.91,.5)]);}});
+ line([pitchPoint(0,.5),pitchPoint(1,.5)],.35,'#ffffff');
+ const circle=[];for(let i=0;i<=60;i++)circle.push(pitchPoint(.5+.14*Math.cos(i*Math.PI/30),.5+.08*Math.sin(i*Math.PI/30)));line(circle,.35,'#ffffff');
+ for(const v of [0,1]){const end=v===0?.17:.83;line([pitchPoint(.22,v),pitchPoint(.22,end),pitchPoint(.78,end),pitchPoint(.78,v)],.35,'#ffffff');}
+ 
+ L.courts.forEach((quad,index)=>{
+  const rows=index===0?3:2,cols=2;
+  polygon(quad,.25,index===2?'#5a9ca4':'#5c9779');
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+   const p=(u,v)=>L.bilinear(quad,(c+u)/cols,(r+v)/rows);
+   const rect=[p(.09,.08),p(.91,.08),p(.91,.92),p(.09,.92)];
+   line([...rect,rect[0]],.3,'#ffffff');line([p(.09,.5),p(.91,.5)],.3,'#ffffff');
+  }
+ });
  if(window.AcademicTrace)AcademicTrace.buildParking({scene:groundSchematic,flat,mat});
- // Trees follow traced avenues; exclude building, water and parking polygons.
+
+ // Trees - Lush Greenery along Avenues and Lakeside
  function inside(p,loop){let hit=false;for(let i=0,j=loop.length-1;i<loop.length;j=i++){const a=loop[i],b=loop[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])hit=!hit;}return hit;}
  const buildings=CampusData.buildings.flatMap(b=>{const m=CampusFootprints[b.id];return [m.outer,...(m.links||[]).map(link=>link.outline)].map(loop=>loop.map(p=>[p[0]*4+b.x*4,p[1]*4+b.z*4]));});
  if(window.AcademicTrace)buildings.push(AcademicTrace.parkingWorld.map(p=>p.map(v=>v*4)));
  if(CampusData.regions)buildings.push(...CampusData.regions.filter(r=>!['plaza','lake'].includes(r.kind)).map(r=>r.outline.map(p=>p.map(v=>v*4))));
- const trunkGeo=new THREE.CylinderGeometry(.3,.4,1.7,5),leafGeo=new THREE.IcosahedronGeometry(1.8,0),trunkMat=mat('#897d61'),leafMat=mat('#628664');
- for(const road of L.roads.slice(0,8))for(let i=1;i<road.points.length;i++){const a=road.points[i-1],b=road.points[i],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);for(let t=18;t<len;t+=42)for(const sign of [-1,1]){const offset=(road.width/2+3)*4,p=[a[0]+dx*t/len-sign*dz/len*offset,a[1]+dz*t/len+sign*dx/len*offset];if(!inside(p,L.boundary)||inside(p,L.lake)||buildings.some(loop=>inside(p,loop)))continue;const [x,z]=W(p),trunk=new THREE.Mesh(trunkGeo,trunkMat),leaf=new THREE.Mesh(leafGeo,leafMat);trunk.position.set(x,.85,z);leaf.position.set(x,3,z);leaf.castShadow=true;groundSchematic.add(trunk,leaf);}}
+ 
+ const trunkGeo=new THREE.CylinderGeometry(.3,.4,1.8,5),leafGeo=new THREE.IcosahedronGeometry(1.9,0);
+ const treeMats=['#447b48','#558e5a','#689f64'].map(c=>mat(c));
+ const trunkMat=mat('#7d6f55');
+
+ for(const road of [...L.roads, ...teachWalks.map(pts=>({width:3,points:pts}))])for(let i=1;i<road.points.length;i++){
+  const a=road.points[i-1],b=road.points[i],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);
+  for(let t=14;t<len;t+=36)for(const sign of [-1,1]){
+   const offset=(road.width/2+3.2)*4,p=[a[0]+dx*t/len-sign*dz/len*offset,a[1]+dz*t/len+sign*dx/len*offset];
+   if(!inside(p,L.boundary)||inside(p,L.lake)||buildings.some(loop=>inside(p,loop)))continue;
+   const [x,z]=W(p);
+   const trunk=new THREE.Mesh(trunkGeo,trunkMat);
+   const leaf=new THREE.Mesh(leafGeo,treeMats[(Math.round(x+z)%3)]);
+   const s=0.85+Math.sin(x*17+z*31)*0.2;
+   trunk.scale.set(s,s,s);leaf.scale.set(s,s,s);
+   trunk.position.set(x,.9*s,z);leaf.position.set(x,3.2*s,z);leaf.castShadow=true;
+   groundSchematic.add(trunk,leaf);
+  }
+ }
 
  // --- 3D South Gate Archway (晴川大门牌坊) ---
  function buildSouthGate(parentGroup){
@@ -56,13 +147,17 @@
  }
  buildSouthGate(groundSchematic);
 
- // --- High-Resolution Aerial Drone Photograph Ground Texture Layer ---
+ // --- High-Resolution Unwarped Aerial Drone Photograph Ground Texture Layer ---
  const aerialGroup=new THREE.Group();
  scene.add(aerialGroup);
- const basePlinth=new THREE.Mesh(geo,mat('#475548'));
- basePlinth.position.y=-4.02;
- basePlinth.receiveShadow=true;
- aerialGroup.add(basePlinth);
+ 
+ // Base Architectural Plinth
+ const plinthGeo=new THREE.BoxGeometry(342,4,196);
+ const plinthMat=mat('#2c352f');
+ const plinthMesh=new THREE.Mesh(plinthGeo,plinthMat);
+ plinthMesh.position.set(165,-2.02,140);
+ plinthMesh.receiveShadow=true;
+ aerialGroup.add(plinthMesh);
 
  buildSouthGate(aerialGroup);
 
@@ -71,27 +166,19 @@
    if(THREE.SRGBColorSpace)tex.colorSpace=THREE.SRGBColorSpace;
    tex.minFilter=THREE.LinearFilter;
    tex.magFilter=THREE.LinearFilter;
-   const planeGeo=new THREE.PlaneGeometry(330,320);
+   
+   // Exact aspect ratio matching 1673 x 940 (1.78)
+   const planeGeo=new THREE.PlaneGeometry(338,190);
    planeGeo.rotateX(-Math.PI/2);
    const planeMat=new THREE.MeshStandardMaterial({
      map:tex,
-     roughness:0.86,
-     metalness:0.06
+     roughness:0.82,
+     metalness:0.04
    });
    const aerialMesh=new THREE.Mesh(planeGeo,planeMat);
-   aerialMesh.position.set(165,0.02,160);
+   aerialMesh.position.set(165,0.02,140);
    aerialMesh.receiveShadow=true;
    aerialGroup.add(aerialMesh);
-
-   // Lake shimmer water overlay on the photo lake
-   const lakeOverlay=flat(shore.map(W),0.1,'#2c8c96',aerialGroup);
-   lakeOverlay.material=new THREE.MeshStandardMaterial({
-     color:'#2c8c96',
-     roughness:0.18,
-     metalness:0.75,
-     transparent:true,
-     opacity:0.45
-   });
  });
 
  window.setGroundMode=function(mode){
@@ -99,5 +186,6 @@
    aerialGroup.visible=isAerial;
    groundSchematic.visible=!isAerial;
  };
- window.setGroundMode('aerial');
+ // Default to the lush, detailed 3D Sandbox mode
+ window.setGroundMode('schematic');
 };})();
