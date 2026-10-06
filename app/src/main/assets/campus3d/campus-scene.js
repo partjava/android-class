@@ -211,14 +211,16 @@ cruiseBtn.onclick=function(){
 
 let currentGroundMode='schematic';
 const modeBtn=document.getElementById('mode');
+function toggleGroundMode(){
+ currentGroundMode=currentGroundMode==='schematic'?'aerial':'schematic';
+ if(window.setGroundMode)window.setGroundMode(currentGroundMode);
+ modeBtn.textContent=currentGroundMode==='aerial'?'实景':'沙盘';
+ modeBtn.classList.toggle('active',currentGroundMode==='aerial');
+}
 if(modeBtn){
  modeBtn.textContent='沙盘';
- modeBtn.onclick=()=>{
-  currentGroundMode=currentGroundMode==='schematic'?'aerial':'schematic';
-  if(window.setGroundMode)window.setGroundMode(currentGroundMode);
-  modeBtn.textContent=currentGroundMode==='aerial'?'实景':'沙盘';
-  modeBtn.classList.toggle('active',currentGroundMode==='aerial');
- };
+ modeBtn.addEventListener('click',toggleGroundMode);
+ modeBtn.addEventListener('touchend',e=>{e.preventDefault();toggleGroundMode();});
 }
 
 const pointers=new Map();let down=null,moved=false,pinch=0;
