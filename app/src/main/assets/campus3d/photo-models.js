@@ -14,9 +14,10 @@ window.buildPhotoModel=function(b,g,api){
  volume(m.outer,m.holes,h,.4,b.category==='住宿'?'#d3c7b9':'#cfc6b7');
  for(const hole of m.holes)volume(hole,[],.15,.15,'#8d9b78');
  if(m.roof==='traced'){
-  // Base roof uses the SAME polygon and cutouts as the walls, preserving recesses.
-  volume(m.outer,m.holes,.3,h+.4,'#73777b');
-  for(const wing of m.roofWings)hipRoof(wing,h+.7,1.6);
+  const isTeach=b.id.startsWith('teach_');
+  const roofColor=isTeach?'#a64332':'#686970';
+  volume(m.outer,m.holes,.3,h+.4,isTeach?'#843528':'#73777b');
+  for(const wing of m.roofWings)hipRoof(wing,h+.7,1.6,roofColor);
   for(const link of m.links){volume(link.outline,[],link.height,.4,'#ded8cd');volume(link.outline,[],.35,link.height+.4,'#e5e2d9');}
  }else if(m.roof==='ring')ringRoof(m.outer,m.holes[0],h+.4,2.0);
  else if(m.roof==='open'){
@@ -41,6 +42,9 @@ window.buildPhotoModel=function(b,g,api){
   // L-shaped roof parapet and stepped lake-facing terrace.
   const outer=m.outer;for(let i=0;i<outer.length;i++){const a=outer[i],c=outer[(i+1)%outer.length],dx=c[0]-a[0],dz=c[1]-a[1];const rail=box(.35,.6,Math.hypot(dx,dz),(a[0]+c[0])/2,h+1.05,(a[1]+c[1])/2,'#ece7df',g);rail.rotation.y=Math.atan2(dx,dz);}
   box(4,1.1,5,0,h+1.05,-10,'#ddd8cb',g);
+  // Glass atrium skylight pavilion on top of Library
+  box(7,1.6,7,0,h+1.2,-2,'#3c7886',g);
+  box(8.5,.3,8.5,0,h+2.0,-2,'#ded9cd',g);
   const terrace=m.terraceOutline||m.outer.slice(0,4);
   for(let level=0;level<3;level++){const extended=terrace.map(p=>[p[0]+level*.6,p[1]-level*.4]);volume(extended,[],.4,1.3-level*.35,'#b4b0a8');}
  }else if(m.roof==='hall'){

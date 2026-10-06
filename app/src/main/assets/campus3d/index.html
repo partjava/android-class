@@ -1,11 +1,94 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>晴川 3D 校园</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#e7efec;font-family:system-ui,sans-serif;color:#213d35;overflow:hidden}canvas{display:block;touch-action:none}button,input,select{font:inherit}button{border:0;border-radius:12px;background:#fff;color:#284d40;padding:11px 14px;box-shadow:0 3px 12px #163e2920}button.active{background:#215e48;color:white}.top{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:8px;z-index:2}.top input{min-width:0;flex:1;border:0;border-radius:12px;padding:12px;background:#ffffffed}.filters{position:fixed;top:65px;left:12px;display:flex;gap:6px;z-index:2}.filters button{padding:8px 11px;font-size:12px}.tools{position:fixed;right:12px;top:115px;display:grid;gap:9px;z-index:2}.tools button{width:45px;padding:12px 0}.card{position:fixed;bottom:20px;left:14px;right:14px;padding:17px;background:#ffffffef;border-radius:18px;box-shadow:0 8px 28px #163e2920;z-index:2}.card h3{margin:0 0 6px;font-size:19px}.card p{margin:5px 0;font-size:12px;line-height:1.6;color:#61786e}.card a{display:inline-block;margin-top:8px;text-decoration:none;color:white;background:#215e48;padding:9px 14px;border-radius:9px;font-size:13px}[hidden]{display:none!important}.hint{position:fixed;bottom:6px;left:0;right:0;text-align:center;font-size:10px;color:#64796f;pointer-events:none}.badge{position:fixed;left:14px;top:117px;font-size:11px;color:#547365;pointer-events:none}#error{display:none;position:fixed;inset:100px 20px auto;background:white;padding:20px;border-radius:12px;z-index:5}
+*{box-sizing:border-box}body{margin:0;background:#e7efec;font-family:system-ui,-apple-system,sans-serif;color:#213d35;overflow:hidden}canvas{display:block;touch-action:none}button,input,select{font:inherit}
+button{border:0;border-radius:12px;background:#fff;color:#284d40;padding:10px 14px;box-shadow:0 3px 12px #163e2920;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.active{background:#215e48;color:white}
+.top{position:fixed;top:10px;left:10px;right:10px;display:flex;gap:8px;z-index:2}
+.top input{min-width:0;flex:1;border:0;border-radius:12px;padding:10px 14px;background:#ffffffed;box-shadow:0 2px 8px #163e2915}
+.filters{position:fixed;top:58px;left:10px;right:10px;display:flex;gap:6px;z-index:2;overflow-x:auto;padding-bottom:4px}
+.filters button{padding:6px 12px;font-size:12px;flex-shrink:0}
+.tools{position:fixed;right:12px;top:105px;display:grid;gap:8px;z-index:2}
+.tools button{width:42px;padding:9px 0;font-size:12px;font-weight:600;text-align:center}
+.tools button#cruise.active{background:#d46238;color:white;animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(212,98,56,0.6)}70%{box-shadow:0 0 0 8px rgba(212,98,56,0)}100%{box-shadow:0 0 0 0 rgba(212,98,56,0)}}
 
-.card{padding:12px 15px;bottom:22px;border-radius:15px;max-width:440px;margin:auto}.card h3{font-size:16px;margin-bottom:3px}.card p{font-size:11px;margin:3px 0}.card:not(.selected) #sub{display:none}.card.selected #sub{display:none}.card a{padding:7px 12px;margin-top:5px;font-size:12px}.badge{background:#ffffffbc;border-radius:8px;padding:6px 8px;font-size:10px}.tools{top:118px}.tools button{width:40px;padding:10px 0;font-size:13px}.labels{position:fixed;inset:0;pointer-events:none;z-index:1}.map-label{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;padding:4px 7px;border-radius:6px;background:#ffffffed;box-shadow:0 2px 6px #163e2926;color:#345448;font-size:10px;font-weight:600}.map-label.chosen{background:#215e48;color:white}.compass{position:fixed;right:15px;bottom:140px;color:#345448;font-size:12px;pointer-events:none} .filters{max-width:calc(100vw - 20px);overflow:auto;padding-bottom:5px}.filters button{flex-shrink:0}
+.badge{position:fixed;left:12px;top:105px;font-size:10px;color:#456657;background:#ffffffd4;border-radius:8px;padding:5px 8px;pointer-events:none;box-shadow:0 2px 6px #163e2912}
+.labels{position:fixed;inset:0;pointer-events:none;z-index:1}
+.map-label{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;padding:4px 8px;border-radius:6px;background:#ffffffed;box-shadow:0 2px 6px #163e2926;color:#345448;font-size:10px;font-weight:600;pointer-events:auto;cursor:pointer}
+.map-label:active{transform:translate(-50%,-100%) scale(1.08);background:#215e48;color:white}
+.map-label.chosen{background:#215e48;color:white}
+.compass{position:fixed;right:14px;bottom:155px;color:#345448;font-size:12px;font-weight:bold;pointer-events:none;background:#ffffffc0;border-radius:20px;padding:4px 6px;box-shadow:0 2px 6px #163e2915}
+
+/* Rich Landmark Detail Card */
+.card{position:fixed;bottom:16px;left:12px;right:12px;max-width:440px;margin:auto;padding:12px 14px;background:#fffffffa;border-radius:16px;box-shadow:0 8px 30px #163e292a;z-index:3;transition:transform .25s ease,opacity .25s ease}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.card-title-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.card h3{margin:0;font-size:16px;color:#1d382e}
+.card-badge{font-size:10px;padding:2px 6px;border-radius:4px;background:#e2eeea;color:#215e48;font-weight:600}
+.card-close{border:0;background:transparent;box-shadow:none;color:#8a9992;font-size:18px;line-height:1;padding:0 4px;cursor:pointer}
+.card-body{display:flex;gap:12px;margin-top:8px}
+.card-thumb{width:92px;height:72px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#d8dfdb;box-shadow:0 2px 6px #00000015}
+.card-info{flex:1;min-width:0}
+.card p{margin:2px 0;font-size:11px;line-height:1.45;color:#596f66}
+.card-desc{color:#31483e!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-floors{font-size:10px;color:#70867d;margin-top:3px;max-height:48px;overflow-y:auto;white-space:pre-line}
+.card-actions{display:flex;gap:8px;margin-top:8px}
+.btn-action{flex:1;padding:7px 10px;font-size:12px;font-weight:600;border-radius:8px;text-align:center;text-decoration:none;display:inline-block}
+.btn-fly{background:#215e48;color:white}
+.btn-detail{background:#e8f0ec;color:#215e48}
+.hint{position:fixed;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#6d8379;pointer-events:none}
+#error{display:none;position:fixed;inset:100px 20px auto;background:white;padding:20px;border-radius:12px;z-index:5}
 </style></head><body>
-<div class="top"><input id="search" placeholder="搜索建筑或区域，如：教1、羽毛球场" aria-label="搜索建筑或区域"><button id="find">查找</button></div>
-<div class="filters" id="filters"></div><div class="badge">晴川校园 · 估算比例沙盘<br>道路参考截图 · 暂无入口导航</div>
-<div class="tools"><button id="plus" aria-label="放大">＋</button><button id="minus" aria-label="缩小">－</button><button id="mode" class="active" aria-label="底图模式" title="切换实景航拍/规划沙盘">实景</button><button id="top" aria-label="俯视切换">俯视</button><button id="reset" aria-label="复位">复位</button></div>
-<div class="labels" id="labels"></div><div class="compass" id="compass">↑ 北</div><div class="card"><h3 id="title">晴川 3D 校园</h3><p id="info">独立建筑模型 · 庭院与屋顶 · 情缘湖与运动场</p><p id="sub">点击建筑查看楼层，拖动旋转，双指缩放和平移。</p><a id="photo" hidden>查看实景与详情</a></div><div class="hint">名称与楼层依据提供资料；尺寸、屋顶细节为近似重建</div><div id="error"></div>
-<script src="three.min.js"></script><script src="campus-data.js"></script><script src="scene-utils.js"></script><script src="campus-footprints.js"></script><script src="campus-layout.js"></script><script src="teaching-trace.js"></script><script src="dorm-trace.js"></script><script src="academic-trace.js"></script><script src="special-trace.js"></script><script src="campus-ground.js"></script><script src="photo-models.js"></script><script src="campus-scene.js"></script></body></html>
+<div class="top"><input id="search" placeholder="搜索建筑或区域，如：教1、图书馆、体育馆" aria-label="搜索建筑或区域"><button id="find">查找</button></div>
+<div class="filters" id="filters"></div>
+<div class="badge">晴川 3D 校园 · 实景底图与模型严密对齐</div>
+<div class="tools">
+  <button id="plus" aria-label="放大">＋</button>
+  <button id="minus" aria-label="缩小">－</button>
+  <button id="mode" class="active" aria-label="底图模式" title="切换实景航拍/规划沙盘">实景</button>
+  <button id="cruise" aria-label="漫游巡航" title="自动校园漫游巡航">巡航</button>
+  <button id="top" aria-label="俯视切换">俯视</button>
+  <button id="reset" aria-label="复位">复位</button>
+</div>
+<div class="labels" id="labels"></div>
+<div class="compass" id="compass">↑ 北</div>
+
+<div class="card" id="card">
+  <div class="card-header">
+    <div class="card-title-group">
+      <h3 id="title">晴川 3D 校园</h3>
+      <span id="badge" class="card-badge" style="display:none"></span>
+    </div>
+    <button class="card-close" id="close" aria-label="关闭">×</button>
+  </div>
+  <div class="card-body">
+    <img id="thumb" class="card-thumb" style="display:none" alt="实景图">
+    <div class="card-info">
+      <p id="info">独立建筑模型 · 真实航拍底图 · 情缘湖与运动场</p>
+      <p id="desc" class="card-desc" style="display:none"></p>
+      <p id="floors" class="card-floors" style="display:none"></p>
+      <div class="card-actions" id="actions" style="display:none">
+        <button id="fly" class="btn-action btn-fly">漫游前往</button>
+        <a id="photo" class="btn-action btn-detail" hidden>全景详情</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">点击建筑查看实景照片与楼层导览 · 开启【巡航】漫游校园</div>
+<div id="error"></div>
+
+<script src="three.min.js"></script>
+<script src="campus-data.js"></script>
+<script src="scene-utils.js"></script>
+<script src="campus-footprints.js"></script>
+<script src="campus-layout.js"></script>
+<script src="teaching-trace.js"></script>
+<script src="dorm-trace.js"></script>
+<script src="academic-trace.js"></script>
+<script src="special-trace.js"></script>
+<script src="campus-landmarks.js"></script>
+<script src="campus-ground.js"></script>
+<script src="photo-models.js"></script>
+<script src="campus-scene.js"></script>
+</body></html>

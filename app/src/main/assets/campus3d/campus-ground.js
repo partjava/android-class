@@ -33,6 +33,29 @@
  const trunkGeo=new THREE.CylinderGeometry(.3,.4,1.7,5),leafGeo=new THREE.IcosahedronGeometry(1.8,0),trunkMat=mat('#897d61'),leafMat=mat('#628664');
  for(const road of L.roads.slice(0,8))for(let i=1;i<road.points.length;i++){const a=road.points[i-1],b=road.points[i],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);for(let t=18;t<len;t+=42)for(const sign of [-1,1]){const offset=(road.width/2+3)*4,p=[a[0]+dx*t/len-sign*dz/len*offset,a[1]+dz*t/len+sign*dx/len*offset];if(!inside(p,L.boundary)||inside(p,L.lake)||buildings.some(loop=>inside(p,loop)))continue;const [x,z]=W(p),trunk=new THREE.Mesh(trunkGeo,trunkMat),leaf=new THREE.Mesh(leafGeo,leafMat);trunk.position.set(x,.85,z);leaf.position.set(x,3,z);leaf.castShadow=true;groundSchematic.add(trunk,leaf);}}
 
+ // --- 3D South Gate Archway (晴川大门牌坊) ---
+ function buildSouthGate(parentGroup){
+  const gateGroup=new THREE.Group();
+  gateGroup.position.set(204.5,0,285);
+  box(24,.6,6,0,0,0,'#ded8cb',gateGroup);
+  for(const x of [-7.5,-2.5,2.5,7.5]){
+   box(1.2,7.5,1.2,x,.6,0,'#e5ded2',gateGroup);
+   box(1.5,.8,1.5,x,.6,0,'#8d3b32',gateGroup);
+  }
+  box(18,1.2,1.6,0,7.2,0,'#9e392c',gateGroup);
+  box(10,1.0,1.8,0,7.3,0,'#352e2a',gateGroup);
+  box(8.5,.7,1.85,0,7.3,0,'#e8d28c',gateGroup);
+  box(22,.5,3.6,0,8.4,0,'#3f3833',gateGroup);
+  box(19,.9,3.0,0,8.8,0,'#ab4434',gateGroup);
+  box(15,.8,2.2,0,9.6,0,'#b84937',gateGroup);
+  for(const sx of [-11,11]){
+   box(3.2,3.8,3.2,sx,.6,0,'#ded7cb',gateGroup);
+   box(4.2,.6,4.2,sx,4.4,0,'#b04636',gateGroup);
+  }
+  parentGroup.add(gateGroup);
+ }
+ buildSouthGate(groundSchematic);
+
  // --- High-Resolution Aerial Drone Photograph Ground Texture Layer ---
  const aerialGroup=new THREE.Group();
  scene.add(aerialGroup);
@@ -41,12 +64,14 @@
  basePlinth.receiveShadow=true;
  aerialGroup.add(basePlinth);
 
+ buildSouthGate(aerialGroup);
+
  const texLoader=new THREE.TextureLoader();
  texLoader.load('campus_aerial.jpg',function(tex){
    if(THREE.SRGBColorSpace)tex.colorSpace=THREE.SRGBColorSpace;
    tex.minFilter=THREE.LinearFilter;
    tex.magFilter=THREE.LinearFilter;
-   const planeGeo=new THREE.PlaneGeometry(345,375);
+   const planeGeo=new THREE.PlaneGeometry(330,320);
    planeGeo.rotateX(-Math.PI/2);
    const planeMat=new THREE.MeshStandardMaterial({
      map:tex,
@@ -54,7 +79,7 @@
      metalness:0.06
    });
    const aerialMesh=new THREE.Mesh(planeGeo,planeMat);
-   aerialMesh.position.set(175,0.02,158);
+   aerialMesh.position.set(165,0.02,160);
    aerialMesh.receiveShadow=true;
    aerialGroup.add(aerialMesh);
 
