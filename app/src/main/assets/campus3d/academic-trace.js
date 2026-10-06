@@ -11,19 +11,31 @@ const shapes={
  admin_1:{outer:[[300,1127],[723,1041],[787,1261],[483,1333],[459,1255],[489,1245],[464,1166],[380,1187],[369,1164]],holes:[[[523,1159],[677,1129],[693,1204],[543,1232]]],roofWings:[[[300,1127],[723,1041],[677,1129],[523,1159],[464,1166],[380,1187],[369,1164]],[[723,1041],[787,1261],[693,1204],[677,1129]],[[787,1261],[483,1333],[543,1232],[693,1204]],[[483,1333],[459,1255],[489,1245],[464,1166],[523,1159],[543,1232]]]},
  admin_2:{outer:[[75,1155],[300,1127],[369,1164],[425,1350],[145,1418],[118,1399]],holes:[[[166,1234],[316,1203],[336,1287],[184,1327]]],roofWings:[[[75,1155],[300,1127],[316,1203],[166,1234]],[[300,1127],[369,1164],[425,1350],[336,1287],[316,1203]],[[425,1350],[145,1418],[184,1327],[336,1287]],[[145,1418],[118,1399],[75,1155],[166,1234],[184,1327]]]}
 };
-const trace={reference:{width:942,height:2048,source:'User green-line laboratory/comprehensive-area annotation'},shapes,world:p=>[194+(p[0]-95)/10,13+(p[1]-584)/10],parking:[[166,1469],[733,1362],[766,1369],[772,1490],[736,1546],[222,1657]],parkingGrid:[[180,1470],[748,1385],[740,1537],[231,1640]]};
-trace.parkingWorld=trace.parking.map(trace.world);
+// 单个建筑位置微调表：[左右X, 上下Z] (正数往右/往下，负数往左/往上)
+const offsets={
+ lab_1:[0,0],          // 实1 (左上)
+ lab_2:[0,0],          // 实2 (右上)
+ admin_1:[0,0],        // 综1 (右下)
+ admin_2:[0,0],        // 综2 (左下)
+ art_museum:[0,0],     // 连廊 (左)
+ computer_center:[0,0] // 连廊 (右)
+};
+const trace={reference:{width:942,height:2048,source:'User green-line laboratory/comprehensive-area annotation'},shapes,offsets,world:(p,id)=>{
+ const off=(id&&offsets[id])||[0,0];
+ return [201+(p[0]-95)/10+off[0],20+(p[1]-584)/10+off[1]];
+},parking:[[166,1469],[733,1362],[766,1369],[772,1490],[736,1546],[222,1657]],parkingGrid:[[180,1470],[748,1385],[740,1537],[231,1640]]};
+trace.parkingWorld=trace.parking.map(p=>trace.world(p));
 trace.buildParking=function({scene,flat,mat}){
  flat(trace.parkingWorld,.3,'#828d89');
- const line=points=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(trace.world).map(p=>new THREE.Vector3(p[0],.34,p[1]))),new THREE.LineBasicMaterial({color:'#ede6d2'}));scene.add(mesh);};
+ const line=points=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>trace.world(p)).map(p=>new THREE.Vector3(p[0],.34,p[1]))),new THREE.LineBasicMaterial({color:'#ede6d2'}));scene.add(mesh);};
  line([...trace.parking,trace.parking[0]]);
  const q=trace.parkingGrid,p=(u,v)=>CampusLayout.bilinear(q,u,v);
  for(let r=0;r<4;r++){const a=.06+r*.23,b=a+.14;line([p(.03,a),p(.97,a)]);for(let c=0;c<=22;c++){const u=.03+c*.94/22;line([p(u,a),p(u,b)]);}}
 };
 trace.apply=function(data,models){for(const [id,shape]of Object.entries(shapes)){
- const b=data.buildings.find(b=>b.id===id),m=models[id],points=shape.outer.map(trace.world),xs=points.map(p=>p[0]),zs=points.map(p=>p[1]);
+ const b=data.buildings.find(b=>b.id===id),m=models[id],points=shape.outer.map(p=>trace.world(p,id)),xs=points.map(p=>p[0]),zs=points.map(p=>p[1]);
  b.x=(Math.min(...xs)+Math.max(...xs))/2;b.z=(Math.min(...zs)+Math.max(...zs))/2;
- const local=p=>{const q=trace.world(p);return [q[0]-b.x,q[1]-b.z];};
+ const local=p=>{const q=trace.world(p,id);return [q[0]-b.x,q[1]-b.z];};
  m.outer=shape.outer.map(local);m.holes=shape.holes.map(loop=>loop.map(local));m.roofWings=shape.roofWings.map(loop=>loop.map(local));m.links=(shape.links||[]).map(a=>({outline:a.outline.map(local),height:a.height}));
  m.roof='traced';m.infill=[];m.annex=[];m.corners=[];m.source='User-marked laboratory/comprehensive-area screenshot';
 }};
