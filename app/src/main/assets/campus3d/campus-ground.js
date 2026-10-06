@@ -115,17 +115,28 @@
 
  const line=(points,y=.4,color='#f5f0e1')=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0]/4,y,p[1]/4))),new THREE.LineBasicMaterial({color}));groundSchematic.add(mesh);};
  
- // Athletic Running Track - Vibrant Terracotta Red & White Lanes
+ const stadiumGroup=new THREE.Group();
+ scene.add(stadiumGroup);
+ window.stadiumGroup=stadiumGroup;
+ const stadiumPolygon=(points,y,color)=>flat(points.map(W),y,color,stadiumGroup);
+ const stadiumLine=(points,y=.4,color='#f5f0e1')=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0]/4,y,p[1]/4))),new THREE.LineBasicMaterial({color}));stadiumGroup.add(mesh);};
+
+ // Athletic Running Track & Football Soccer Pitch
  const curve=new THREE.CatmullRomCurve3(L.track.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal');
  const track=curve.getPoints(100).map(p=>[p.x,p.z]);
- polygon(track,.25,'#ba4938');
+ const stadiumSurface=stadiumPolygon(track,.25,'#ba4938');
+ stadiumSurface.userData.id='stadium';
+ window.stadiumSurface=stadiumSurface;
+
  const c=[638,266];
- for(const scale of [.98,.94,.9,.86,.82])line(track.map(p=>[c[0]+(p[0]-c[0])*scale,c[1]+(p[1]-c[1])*scale]),.29,'#ffffff');
- polygon(L.pitch,.32,'#4e8a52');line([...L.pitch,L.pitch[0]],.35,'#ffffff');
+ for(const scale of [.98,.94,.9,.86,.82])stadiumLine(track.map(p=>[c[0]+(p[0]-c[0])*scale,c[1]+(p[1]-c[1])*scale]),.29,'#ffffff');
+ const pitchSurface=stadiumPolygon(L.pitch,.32,'#4e8a52');
+ pitchSurface.userData.id='stadium';
+ stadiumLine([...L.pitch,L.pitch[0]],.35,'#ffffff');
  const pitchPoint=(u,v)=>L.bilinear(L.pitch,u,v);
- line([pitchPoint(0,.5),pitchPoint(1,.5)],.35,'#ffffff');
- const circle=[];for(let i=0;i<=60;i++)circle.push(pitchPoint(.5+.14*Math.cos(i*Math.PI/30),.5+.08*Math.sin(i*Math.PI/30)));line(circle,.35,'#ffffff');
- for(const v of [0,1]){const end=v===0?.17:.83;line([pitchPoint(.22,v),pitchPoint(.22,end),pitchPoint(.78,end),pitchPoint(.78,v)],.35,'#ffffff');}
+ stadiumLine([pitchPoint(0,.5),pitchPoint(1,.5)],.35,'#ffffff');
+ const circle=[];for(let i=0;i<=60;i++)circle.push(pitchPoint(.5+.14*Math.cos(i*Math.PI/30),.5+.08*Math.sin(i*Math.PI/30)));stadiumLine(circle,.35,'#ffffff');
+ for(const v of [0,1]){const end=v===0?.17:.83;stadiumLine([pitchPoint(.22,v),pitchPoint(.22,end),pitchPoint(.78,end),pitchPoint(.78,v)],.35,'#ffffff');}
  
  L.courts.forEach((quad,index)=>{
   const rows=index===0?3:2,cols=2;

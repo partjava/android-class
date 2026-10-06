@@ -1,9 +1,9 @@
 /**
- * 晴川 3D 校园 · 建筑位移与旋转微调器 (Building Transform Editor)
+ * 晴川 3D 校园 · 建筑与场地全要素位移与旋转微调器 (Building & Venue Transform Editor)
  * 支持：
- * 1. 单个建筑选取：点击3D场景内建筑，或从下拉列表快速选择
+ * 1. 全要素选取：支持所有建筑、驾校、田径足球场、篮球场、羽毛球场、排球场、小吃街、情缘湖等
  * 2. 上下左右平移：支持 0.5m / 1m / 3m 步长精细对齐底图
- * 3. 角度旋转：支持 1° / 5° / 15° 顺逆时针旋转
+ * 3. 角度旋转：支持 1° / 5° / 15° 顺逆时针绕中心旋转
  * 4. 实时高亮反馈与标签同步
  * 5. 本地持久化保存 (localStorage) 与 一键代码导出
  */
@@ -15,24 +15,28 @@
   let stepMove=1.0; // 米
   let stepRot=5;    // 度 (DEG)
   let transforms={}; // { [id]: { dx: 0, dz: 0, rot: 0 } }
-  let baseTransforms={}; // { [id]: { x, z, rot } }
+  let baseTransforms={}; // { [id]: { x, z, rot, cx, cz, isRegion } }
 
   let sceneRef=null, cameraRef=null, rendererRef=null;
-  let groupsRef=null, labelsRef=null, dataRef=null, selectFn=null;
+  let groupsRef=null, labelsRef=null, placesRef=[], selectFn=null;
   let highlightMarker=null;
 
-  function init({scene, camera, renderer, groups, labels, CampusData, select}){
+  function init({scene, camera, renderer, groups, labels, CampusData, select, allPlaces}){
    sceneRef=scene; cameraRef=camera; rendererRef=renderer;
-   groupsRef=groups; labelsRef=labels; dataRef=CampusData; selectFn=select;
+   groupsRef=groups; labelsRef=labels; selectFn=select;
+   placesRef=allPlaces || (CampusData ? [...CampusData.buildings, ...(CampusData.regions||[])] : []);
 
-   // 记录所有建筑的初始基准位置与旋转
-   for(const b of dataRef.buildings){
+   // 记录所有建筑与运动场地的初始基准位置与旋转
+   for(const b of placesRef){
     const g=groupsRef.get(b.id);
     if(g){
      baseTransforms[b.id]={
       x: g.position.x,
       z: g.position.z,
-      rot: g.rotation.y
+      rot: g.rotation.y,
+      cx: b.x || 0,
+      cz: b.z || 0,
+      isRegion: Boolean(b.region)
      };
     }
    }
@@ -62,29 +66,44 @@
 
   function applyTransform(id){
    const g=groupsRef.get(id);
-   const b=dataRef.buildings.find(item=>item.id===id);
+   const b=placesRef.find(item=>item.id===id);
    const base=baseTransforms[id];
    if(!g||!b||!base)return;
 
    const t=transforms[id]||{dx:0, dz:0, rot:0};
-   g.position.x=base.x+(t.dx||0);
-   g.position.z=base.z+(t.dz||0);
-   g.rotation.y=base.rot+((t.rot||0)*Math.PI/180);
+   const rad=((t.rot||0)*Math.PI/180);
 
-   b.x=g.position.x;
-   b.z=g.position.z;
+   if(base.isRegion){
+    // 场地（驾校、篮球场、足球场、羽毛球场等）：绕自身中心 (cx, cz) 旋转与平移
+    const cx=base.cx||0, cz=base.cz||0;
+    const cos=Math.cos(rad), sin=Math.sin(rad);
+    g.rotation.y=base.rot+rad;
+    g.position.x=base.x+(t.dx||0)+cx-(cx*cos+cz*sin);
+    g.position.z=base.z+(t.dz||0)+cz-(-cx*sin+cz*cos);
+
+    b.x=base.cx+(t.dx||0);
+    b.z=base.cz+(t.dz||0);
+   }else{
+    // 普通建筑模型：Group 原点即为自身中心 (b.x, b.z)
+    g.position.x=base.x+(t.dx||0);
+    g.position.z=base.z+(t.dz||0);
+    g.rotation.y=base.rot+rad;
+
+    b.x=g.position.x;
+    b.z=g.position.z;
+   }
 
    if(labelsRef){
     const lbl=labelsRef.find(item=>item.b.id===id);
     if(lbl&&lbl.s&&lbl.s.position){
-     lbl.s.position.x=g.position.x;
-     lbl.s.position.z=g.position.z;
+     lbl.s.position.x=b.x;
+     lbl.s.position.z=b.z;
     }
    }
 
    if(highlightMarker&&selectedId===id){
-    highlightMarker.position.x=g.position.x;
-    highlightMarker.position.z=g.position.z;
+    highlightMarker.position.x=b.x;
+    highlightMarker.position.z=b.z;
    }
   }
 
@@ -98,7 +117,7 @@
    if(!id||!baseTransforms[id])return;
    selectedId=id;
 
-   // 恢复所有建筑材质原色
+   // 恢复所有物体材质原色，高亮选中的物体
    for(const [gId, g] of groupsRef){
     g.traverse(m=>{
      if(m.isMesh&&m.material&&m.material.emissive){
@@ -107,11 +126,11 @@
     });
    }
 
-   // 移动光圈到建筑底部
-   const g=groupsRef.get(id);
-   if(g&&highlightMarker){
-    highlightMarker.position.x=g.position.x;
-    highlightMarker.position.z=g.position.z;
+   // 移动光圈到物体底部
+   const b=placesRef.find(item=>item.id===id);
+   if(b&&highlightMarker){
+    highlightMarker.position.x=b.x;
+    highlightMarker.position.z=b.z;
     highlightMarker.visible=true;
    }
 
@@ -120,8 +139,7 @@
    if(sel&&sel.value!==id)sel.value=id;
 
    updateReadout();
-   const b=dataRef.buildings.find(item=>item.id===id);
-   showToast('已选中建筑：'+(b?b.name:id)+'，可通过下方按钮调整位置与旋转');
+   showToast('已选中：'+(b?b.name:id)+'，可通过下方按钮调整位置与旋转');
   }
 
   function nudge(dx, dz, drot){
@@ -140,11 +158,11 @@
    transforms[selectedId]={dx:0, dz:0, rot:0};
    applyTransform(selectedId);
    updateReadout();
-   showToast('已复位该建筑至默认位置');
+   showToast('已复位该对象至默认位置');
   }
 
   function resetAll(){
-   if(confirm('确定要将所有建筑恢复至初始默认位置吗？')){
+   if(confirm('确定要将所有建筑和场地恢复至初始默认位置吗？')){
     transforms={};
     applyAllTransforms();
     updateReadout();
@@ -156,7 +174,7 @@
   function saveTransforms(){
    try{
     localStorage.setItem('custom_building_transforms', JSON.stringify(transforms));
-    showToast('🎉 建筑位置与角度已成功保存！');
+    showToast('🎉 位置与角度已成功保存到本地！');
    }catch(e){
     alert('保存失败：'+e.message);
    }
@@ -173,14 +191,14 @@
    if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(json).catch(()=>{});
    }
-   prompt('建筑微调配置代码（可复制到 academic-trace.js 或 campus-layout.js）：', json);
+   prompt('位置与旋转偏移配置 JSON（已复制，可发给我固化到代码）：', json);
   }
 
   function updateReadout(){
    const info=document.getElementById('bld-readout');
    const t=(selectedId&&transforms[selectedId])?transforms[selectedId]:{dx:0, dz:0, rot:0};
    if(info){
-    const b=dataRef.buildings.find(item=>item.id===selectedId);
+    const b=placesRef.find(item=>item.id===selectedId);
     const name=b?b.name:'未选择';
     info.innerHTML=`<strong>${name}</strong>: X偏: <span style="color:#d46238;">${t.dx>=0?'+':''}${t.dx}m</span>, Z偏: <span style="color:#d46238;">${t.dz>=0?'+':''}${t.dz}m</span>, 角度: <span style="color:#215e48;">${t.rot>=0?'+':''}${t.rot}°</span>`;
    }
@@ -203,7 +221,7 @@
     const btn=document.createElement('button');
     btn.id='building-editor-btn';
     btn.textContent='移楼';
-    btn.title='开启建筑位置与旋转调整面板';
+    btn.title='开启建筑与场地位置/旋转微调面板';
     btn.onclick=toggleEditor;
     tools.insertBefore(btn, document.getElementById('top'));
    }
@@ -217,9 +235,9 @@
       <!-- 第一行：标题 + 展开收起 + 退出 -->
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2ebe6;padding-bottom:6px;">
         <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-weight:bold;font-size:13px;color:#1e4d3c;">🏢 建筑位置与方向微调</span>
-          <select id="bld-select" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c2d4cb;background:white;color:#1e4d3c;outline:none;max-width:140px;">
-            <option value="">-- 点击建筑或下拉选择 --</option>
+          <span style="font-weight:bold;font-size:13px;color:#1e4d3c;">🏢 物体位置与方向微调</span>
+          <select id="bld-select" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c2d4cb;background:white;color:#1e4d3c;outline:none;max-width:145px;">
+            <option value="">-- 点击物体或下拉选择 --</option>
           </select>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -229,7 +247,7 @@
       </div>
 
       <!-- 第二行：数值状态指示器 -->
-      <div id="bld-readout" style="font-size:11px;color:#334d42;background:#f2f7f4;padding:4px 8px;border-radius:6px;">请点击场景中的建筑开始调整</div>
+      <div id="bld-readout" style="font-size:11px;color:#334d42;background:#f2f7f4;padding:4px 8px;border-radius:6px;">请点击场景中的建筑或场地开始调整</div>
 
       <!-- 第三行：方向键与旋转控制键盘 (D-Pad) -->
       <div style="display:flex;align-items:center;justify-content:space-around;gap:12px;padding:4px 0;">
@@ -275,25 +293,41 @@
 
     <!-- 收起状态极简微调胶囊 -->
     <div id="bld-panel-mini" style="display:none;position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);padding:6px 14px;border-radius:24px;box-shadow:0 4px 14px rgba(0,0,0,0.2);pointer-events:auto;align-items:center;gap:10px;">
-      <span style="font-weight:bold;font-size:12px;color:#1e4d3c;">🏢 移楼中</span>
-      <span id="bld-mini-name" style="font-size:11px;color:#3e6354;">点击任意建筑调整</span>
+      <span style="font-weight:bold;font-size:12px;color:#1e4d3c;">🏢 调整中</span>
+      <span id="bld-mini-name" style="font-size:11px;color:#3e6354;">点击任意建筑或场地</span>
       <button id="bld-expand-btn" style="padding:3px 10px;font-size:11px;font-weight:bold;border-radius:12px;background:#215e48;color:white;border:0;cursor:pointer;">▼ 展开面板</button>
     </div>
 
     <!-- 底部操作提示 -->
-    <div id="bld-toast" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(20,38,30,0.92);color:white;padding:8px 18px;border-radius:20px;font-size:12px;pointer-events:none;transition:opacity .3s ease;opacity:0;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.3);z-index:10;">点击场景建筑进行微调</div>
+    <div id="bld-toast" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(20,38,30,0.92);color:white;padding:8px 18px;border-radius:20px;font-size:12px;pointer-events:none;transition:opacity .3s ease;opacity:0;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.3);z-index:10;">点击场景建筑或场地进行微调</div>
    `;
    document.body.appendChild(hud);
 
-   // 填充建筑下拉框
+   // 分类填充全要素下拉框
    const sel=document.getElementById('bld-select');
-   if(sel&&dataRef){
-    for(const b of dataRef.buildings){
-     const opt=document.createElement('option');
-     opt.value=b.id;
-     opt.textContent=b.name;
-     sel.appendChild(opt);
-    }
+   if(sel&&placesRef.length>0){
+    sel.innerHTML='<option value="">-- 点击物体或下拉选择 --</option>';
+    const catMap={
+     '教学':'🏫 教学与综合办公',
+     '住宿':'🛏️ 宿舍生活公寓',
+     '生活':'🏪 生活服务与驾校场地',
+     '文体':'⚽ 运动场地与园林景观'
+    };
+    ['教学','住宿','生活','文体'].forEach(cat=>{
+     const list=placesRef.filter(p=>p.category===cat);
+     if(list.length>0){
+      const grp=document.createElement('optgroup');
+      grp.label=catMap[cat]||cat;
+      list.forEach(b=>{
+       const opt=document.createElement('option');
+       opt.value=b.id;
+       opt.textContent=b.name;
+       grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+     }
+    });
+
     sel.onchange=()=>{
      if(sel.value)selectBuilding(sel.value);
     };
@@ -308,7 +342,7 @@
     panelMini.style.display=collapsed?'flex':'none';
     const miniName=document.getElementById('bld-mini-name');
     if(miniName){
-     const b=dataRef.buildings.find(item=>item.id===selectedId);
+     const b=placesRef.find(item=>item.id===selectedId);
      miniName.textContent=b?b.name:'未选择';
     }
    };
@@ -382,12 +416,12 @@
     if(window.setGroundMode)window.setGroundMode('aerial');
     const modeBtn=document.getElementById('mode');
     if(modeBtn){modeBtn.textContent='实景';modeBtn.classList.add('active');}
-    if(!selectedId&&dataRef.buildings.length>0){
-     selectBuilding(dataRef.buildings[0].id);
+    if(!selectedId&&placesRef.length>0){
+     selectBuilding(placesRef[0].id);
     }
-    showToast('已进入建筑微调模式：点击任意建筑或使用方向键平移旋转');
+    showToast('已进入物体微调模式：点击任意建筑或场地，使用方向键平移旋转');
    }else{
-    // 退出编辑模式：恢复建筑默认颜色
+    // 退出编辑模式：恢复所有物体默认颜色
     for(const [gId, g] of groupsRef){
      g.traverse(m=>{
       if(m.isMesh&&m.material&&m.material.emissive){

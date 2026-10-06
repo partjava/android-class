@@ -12,7 +12,18 @@ function flat(points,y,color,parent=scene){const s=new THREE.Shape();points.forE
 buildCampusGround({scene,flat,box,mat});
 const groups=new Map(),pickables=[],labels=[];
 const allPlaces=[...CampusData.buildings,...(CampusData.regions||[])],regionGroups=window.SpecialTrace?SpecialTrace.render(CampusData,{scene,flat,mat}):[];
-for(const record of regionGroups){pickables.push(record.surface);labels.push({b:record.b,s:label(record.b.name,record.b.x,3,record.b.z,record.b)});}
+for(const record of regionGroups){
+ pickables.push(record.surface);
+ labels.push({b:record.b,s:label(record.b.name,record.b.x,3,record.b.z,record.b)});
+ groups.set(record.b.id,record.group);
+}
+if(window.stadiumGroup){
+ const stadiumB={id:'stadium',name:'田径场 / 足球场',category:'文体',region:true,x:638/4,z:266/4};
+ allPlaces.push(stadiumB);
+ if(window.stadiumSurface)pickables.push(window.stadiumSurface);
+ groups.set('stadium', window.stadiumGroup);
+ labels.push({b:stadiumB, s:label(stadiumB.name,stadiumB.x,4,stadiumB.z,stadiumB)});
+}
 function label(text,x,y,z,place){
  const el=document.createElement('div');
  el.className='map-label';
@@ -319,7 +330,7 @@ if(window.RoadEditor&&typeof window.RoadEditor.init==='function'){
  window.RoadEditor.init({scene,camera,renderer});
 }
 if(window.BuildingEditor&&typeof window.BuildingEditor.init==='function'){
- window.BuildingEditor.init({scene,camera,renderer,groups,labels,CampusData,select});
+ window.BuildingEditor.init({scene,camera,renderer,groups,labels,CampusData,select,allPlaces});
 }
 window.CampusScene={
  select:id=>{const b=allPlaces.find(b=>b.id===id);if(b)select(b);},

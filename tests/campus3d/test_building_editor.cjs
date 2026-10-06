@@ -126,8 +126,39 @@ const transforms = globalThis.BuildingEditor.getTransforms();
 assert.equal(transforms['teach_1'].dx, 2.0);
 assert.equal(transforms['teach_1'].dz, -1.5);
 assert.equal(transforms['teach_1'].rot, 10);
+globalThis.BuildingEditor.toggleEditor();
+
+const mockSchoolGroup = {
+  position: { x: 0, y: 0, z: 0 },
+  rotation: { y: 0 },
+  traverse() {}
+};
+groups.set('driving_school', mockSchoolGroup);
+
+const allPlaces = [
+  { id: 'teach_1', name: '教1 (教学楼1)', x: 100, z: 200, category: '教学' },
+  { id: 'driving_school', name: '驾校', x: 200, z: 250, category: '生活', region: true }
+];
+
+globalThis.BuildingEditor.init({
+  scene: mockScene,
+  camera: mockCamera,
+  renderer: mockRenderer,
+  groups,
+  labels,
+  CampusData,
+  select: () => {},
+  allPlaces
+});
+
+globalThis.BuildingEditor.toggleEditor();
+globalThis.BuildingEditor.selectBuilding('driving_school');
+globalThis.BuildingEditor.nudge(3.0, -2.0, 0);
+
+assert.equal(mockSchoolGroup.position.x, 3.0, 'Driving school nudged X');
+assert.equal(mockSchoolGroup.position.z, -2.0, 'Driving school nudged Z');
 
 globalThis.BuildingEditor.toggleEditor();
 assert.equal(globalThis.BuildingEditor.isEditing(), false, 'Editing closed');
 
-console.log('✔ building-editor.js unit tests passed: select, nudge (translation & rotation), labels sync verified');
+console.log('✔ building-editor.js unit tests passed: select, nudge buildings & region venues, labels sync verified');
