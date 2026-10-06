@@ -22,12 +22,24 @@
  polygon([[796,1150],[806,1150],[806,730],[796,730]],.13,'#dcd5c7');
  polygon([[830,1150],[840,1150],[840,730],[830,730]],.13,'#dcd5c7');
 
+ const roadGroup=new THREE.Group();
+ groundSchematic.add(roadGroup);
+
+ // Load custom roads from storage if user customized them
+ try{
+  const saved=localStorage.getItem('custom_campus_roads');
+  if(saved){
+   const parsed=JSON.parse(saved);
+   if(Array.isArray(parsed)&&parsed.length>0)L.roads=parsed;
+  }
+ }catch(e){}
+
  // Realistic Asphalt Roads with Granite Curbs, Junction Caps & Center Lane Markings
  function drawRoad(points,width,y=.12){
   for(let i=0;i<points.length;i++){
    const p=W(points[i]);
-   box(width+1.2,.06,width+1.2,p[0],y,p[1],'#d5cfc2',groundSchematic);
-   box(width,.08,width,p[0],y+.02,p[1],'#383d42',groundSchematic);
+   box(width+1.2,.06,width+1.2,p[0],y,p[1],'#d5cfc2',roadGroup);
+   box(width,.08,width,p[0],y+.02,p[1],'#383d42',roadGroup);
   }
   for(let i=1;i<points.length;i++){
    const a=W(points[i-1]),b=W(points[i]);
@@ -38,21 +50,32 @@
    const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
 
    // Sidewalk curb base
-   const curb=box(width+1.2,.06,len,mx,y,mz,'#d5cfc2',groundSchematic);
+   const curb=box(width+1.2,.06,len,mx,y,mz,'#d5cfc2',roadGroup);
    curb.rotation.y=angle;
 
    // Asphalt surface
-   const road=box(width,.08,len,mx,y+.02,mz,'#383d42',groundSchematic);
+   const road=box(width,.08,len,mx,y+.02,mz,'#383d42',roadGroup);
    road.rotation.y=angle;
 
    // Center white dashed dividing line on main roads
    if(width>=4.5&&len>5.5){
-    const stripe=box(.26,.09,len*.92,mx,y+.03,mz,'#eae6dc',groundSchematic);
+    const stripe=box(.26,.09,len*.92,mx,y+.03,mz,'#eae6dc',roadGroup);
     stripe.rotation.y=angle;
    }
   }
  }
  for(const road of L.roads)drawRoad(road.points,road.width);
+
+ window.rebuildCampusRoads=function(newRoads){
+  while(roadGroup.children.length>0){
+   const obj=roadGroup.children[0];
+   if(obj.geometry)obj.geometry.dispose();
+   roadGroup.remove(obj);
+  }
+  for(const road of newRoads)drawRoad(road.points,road.width);
+  L.roads=newRoads;
+  try{localStorage.setItem('custom_campus_roads',JSON.stringify(newRoads));}catch(e){}
+ };
 
  // Crosswalk zebra stripes at key pedestrian crossings
  function drawCrosswalk(pt,angle,stripes=5){

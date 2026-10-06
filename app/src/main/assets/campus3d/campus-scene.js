@@ -240,6 +240,7 @@ canvas.onpointermove=e=>{
  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)moved=true;
  if(pointers.size===1){
+  if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing())return;
   theta-=dx*.007;
   phi=THREE.MathUtils.clamp(phi+dy*.005,.025,1.4);
  }else{
@@ -257,6 +258,10 @@ canvas.onpointermove=e=>{
  updateCamera();
 };
 function release(e){
+ if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing()){
+  pointers.delete(e.pointerId);pinch=0;down=null;
+  return;
+ }
  if(!moved&&pointers.size===1&&down&&e.type!=='pointercancel')pick(e.clientX,e.clientY);
  pointers.delete(e.pointerId);pinch=0;down=null;
 }
@@ -276,6 +281,18 @@ window.onresize=()=>{
  renderer.setSize(innerWidth,innerHeight);
 };
 document.addEventListener('visibilitychange',()=>paused=document.hidden);
+window.resetCameraTop=function(){
+ stopCruise();
+ selected=null;
+ target.set(165,0,157.5);
+ phi=0.025;
+ theta=0;
+ radius=480;
+ updateCamera();
+};
+if(window.RoadEditor&&typeof window.RoadEditor.init==='function'){
+ window.RoadEditor.init({scene,camera,renderer});
+}
 window.CampusScene={
  select:id=>{const b=allPlaces.find(b=>b.id===id);if(b)select(b);},
  pause:v=>paused=v,

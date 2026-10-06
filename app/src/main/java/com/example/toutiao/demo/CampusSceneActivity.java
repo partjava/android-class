@@ -24,6 +24,7 @@ public class CampusSceneActivity extends AppCompatActivity {
         setContentView(R.layout.activity_campus_scene);
         findViewById(R.id.scene_back).setOnClickListener(v -> finish());
         web = findViewById(R.id.campus_scene_web);
+        WebView.setWebContentsDebuggingEnabled(true);
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setAllowFileAccess(true);
