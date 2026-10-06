@@ -22,8 +22,13 @@
  polygon([[796,1150],[806,1150],[806,730],[796,730]],.13,'#dcd5c7');
  polygon([[830,1150],[840,1150],[840,730],[830,730]],.13,'#dcd5c7');
 
- // Realistic Asphalt Roads with Granite Curbs & Center Lane Markings
+ // Realistic Asphalt Roads with Granite Curbs, Junction Caps & Center Lane Markings
  function drawRoad(points,width,y=.12){
+  for(let i=0;i<points.length;i++){
+   const p=W(points[i]);
+   box(width+1.2,.06,width+1.2,p[0],y,p[1],'#d5cfc2',groundSchematic);
+   box(width,.08,width,p[0],y+.02,p[1],'#383d42',groundSchematic);
+  }
   for(let i=1;i<points.length;i++){
    const a=W(points[i-1]),b=W(points[i]);
    const dx=b[0]-a[0],dz=b[1]-a[1];
@@ -33,7 +38,7 @@
    const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
 
    // Sidewalk curb base
-   const curb=box(width+1.4,.06,len,mx,y,mz,'#d5cfc2',groundSchematic);
+   const curb=box(width+1.2,.06,len,mx,y,mz,'#d5cfc2',groundSchematic);
    curb.rotation.y=angle;
 
    // Asphalt surface
@@ -41,21 +46,28 @@
    road.rotation.y=angle;
 
    // Center white dashed dividing line on main roads
-   if(width>=4&&len>6){
-    const stripe=box(.24,.09,len*.94,mx,y+.03,mz,'#eae6dc',groundSchematic);
+   if(width>=4.5&&len>5.5){
+    const stripe=box(.26,.09,len*.92,mx,y+.03,mz,'#eae6dc',groundSchematic);
     stripe.rotation.y=angle;
    }
   }
  }
  for(const road of L.roads)drawRoad(road.points,road.width);
 
- // Teaching Quadrangle connecting walkways
- const teachWalks=[
-  [[920,850],[1200,850]],
-  [[1060,710],[1060,1060]],
-  [[940,940],[1120,940]],
- ];
- for(const pts of teachWalks)drawRoad(pts,3.2);
+ // Crosswalk zebra stripes at key pedestrian crossings
+ function drawCrosswalk(pt,angle,stripes=5){
+  const [cx,cz]=W(pt);
+  for(let s=-stripes/2;s<=stripes/2;s++){
+   const bar=box(2.2,.09,.42,cx+Math.sin(angle)*s*.85, .14, cz+Math.cos(angle)*s*.85,'#f7f4ed',groundSchematic);
+   bar.rotation.y=angle;
+  }
+ }
+ drawCrosswalk([818,1095],0,6);          // 南门广场前斑马线
+ drawCrosswalk([818,735],0,5);           // 晴川广场北端湖滨斑马线
+ drawCrosswalk([900,1070],Math.PI/2,5);  // 教学区西侧主路斑马线
+ drawCrosswalk([340,1020],Math.PI/2,5);  // 宿舍生活大道交叉口斑马线
+ drawCrosswalk([480,1035],Math.PI/2,5);  // 食堂超市前斑马线
+ drawCrosswalk([640,1040],0,4);          // 小剧场与运动场斑马线
 
  // Lake & Shimmering Waters
  const shore=new THREE.CatmullRomCurve3(L.lake.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
@@ -109,9 +121,10 @@
  const treeMats=['#447b48','#558e5a','#689f64'].map(c=>mat(c));
  const trunkMat=mat('#7d6f55');
 
- for(const road of [...L.roads, ...teachWalks.map(pts=>({width:3,points:pts}))])for(let i=1;i<road.points.length;i++){
+ for(const road of L.roads)for(let i=1;i<road.points.length;i++){
   const a=road.points[i-1],b=road.points[i],dx=b[0]-a[0],dz=b[1]-a[1],len=Math.hypot(dx,dz);
-  for(let t=14;t<len;t+=36)for(const sign of [-1,1]){
+  if(len<20)continue;
+  for(let t=18;t<len-10;t+=38)for(const sign of [-1,1]){
    const offset=(road.width/2+3.2)*4,p=[a[0]+dx*t/len-sign*dz/len*offset,a[1]+dz*t/len+sign*dx/len*offset];
    if(!inside(p,L.boundary)||inside(p,L.lake)||buildings.some(loop=>inside(p,loop)))continue;
    const [x,z]=W(p);
@@ -127,7 +140,7 @@
  // --- 3D South Gate Archway (晴川大门牌坊) ---
  function buildSouthGate(parentGroup){
   const gateGroup=new THREE.Group();
-  gateGroup.position.set(204.5,0,285);
+  gateGroup.position.set(204.5,0,302.5);
   box(24,.6,6,0,0,0,'#ded8cb',gateGroup);
   for(const x of [-7.5,-2.5,2.5,7.5]){
    box(1.2,7.5,1.2,x,.6,0,'#e5ded2',gateGroup);
@@ -147,15 +160,15 @@
  }
  buildSouthGate(groundSchematic);
 
- // --- High-Resolution Unwarped Aerial Drone Photograph Ground Texture Layer ---
+ // --- High-Resolution Perfectly Aligned Aerial Satellite Ground Texture Layer ---
  const aerialGroup=new THREE.Group();
  scene.add(aerialGroup);
  
  // Base Architectural Plinth
- const plinthGeo=new THREE.BoxGeometry(342,4,196);
+ const plinthGeo=new THREE.BoxGeometry(334,4,319);
  const plinthMat=mat('#2c352f');
  const plinthMesh=new THREE.Mesh(plinthGeo,plinthMat);
- plinthMesh.position.set(165,-2.02,140);
+ plinthMesh.position.set(165,-2.02,157.5);
  plinthMesh.receiveShadow=true;
  aerialGroup.add(plinthMesh);
 
@@ -167,8 +180,8 @@
    tex.minFilter=THREE.LinearFilter;
    tex.magFilter=THREE.LinearFilter;
    
-   // Exact aspect ratio matching 1673 x 940 (1.78)
-   const planeGeo=new THREE.PlaneGeometry(338,190);
+   // Exact 1:1 isometric match to reference 1320 x 1260 (world size: 330 x 315)
+   const planeGeo=new THREE.PlaneGeometry(330,315);
    planeGeo.rotateX(-Math.PI/2);
    const planeMat=new THREE.MeshStandardMaterial({
      map:tex,
@@ -176,7 +189,7 @@
      metalness:0.04
    });
    const aerialMesh=new THREE.Mesh(planeGeo,planeMat);
-   aerialMesh.position.set(165,0.02,140);
+   aerialMesh.position.set(165,0.02,157.5);
    aerialMesh.receiveShadow=true;
    aerialGroup.add(aerialMesh);
  });
