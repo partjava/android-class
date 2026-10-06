@@ -199,6 +199,7 @@
    t.rot=Math.round((t.rot+drot)*10)/10;
    applyTransform(selectedId);
    updateReadout();
+   autoSaveTransforms();
   }
 
   function resetCurrent(){
@@ -206,6 +207,7 @@
    transforms[selectedId]={dx:0, dz:0, rot:0};
    applyTransform(selectedId);
    updateReadout();
+   autoSaveTransforms();
    showToast('已复位该对象至默认位置');
   }
 
@@ -219,13 +221,20 @@
    }
   }
 
-  function saveTransforms(){
-   try{
-    localStorage.setItem('custom_building_transforms', JSON.stringify(transforms));
-    showToast('🎉 位置与角度已成功保存到本地！');
-   }catch(e){
-    alert('保存失败：'+e.message);
+  function autoSaveTransforms(){
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
+    try{ window.CampusNativeBridge.saveConfig('custom_building_transforms', JSON.stringify(transforms)); }catch(e){}
    }
+   try{
+    if(typeof localStorage !== 'undefined' && localStorage){
+     localStorage.setItem('custom_building_transforms', JSON.stringify(transforms));
+    }
+   }catch(e){}
+  }
+
+  function saveTransforms(){
+   autoSaveTransforms();
+   showToast('🎉 位置与角度已成功保存到手机硬盘！');
   }
 
   function exportTransformsCode(){

@@ -68,6 +68,18 @@
    setupPointerEvents();
   }
 
+  
+  function autoSaveRoads(){
+   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
+    try{ window.CampusNativeBridge.saveConfig('custom_campus_roads', JSON.stringify(roads)); }catch(e){}
+   }
+   try{
+    if(typeof localStorage !== 'undefined' && localStorage){
+     localStorage.setItem('custom_campus_roads', JSON.stringify(roads));
+    }
+   }catch(e){}
+  }
+
   function loadInitialRoads(){
    if(window.CampusNativeBridge && typeof window.CampusNativeBridge.loadConfig === 'function'){
     try{
@@ -187,6 +199,7 @@
     history.push(JSON.parse(JSON.stringify(roads)));
     roads=remainingRoads;
     updatePreview();
+    autoSaveRoads();
     showToast('🧹 已精准擦除触碰的道路');
     return true;
    }
@@ -227,6 +240,7 @@
        roads.push({width:currentWidth,points:[prev,pt]});
        activePoints=[pt];
        updatePreview();
+       autoSaveRoads();
        showToast('已连接道路！继续点击连线，或点击“结束当前段”');
       }
      }
@@ -269,6 +283,7 @@
      }
      activePoints=[];
      updatePreview();
+     autoSaveRoads();
     }else if(drawMode==='erase'){
      isDragging=false;
     }
@@ -449,6 +464,7 @@
      roads=history.pop();
      activePoints=[];
      updatePreview();
+     autoSaveRoads();
      showToast('↩ 已撤销一步操作');
     }else{
      showToast('没有可撤销的步骤了');
@@ -461,6 +477,7 @@
      history.push(JSON.parse(JSON.stringify(roads)));
      roads=[];activePoints=[];
      updatePreview();
+     autoSaveRoads();
      showToast('🗑️ 画布已清空，请在网格上开始画路');
     }
    };
