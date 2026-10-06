@@ -240,7 +240,19 @@ canvas.onpointermove=e=>{
  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)moved=true;
  if(pointers.size===1){
-  if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing())return;
+  if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing()){
+   if(window.RoadEditor.getMode&&window.RoadEditor.getMode()==='pan'){
+    const panK=(radius*0.0016);
+    target.x-=dx*panK*Math.cos(theta);
+    target.z+=dx*panK*Math.sin(theta);
+    target.z-=dy*panK*Math.cos(theta);
+    target.x-=dy*panK*Math.sin(theta);
+    target.x=THREE.MathUtils.clamp(target.x,-50,380);
+    target.z=THREE.MathUtils.clamp(target.z,-50,380);
+    updateCamera();
+   }
+   return;
+  }
   theta-=dx*.007;
   phi=THREE.MathUtils.clamp(phi+dy*.005,.025,1.4);
  }else{

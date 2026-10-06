@@ -36,14 +36,15 @@ for (const [id, p] of Object.entries(layout.placements)) {
   else if (p.outline) buildingPolys.push({ id, poly: p.outline });
 }
 
-assert(layout.roads.length >= 25, 'Expected comprehensive road network');
+const testRoads = layout.defaultRoads || layout.roads;
+assert(testRoads.length >= 25, 'Expected comprehensive road network');
 assert(buildingPolys.length >= 20, 'Expected all building footprints registered');
 
 // Test each road segment for collisions with building interiors
 let collisionCount = 0;
 const collidingPairs = [];
 
-for (const road of layout.roads) {
+for (const road of testRoads) {
   const halfWidthPx = (road.width * 4) / 2;
   for (let i = 0; i < road.points.length - 1; i++) {
     const p1 = road.points[i];

@@ -27,7 +27,8 @@ trace.apply=function(data,models,layout){
  }
  data.regions=regions.map(r=>{const convert=p=>trace.world(p).map((v,i)=>v+(r.offset?.[i]||0)),outline=r.outline.map(convert),x=outline.reduce((sum,p)=>sum+p[0],0)/outline.length,z=outline.reduce((sum,p)=>sum+p[1],0)/outline.length;return {...r,outline,x,z,region:true};});
  const pixels=p=>trace.world(p).map(v=>v*4);layout.lake=regions[0].outline.map(pixels);layout.courts=[];
- layout.roads[5].points=[[496,395],[498,469],[489,519],[522,584],[573,642],[632,651],[728,597],[725,576],[622,431],[588,370],[496,395]].map(pixels);
+ if(layout.roads&&layout.roads[5])layout.roads[5].points=[[496,395],[498,469],[489,519],[522,584],[573,642],[632,651],[728,597],[725,576],[622,431],[588,370],[496,395]].map(pixels);
+ if(layout.defaultRoads&&layout.defaultRoads[5])layout.defaultRoads[5].points=[[496,395],[498,469],[489,519],[522,584],[573,642],[632,651],[728,597],[725,576],[622,431],[588,370],[496,395]].map(pixels);
 };
 // Small schematic furnishings, confined to the existing parcels. Shared geometry
 // and materials keep this cosmetic layer inexpensive in the Android WebView.

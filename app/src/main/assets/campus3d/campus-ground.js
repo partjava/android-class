@@ -49,16 +49,20 @@
    const angle=Math.atan2(dx,dz);
    const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
 
+   const isWhitePaved=(width<=3.2); // 3m 支路为米白色白板路
+   const roadColor=isWhitePaved?'#eae5dc':'#383d42';
+   const curbColor=isWhitePaved?'#ded9ce':'#d5cfc2';
+
    // Sidewalk curb base
-   const curb=box(width+1.2,.06,len,mx,y,mz,'#d5cfc2',roadGroup);
+   const curb=box(width+(isWhitePaved?0.6:1.2),.06,len,mx,y,mz,curbColor,roadGroup);
    curb.rotation.y=angle;
 
-   // Asphalt surface
-   const road=box(width,.08,len,mx,y+.02,mz,'#383d42',roadGroup);
+   // Road surface
+   const road=box(width,.08,len,mx,y+.02,mz,roadColor,roadGroup);
    road.rotation.y=angle;
 
    // Center white dashed dividing line on main roads
-   if(width>=4.5&&len>5.5){
+   if(!isWhitePaved&&width>=4.5&&len>5.5){
     const stripe=box(.26,.09,len*.92,mx,y+.03,mz,'#eae6dc',roadGroup);
     stripe.rotation.y=angle;
    }

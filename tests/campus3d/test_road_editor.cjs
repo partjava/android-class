@@ -97,7 +97,9 @@ createRoadEditor();
 assert(globalThis.RoadEditor, 'RoadEditor namespace registered on window');
 assert.equal(typeof globalThis.RoadEditor.init, 'function', 'RoadEditor.init is callable');
 assert.equal(typeof globalThis.RoadEditor.toggleEditor, 'function', 'RoadEditor.toggleEditor is callable');
-assert.equal(typeof globalThis.RoadEditor.isEditing, 'function', 'RoadEditor.isEditing is callable');
+assert.equal(typeof globalThis.RoadEditor.getMode, 'function', 'RoadEditor.getMode is callable');
+assert.equal(typeof globalThis.RoadEditor.clearRoads, 'function', 'RoadEditor.clearRoads is callable');
+assert.equal(typeof globalThis.RoadEditor.getRoads, 'function', 'RoadEditor.getRoads is callable');
 
 const mockScene = new globalThis.THREE.Group();
 const mockCamera = {};
@@ -112,11 +114,15 @@ globalThis.RoadEditor.init({
 });
 
 assert.equal(globalThis.RoadEditor.isEditing(), false, 'Initially not editing');
+assert.equal(globalThis.RoadEditor.getMode(), 'point', 'Default mode is point');
 
 globalThis.RoadEditor.toggleEditor();
 assert.equal(globalThis.RoadEditor.isEditing(), true, 'Editing mode active after toggle');
 
+globalThis.RoadEditor.clearRoads();
+assert.equal(globalThis.RoadEditor.getRoads().length, 0, 'Roads cleared to 0');
+
 globalThis.RoadEditor.toggleEditor();
 assert.equal(globalThis.RoadEditor.isEditing(), false, 'Editing mode closed after second toggle');
 
-console.log('✔ road-editor.js unit tests passed: state toggle, UI construction and event listeners verified');
+console.log('✔ road-editor.js unit tests passed: state toggle, UI construction, clearRoads and mode verified');
