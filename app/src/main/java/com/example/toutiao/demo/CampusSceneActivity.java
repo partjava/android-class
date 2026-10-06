@@ -28,8 +28,8 @@ public class CampusSceneActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(false);
-        settings.setAllowFileAccessFromFileURLs(false);
-        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
         settings.setBlockNetworkLoads(true);
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
