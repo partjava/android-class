@@ -30,7 +30,7 @@
   const saved=localStorage.getItem('custom_campus_roads');
   if(saved){
    const parsed=JSON.parse(saved);
-   if(Array.isArray(parsed)&&parsed.length>0)L.roads=parsed;
+   if(Array.isArray(parsed))L.roads=parsed;
   }
  }catch(e){}
 
