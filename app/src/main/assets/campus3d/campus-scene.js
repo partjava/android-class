@@ -17,7 +17,14 @@ function label(text,x,y,z,place){
  const el=document.createElement('div');
  el.className='map-label';
  el.textContent=text;
- if(place)el.onclick=e=>{e.stopPropagation();select(place);};
+ if(place)el.onclick=e=>{
+  e.stopPropagation();
+  if(window.BuildingEditor&&window.BuildingEditor.isEditing&&window.BuildingEditor.isEditing()){
+   window.BuildingEditor.selectBuilding(place.id);
+   return;
+  }
+  select(place);
+ };
  document.getElementById('labels').append(el);
  return {el,position:new THREE.Vector3(x,y,z),visible:true};
 }
@@ -134,7 +141,13 @@ function pick(x,y){
  const hit=raycaster.intersectObjects(pickables).find(h=>h.object.parent.visible);
  if(hit){
   const b=allPlaces.find(b=>b.id===hit.object.userData.id);
-  if(b)select(b);
+  if(b){
+   if(window.BuildingEditor&&window.BuildingEditor.isEditing&&window.BuildingEditor.isEditing()){
+    window.BuildingEditor.selectBuilding(b.id);
+    return;
+   }
+   select(b);
+  }
  }
 }
 
@@ -304,6 +317,9 @@ window.resetCameraTop=function(){
 };
 if(window.RoadEditor&&typeof window.RoadEditor.init==='function'){
  window.RoadEditor.init({scene,camera,renderer});
+}
+if(window.BuildingEditor&&typeof window.BuildingEditor.init==='function'){
+ window.BuildingEditor.init({scene,camera,renderer,groups,labels,CampusData,select});
 }
 window.CampusScene={
  select:id=>{const b=allPlaces.find(b=>b.id===id);if(b)select(b);},
