@@ -14,7 +14,7 @@
  // South Gate Entrance Plaza & Ceremonial paving
  polygon(L.plaza,.06,'#ded7c8');
  polygon([[335,170],[520,137],[549,445],[444,415],[360,365]],.06,'#dfdbd0');
- polygon(L.grass,.08,'#65a35e');
+ polygon(L.grass,.08,'#5c9656');
 
  // Central Ceremonial White Marble Pathway (国旗大道主轴线)
  const centralWalk=[[806,1150],[830,1150],[830,730],[806,730]];
