@@ -11,6 +11,7 @@
 (function(root){
  function createRoadEditor(){
   let isEditing=false;
+  let previousGroundMode='schematic';
   let isCollapsed=false;
   let drawMode='point'; // 'pan' (移动视野), 'point' (两点连线), 'drag' (涂抹划路), 'erase' (橡皮擦)
   let currentWidth=6.0; // 道路宽度：6.0 (主路), 4.5 (次干), 3.0 (白板路)
@@ -215,13 +216,23 @@
 
   let isDragging=false;
   let lastDragPt=null;
+  const drawingPointers=new Set();
+  let gesturePaused=false,gestureSnapshot=null;
 
   function setupPointerEvents(){
    const dom=rendererRef.domElement;
 
    dom.addEventListener('pointerdown',e=>{
     if(!isEditing)return;
-    if(e.pointerType==='touch'&&e.isPrimary===false)return;
+    drawingPointers.add(e.pointerId);
+    if(drawingPointers.size>1){
+     gesturePaused=true;isDragging=false;lastDragPt=null;
+     if(gestureSnapshot){roads=gestureSnapshot.roads;activePoints=gestureSnapshot.activePoints;history.length=gestureSnapshot.historyLength;autoSaveRoads();updatePreview();}
+     markerMesh.visible=false;
+     return;
+    }
+    if(gesturePaused)return;
+    gestureSnapshot={roads:JSON.parse(JSON.stringify(roads)),activePoints:JSON.parse(JSON.stringify(activePoints)),historyLength:history.length};
     if(drawMode==='pan')return; // 移动模式由 campus-scene.js 处理单指平移
 
     const shouldSnap = (drawMode === 'point');
@@ -263,7 +274,7 @@
    });
 
    dom.addEventListener('pointermove',e=>{
-    if(!isEditing||drawMode==='pan')return;
+    if(!isEditing||drawMode==='pan'||gesturePaused)return;
     const shouldSnap = (drawMode === 'point');
     const pt = getWorldCoords(e, shouldSnap);
     if(pt){
@@ -283,6 +294,8 @@
    });
 
    dom.addEventListener('pointerup',e=>{
+    drawingPointers.delete(e.pointerId);
+    if(gesturePaused){if(!drawingPointers.size){gesturePaused=false;gestureSnapshot=null;}return;}
     if(!isEditing||drawMode==='pan')return;
     if(drawMode==='drag'&&isDragging){
      isDragging=false;
@@ -296,6 +309,12 @@
     }else if(drawMode==='erase'){
      isDragging=false;
     }
+   });
+   dom.addEventListener('pointercancel',e=>{
+    drawingPointers.delete(e.pointerId);isDragging=false;lastDragPt=null;
+    if(gestureSnapshot&&!gesturePaused){roads=gestureSnapshot.roads;activePoints=gestureSnapshot.activePoints;history.length=gestureSnapshot.historyLength;autoSaveRoads();updatePreview();}
+    if(!drawingPointers.size){gesturePaused=false;gestureSnapshot=null;}
+    markerMesh.visible=false;
    });
   }
 
@@ -332,14 +351,14 @@
 
   function createUI(){
    // 1. 在右侧工具栏添加【画路】按钮
-   const tools=document.querySelector('.tools');
+   const tools=document.getElementById('more-tools')||document.querySelector('.tools');
    if(tools&&!document.getElementById('road-editor-btn')){
     const btn=document.createElement('button');
     btn.id='road-editor-btn';
     btn.textContent='画路';
     btn.title='开启网格画路编辑面板';
     btn.onclick=toggleEditor;
-    tools.insertBefore(btn,document.getElementById('top'));
+    tools.appendChild(btn);
    }
 
    // 2. 创建顶部和底部编辑器 HUD 面板（支持收起与展开）
@@ -347,59 +366,23 @@
    hud.id='road-editor-hud';
    hud.style.cssText='display:none;position:fixed;inset:0;pointer-events:none;z-index:9;font-family:system-ui,-apple-system,sans-serif;';
    hud.innerHTML=`
-    <!-- 展开状态完整工具箱 -->
-    <div id="ed-panel-full" style="position:absolute;top:10px;left:10px;right:10px;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);padding:10px 12px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.18);pointer-events:auto;display:flex;flex-direction:column;gap:8px;">
-      <!-- 第一行：标题 + 展开收起切换 + 退出 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2ebe6;padding-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-weight:bold;font-size:13px;color:#1e4d3c;">🛠️ 路网网格编辑器</span>
-          <span style="font-size:10px;background:#e5f0eb;color:#215e48;padding:2px 6px;border-radius:4px;">2m精细吸附网格</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button id="ed-collapse-btn" style="padding:4px 9px;font-size:11px;border-radius:6px;background:#e2eeea;color:#1d4e3d;border:0;cursor:pointer;font-weight:bold;">▲ 收起面板</button>
-          <button id="ed-close-btn" style="padding:4px 9px;font-size:11px;border-radius:6px;background:#444;color:white;border:0;cursor:pointer;">✕ 退出</button>
-        </div>
-      </div>
-
-      <!-- 第二行：操作模式选择 -->
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:11px;font-weight:bold;color:#456657;">模式:</span>
-        <button id="ed-mode-pan" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">🖐️ 移动视野</button>
-        <button id="ed-mode-point" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#215e48;color:white;border:0;cursor:pointer;">🔘 两点连线</button>
-        <button id="ed-mode-drag" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">🖌️ 涂抹划线</button>
-        <button id="ed-mode-erase" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#ecdada;color:#8f2d2d;border:0;cursor:pointer;">🧹 橡皮擦</button>
-      </div>
-
-      <!-- 第三行：道路宽度与类型选择 -->
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-size:11px;font-weight:bold;color:#456657;">路型:</span>
-        <button id="ed-w-6" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#215e48;color:white;border:0;cursor:pointer;">主路 6m</button>
-        <button id="ed-w-4" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">次干 4.5m</button>
-        <button id="ed-w-3" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;border:1px solid #ced5cb;">白板路 3m</button>
-        <span style="font-size:10px;color:#788b83;margin-left:2px;">(白板路为米白色石板人行道)</span>
-      </div>
-
-      <!-- 第四行：编辑控制与一键生成 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;padding-top:4px;border-top:1px dashed #e2ebe6;">
-        <div style="display:flex;align-items:center;gap:5px;">
-          <button id="ed-finish-active" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#358164;color:white;border:0;cursor:pointer;">结束当前段</button>
-          <button id="ed-undo" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#dfd8ce;color:#352e25;border:0;cursor:pointer;">↩ 撤销</button>
-          <button id="ed-clear" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#ecdada;color:#8f2d2d;border:0;cursor:pointer;">🗑️ 清空所有</button>
-          <button id="ed-export" style="padding:5px 9px;font-size:11px;border-radius:6px;background:#e2ece7;color:#1b4a39;border:0;cursor:pointer;">📋 导出</button>
-        </div>
-        <button id="ed-save" style="padding:6px 14px;font-size:12px;font-weight:bold;border-radius:8px;background:#e37036;color:white;border:0;cursor:pointer;box-shadow:0 3px 10px rgba(227,112,54,0.45);">💾 生成3D路网</button>
-      </div>
-    </div>
-
-    <!-- 收起状态精简浮标小药丸（超小占用，不挡屏幕画路） -->
-    <div id="ed-panel-mini" style="display:none;position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);padding:6px 14px;border-radius:24px;box-shadow:0 4px 14px rgba(0,0,0,0.2);pointer-events:auto;align-items:center;gap:10px;">
-      <span style="font-weight:bold;font-size:12px;color:#1e4d3c;">🛠️ 画路中</span>
-      <span id="ed-collapsed-label" style="font-size:11px;color:#3e6354;">🔘 两点连线 · 主路 6m</span>
-      <button id="ed-expand-btn" style="padding:3px 10px;font-size:11px;font-weight:bold;border-radius:12px;background:#215e48;color:white;border:0;cursor:pointer;">▼ 展开面板</button>
-    </div>
-
-    <!-- 底部操作提示 -->
-    <div id="editor-toast" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(20,38,30,0.92);color:white;padding:8px 18px;border-radius:20px;font-size:12px;pointer-events:none;transition:opacity .3s ease;opacity:0;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.3);z-index:10;">点击网格交点开始连线</div>
+    <section id="ed-panel-full" class="editor-panel" aria-label="校园道路绘制">
+      <header class="editor-header">
+        <div><p class="editor-kicker">CAMPUS STUDIO</p><div class="editor-title">绘制道路</div></div>
+        <div class="editor-header-actions"><button id="ed-collapse-btn" class="editor-icon" aria-label="收起道路面板">收起</button><button id="ed-close-btn" class="editor-done">完成</button></div>
+      </header>
+      <div class="editor-section"><span class="editor-section-label">绘制方式</span><div class="editor-options">
+        <button id="ed-mode-pan">↔ 移动视野</button><button id="ed-mode-point" style="background:#215e48;color:white">＋ 两点连线</button><button id="ed-mode-drag">〰 连续绘制</button><button id="ed-mode-erase">− 擦除道路</button>
+      </div></div>
+      <div class="editor-section"><span class="editor-section-label">道路类型</span><div class="editor-options editor-widths">
+        <button id="ed-w-6" style="background:#215e48;color:white">主路 · 6m</button><button id="ed-w-4">次干路 · 4.5m</button><button id="ed-w-3">步行道 · 3m</button>
+      </div></div>
+      <div class="editor-history"><button id="ed-finish-active">结束当前段</button><button id="ed-undo">↶ 撤销</button></div>
+      <div class="editor-footer"><button id="ed-clear" class="editor-danger">清空道路</button><button id="ed-export">导出路网</button><button id="ed-save" class="editor-primary">应用路网</button></div>
+      <p class="editor-caption">2m 网格吸附 · 步行道使用米白石板 · 修改自动保存</p>
+    </section>
+    <div id="ed-panel-mini" class="editor-mini" style="display:none"><strong>绘制道路</strong><span id="ed-collapsed-label">两点连线 · 主路 6m</span><button id="ed-expand-btn">展开 ↑</button></div>
+    <div id="editor-toast" class="editor-toast">点击网格开始连线</div>
    `;
    document.body.appendChild(hud);
 
@@ -500,10 +483,7 @@
 
    // 保存并实时生成 3D 沥青/白板路网
    document.getElementById('ed-save').onclick=()=>{
-    if(window.rebuildCampusRoads){
-     window.rebuildCampusRoads(roads);
-     showToast('🎉 3D 路网已实时更新！共生成 '+roads.length+' 段道路');
-    }
+    showToast('🎉 3D 路网已实时更新！共生成 '+roads.length+' 段道路');
     toggleEditor();
    };
 
@@ -511,7 +491,20 @@
   }
 
   function toggleEditor(){
+   if(!isEditing){
+    window.CampusScene?.closeMore();
+    if(window.BuildingEditor?.isEditing())window.BuildingEditor.toggleEditor();
+    window.RoutePlanner?.suspend();
+    previousGroundMode=window.getGroundMode?window.getGroundMode():'schematic';
+    if(window.CampusScene?.stopMotion)window.CampusScene.stopMotion();
+   }else{
+    autoSaveRoads();
+    if(window.rebuildCampusRoads)window.rebuildCampusRoads(roads);
+    if(window.setGroundMode)window.setGroundMode(previousGroundMode);
+    window.RoutePlanner?.refresh();
+   }
    isEditing=!isEditing;
+   drawingPointers.clear();gesturePaused=false;gestureSnapshot=null;isDragging=false;
    const hud=document.getElementById('road-editor-hud');
    const btn=document.getElementById('road-editor-btn');
    if(hud)hud.style.display=isEditing?'block':'none';
@@ -532,10 +525,8 @@
     loadInitialRoads();
     updatePreview();
     if(window.setGroundMode)window.setGroundMode('aerial');
-    const modeBtn=document.getElementById('mode');
-    if(modeBtn){modeBtn.textContent='实景';modeBtn.classList.add('active');}
     if(window.resetCameraTop)window.resetCameraTop();
-    showToast('已进入路网绘制面板：可移动视野、两点连线、连续涂抹或橡皮擦');
+    showToast('选择绘制方式开始画路；收起面板可获得更大视野。');
    }else{
     if(markerMesh)markerMesh.visible=false;
     activePoints=[];
@@ -547,8 +538,10 @@
    toggleEditor,
    isEditing:()=>isEditing,
    getMode:()=>drawMode,
+   isGesturePaused:()=>gesturePaused,
    clearRoads:()=>{history.push(JSON.parse(JSON.stringify(roads)));roads=[];activePoints=[];updatePreview();},
-   getRoads:()=>roads
+   getRoads:()=>roads,
+   autoSave:autoSaveRoads
   };
  }
 

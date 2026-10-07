@@ -21,6 +21,7 @@ button.active{background:#215e48;color:white}
 
 /* Rich Landmark Detail Card */
 .card{position:fixed;bottom:16px;left:12px;right:12px;max-width:440px;margin:auto;padding:12px 14px;background:#fffffffa;border-radius:16px;box-shadow:0 8px 30px #163e292a;z-index:3;transition:transform .25s ease,opacity .25s ease}
+.card[hidden]{display:none!important}
 .card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .card-title-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .card h3{margin:0;font-size:16px;color:#1d382e}
@@ -38,17 +39,35 @@ button.active{background:#215e48;color:white}
 .btn-detail{background:#e8f0ec;color:#215e48}
 .hint{position:fixed;bottom:4px;left:0;right:0;text-align:center;font-size:9px;color:#6d8379;pointer-events:none}
 #error{display:none;position:fixed;inset:100px 20px auto;background:white;padding:20px;border-radius:12px;z-index:5}
-</style></head><body>
+</style><link rel="stylesheet" href="campus-ui.css"></head><body>
 <div class="top"><input id="search" placeholder="搜索建筑或区域，如：教1、图书馆、体育馆" aria-label="搜索建筑或区域"><button id="find">查找</button></div>
-<div class="filters" id="filters"></div>
-<div class="badge">晴川 3D 校园 · 实景底图与模型严密对齐</div>
+<div class="filters" id="filters"><button id="label-toggle" aria-label="隐藏地图地点名称" aria-pressed="false">隐藏名称</button></div>
+<div class="badge">晴川校园 · 三维导览</div>
 <div class="tools">
   <button id="plus" aria-label="放大">＋</button>
   <button id="minus" aria-label="缩小">－</button>
+  <button id="top" aria-label="俯视切换" aria-pressed="false">俯视</button>
+  <button id="route" aria-label="规划校园路线">路线</button>
+  <button id="more" aria-label="展开更多地图工具" aria-expanded="false" aria-controls="more-tools">更多</button>
+</div>
+<div id="more-tools" class="more-tools" hidden>
   <button id="mode" aria-label="底图模式" title="切换实景航拍/规划沙盘">沙盘</button>
   <button id="cruise" aria-label="漫游巡航" title="自动校园漫游巡航">巡航</button>
-  <button id="top" aria-label="俯视切换">俯视</button>
+  <button id="gesture" aria-label="切换拖动方式：平移或旋转" aria-pressed="false">平移</button>
   <button id="reset" aria-label="复位">复位</button>
+</div>
+<div id="route-hud" class="route-hud" hidden>
+  <section class="editor-panel route-panel" aria-label="校园路线规划">
+    <header class="editor-header"><div><p class="editor-kicker">CAMPUS ROUTE</p><div class="editor-title">规划路线</div></div><button id="route-close" class="editor-icon" aria-label="关闭路线面板">×</button></header>
+    <div class="route-endpoints">
+      <label class="editor-select"><span class="route-dot start-dot">起</span><select id="route-start" aria-label="路线起点"></select></label>
+      <button id="route-swap" aria-label="交换起点和终点">⇅</button>
+      <label class="editor-select"><span class="route-dot end-dot">终</span><select id="route-end" aria-label="路线终点"></select></label>
+    </div>
+    <p id="route-status" class="editor-readout" role="status" aria-live="polite">选择起点和终点，沿校园道路规划路线。</p>
+    <div class="editor-footer"><button id="route-clear">清除路线</button><button id="route-plan" class="editor-primary">显示路线</button></div>
+    <p class="editor-caption">实线为道路路线，虚线为地点连接段。校园示意路网，未标注真实建筑入口。</p>
+  </section>
 </div>
 <div class="labels" id="labels"></div>
 <div class="compass" id="compass">↑ 北</div>
@@ -75,12 +94,14 @@ button.active{background:#215e48;color:white}
   </div>
 </div>
 
-<div class="hint">点击建筑查看实景照片与楼层导览 · 开启【巡航】漫游校园</div>
+<div class="hint">单指拖动平移 · 双指缩放 · 点【平移/旋转】切换 · 点击建筑查看详情</div>
 <div id="error"></div>
 
 <script src="three.min.js"></script>
 <script src="campus-data.js"></script>
 <script src="scene-utils.js"></script>
+<script src="campus-routing.js"></script>
+<script src="route-planner.js"></script>
 <script src="campus-footprints.js"></script>
 <script src="campus-layout.js"></script>
 <script src="teaching-trace.js"></script>

@@ -161,4 +161,76 @@ assert.equal(mockSchoolGroup.position.z, -2.0, 'Driving school nudged Z');
 globalThis.BuildingEditor.toggleEditor();
 assert.equal(globalThis.BuildingEditor.isEditing(), false, 'Editing closed');
 
-console.log('✔ building-editor.js unit tests passed: select, nudge buildings & region venues, labels sync verified');
+// Reset must restore the user's packaged layout and persist it to both stores.
+const nativeData = {};
+globalThis.CampusNativeBridge = {
+  loadConfig(key) { return nativeData[key] || null; },
+  saveConfig(key, value) { nativeData[key] = value; }
+};
+globalThis.confirm = () => true;
+localStorage._data = {};
+const defaultTransforms = {
+  teach_1: { dx: 5, dz: 0, rot: 10 },
+  driving_school: { dx: 2, dz: 9, rot: 5 }
+};
+function initDefaultScene() {
+  const building = { position: { x: 100, y: 0, z: 200 }, rotation: { y: 0 }, traverse() {} };
+  const region = { position: { x: 0, y: 0, z: 0 }, rotation: { y: 0 }, traverse() {} };
+  createBuildingEditor();
+  BuildingEditor.init({ scene: mockScene, camera: mockCamera, renderer: mockRenderer,
+    groups: new Map([['teach_1', building], ['driving_school', region]]), labels,
+    CampusData: { buildings: [{ id: 'teach_1', name: '教1', x: 100, z: 200 }], defaultTransforms },
+    allPlaces: [{ id: 'teach_1', name: '教1', x: 100, z: 200 },
+      { id: 'driving_school', name: '驾校', x: 200, z: 250, region: true }], select() {} });
+  return building;
+}
+const defaultBuilding = initDefaultScene();
+assert.equal(defaultBuilding.position.x, 105);
+BuildingEditor.selectBuilding('teach_1');
+BuildingEditor.nudge(8, -3, 20);
+document.getElementById('bld-reset-cur').onclick();
+assert.deepEqual(BuildingEditor.getTransforms().teach_1, defaultTransforms.teach_1,
+  'Single reset restores the calibrated default, not zero offsets');
+assert.equal(defaultBuilding.position.x, 105);
+assert.equal(mockLabel.s.position.x, 105);
+BuildingEditor.nudge(4, 2, 5);
+BuildingEditor.selectBuilding('driving_school');
+BuildingEditor.nudge(-7, 3, 10);
+document.getElementById('bld-reset-all').onclick();
+assert.deepEqual(BuildingEditor.getTransforms(), defaultTransforms, 'Reset all restores calibrated layout');
+assert.deepEqual(JSON.parse(nativeData.custom_building_transforms), defaultTransforms, 'Native reset persists');
+assert.deepEqual(JSON.parse(localStorage.getItem('custom_building_transforms')), defaultTransforms, 'Browser reset persists');
+initDefaultScene();
+assert.deepEqual(BuildingEditor.getTransforms(), defaultTransforms, 'Reopening retains reset layout');
+BuildingEditor.selectBuilding('teach_1');
+BuildingEditor.nudge(1, 0, 0);
+initDefaultScene();
+assert.equal(BuildingEditor.getTransforms().teach_1.dx, 6, 'Later edits still persist across reopening');
+assert.equal(defaultTransforms.teach_1.dx, 5, 'Editing never mutates packaged defaults');
+BuildingEditor.selectBuilding('teach_1');
+const priorEdit = JSON.parse(JSON.stringify(BuildingEditor.getTransforms()));
+BuildingEditor.nudge(2, 3, 5);
+const nextEdit = JSON.parse(JSON.stringify(BuildingEditor.getTransforms()));
+BuildingEditor.undo();
+assert.deepEqual(BuildingEditor.getTransforms(), priorEdit, 'Undo restores previous transforms');
+assert.equal(mockLabel.s.position.x, 106, 'Undo restores label position');
+BuildingEditor.redo();
+assert.deepEqual(BuildingEditor.getTransforms(), nextEdit, 'Redo restores edited transforms');
+BuildingEditor.undo();
+BuildingEditor.nudge(-1, 0, 0);
+BuildingEditor.redo();
+assert.equal(BuildingEditor.getTransforms().teach_1.dx, 5, 'New edit clears redo history');
+BuildingEditor.autoSave();
+assert.deepEqual(JSON.parse(nativeData.custom_building_transforms), BuildingEditor.getTransforms());
+let roadEditing = true;
+globalThis.RoadEditor = { isEditing: () => roadEditing, toggleEditor() { roadEditing = false; } };
+let groundMode = 'schematic';
+globalThis.getGroundMode = () => groundMode;
+globalThis.setGroundMode = mode => { groundMode = mode; };
+BuildingEditor.toggleEditor();
+assert.equal(roadEditing, false, 'Entering building editor exits road editor');
+assert.equal(groundMode, 'aerial');
+BuildingEditor.toggleEditor();
+assert.equal(groundMode, 'schematic', 'Closing editor restores previous ground mode');
+
+console.log('✔ building-editor.js unit tests passed: editing, calibrated resets and persistent reopening verified');

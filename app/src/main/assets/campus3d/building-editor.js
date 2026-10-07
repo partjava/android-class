@@ -59,6 +59,7 @@
   let stepRot=5;    // 度 (DEG)
   let defaultTransforms={};
   let transforms={}; // { [id]: { dx: 0, dz: 0, rot: 0 } }
+  let undoHistory=[],redoHistory=[],previousGroundMode='schematic';
   let baseTransforms={}; // { [id]: { x, z, rot, cx, cz, isRegion } }
 
   let sceneRef=null, cameraRef=null, rendererRef=null;
@@ -196,6 +197,7 @@
 
   function nudge(dx, dz, drot){
    if(!selectedId)return;
+   rememberEdit();
    if(!transforms[selectedId])transforms[selectedId] = defaultTransforms[selectedId] ? {...defaultTransforms[selectedId]} : {dx:0, dz:0, rot:0};
    const t=transforms[selectedId];
    t.dx=Math.round((t.dx+dx)*10)/10;
@@ -208,7 +210,8 @@
 
   function resetCurrent(){
    if(!selectedId)return;
-   transforms[selectedId]={dx:0, dz:0, rot:0};
+   rememberEdit();
+   transforms[selectedId]=defaultTransforms[selectedId] ? {...defaultTransforms[selectedId]} : {dx:0, dz:0, rot:0};
    applyTransform(selectedId);
    updateReadout();
    autoSaveTransforms();
@@ -216,11 +219,12 @@
   }
 
   function resetAll(){
-   if(confirm('确定要将所有建筑和场地恢复至初始默认位置吗？')){
-    transforms={};
+   if(confirm('确定要将所有建筑和场地恢复至已校准的默认布局吗？')){
+    rememberEdit();
+    transforms=JSON.parse(JSON.stringify(defaultTransforms));
     applyAllTransforms();
     updateReadout();
-    try{localStorage.removeItem('custom_building_transforms');}catch(e){}
+    autoSaveTransforms();
     showToast('已全部恢复默认位置');
    }
   }
@@ -234,6 +238,30 @@
      localStorage.setItem('custom_building_transforms', JSON.stringify(transforms));
     }
    }catch(e){}
+  }
+
+  function rememberEdit(){
+   undoHistory.push(JSON.parse(JSON.stringify(transforms)));
+   if(undoHistory.length>100)undoHistory.shift();
+   redoHistory=[];
+   updateHistoryButtons();
+  }
+  function restoreHistory(from,to){
+   if(!from.length)return;
+   to.push(JSON.parse(JSON.stringify(transforms)));
+   transforms=from.pop();
+   applyAllTransforms();
+   updateReadout();
+   autoSaveTransforms();
+   updateHistoryButtons();
+  }
+  function undo(){restoreHistory(undoHistory,redoHistory);}
+  function redo(){restoreHistory(redoHistory,undoHistory);}
+  function updateHistoryButtons(){
+   for(const [id,history] of [['bld-undo',undoHistory],['bld-redo',redoHistory]]){
+    const btn=document.getElementById(id);
+    if(btn){btn.disabled=!history.length;btn.style.opacity=history.length?'1':'.45';}
+   }
   }
 
   function saveTransforms(){
@@ -277,14 +305,14 @@
 
   function createUI(){
    // 1. 在右侧工具栏添加【移楼】按钮
-   const tools=document.querySelector('.tools');
+   const tools=document.getElementById('more-tools')||document.querySelector('.tools');
    if(tools&&!document.getElementById('building-editor-btn')){
     const btn=document.createElement('button');
     btn.id='building-editor-btn';
     btn.textContent='移楼';
     btn.title='开启建筑与场地位置/旋转微调面板';
     btn.onclick=toggleEditor;
-    tools.insertBefore(btn, document.getElementById('top'));
+    tools.appendChild(btn);
    }
 
    // 2. 创建建筑变换悬浮操作面板
@@ -292,75 +320,32 @@
    hud.id='building-editor-hud';
    hud.style.cssText='display:none;position:fixed;inset:0;pointer-events:none;z-index:9;font-family:system-ui,-apple-system,sans-serif;';
    hud.innerHTML=`
-    <div id="bld-panel-full" style="position:absolute;top:10px;left:10px;right:10px;background:rgba(255,255,255,0.96);backdrop-filter:blur(10px);padding:10px 12px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,0.2);pointer-events:auto;display:flex;flex-direction:column;gap:8px;">
-      <!-- 第一行：标题 + 展开收起 + 退出 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2ebe6;padding-bottom:6px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-weight:bold;font-size:13px;color:#1e4d3c;">🏢 物体位置与方向微调</span>
-          <select id="bld-select" style="font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid #c2d4cb;background:white;color:#1e4d3c;outline:none;max-width:145px;">
-            <option value="">-- 点击物体或下拉选择 --</option>
-          </select>
+    <section id="bld-panel-full" class="editor-panel" aria-label="建筑位置调整">
+      <header class="editor-header">
+        <div><p class="editor-kicker">CAMPUS STUDIO</p><div class="editor-title">调整建筑</div></div>
+        <div class="editor-header-actions"><button id="bld-collapse-btn" class="editor-icon" aria-label="收起调整面板">收起</button><button id="bld-close-btn" class="editor-done">完成</button></div>
+      </header>
+      <label class="editor-select">调整对象<select id="bld-select" aria-label="选择建筑或场地"><option value="">点击地图上的建筑或选择对象</option></select></label>
+      <div id="bld-readout" class="editor-readout">选择建筑，开始调整位置与方向</div>
+      <div class="editor-motion">
+        <div class="editor-dpad">
+          <button id="bld-up" aria-label="向北移动" title="向北移动">↑</button>
+          <button id="bld-left" aria-label="向西移动" title="向西移动">←</button>
+          <button id="bld-right" aria-label="向东移动" title="向东移动">→</button>
+          <button id="bld-down" aria-label="向南移动" title="向南移动">↓</button><span>平移</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button id="bld-collapse-btn" style="padding:4px 9px;font-size:11px;border-radius:6px;background:#e2eeea;color:#1d4e3d;border:0;cursor:pointer;font-weight:bold;">▲ 收起面板</button>
-          <button id="bld-close-btn" style="padding:4px 9px;font-size:11px;border-radius:6px;background:#444;color:white;border:0;cursor:pointer;">✕ 退出</button>
-        </div>
-      </div>
-
-      <!-- 第二行：数值状态指示器 -->
-      <div id="bld-readout" style="font-size:11px;color:#334d42;background:#f2f7f4;padding:4px 8px;border-radius:6px;">请点击场景中的建筑或场地开始调整</div>
-
-      <!-- 第三行：方向键与旋转控制键盘 (D-Pad) -->
-      <div style="display:flex;align-items:center;justify-content:space-around;gap:12px;padding:4px 0;">
-        <!-- 平移十字键 -->
-        <div style="display:grid;grid-template-columns:repeat(3, 44px);grid-template-rows:repeat(3, 32px);gap:4px;align-items:center;justify-items:center;">
-          <div style="grid-column:2;grid-row:1;"><button id="bld-up" style="width:44px;height:32px;padding:0;background:#215e48;color:white;font-weight:bold;font-size:14px;border-radius:6px;border:0;cursor:pointer;" title="北/上移">↑ 北</button></div>
-          <div style="grid-column:1;grid-row:2;"><button id="bld-left" style="width:44px;height:32px;padding:0;background:#215e48;color:white;font-weight:bold;font-size:14px;border-radius:6px;border:0;cursor:pointer;" title="西/左移">← 西</button></div>
-          <div style="grid-column:3;grid-row:2;"><button id="bld-right" style="width:44px;height:32px;padding:0;background:#215e48;color:white;font-weight:bold;font-size:14px;border-radius:6px;border:0;cursor:pointer;" title="东/右移">东 →</button></div>
-          <div style="grid-column:2;grid-row:3;"><button id="bld-down" style="width:44px;height:32px;padding:0;background:#215e48;color:white;font-weight:bold;font-size:14px;border-radius:6px;border:0;cursor:pointer;" title="南/下移">↓ 南</button></div>
-        </div>
-
-        <!-- 旋转按钮与步长选择 -->
-        <div style="display:flex;flex-direction:column;gap:6px;flex:1;max-width:170px;">
-          <div style="display:flex;gap:6px;">
-            <button id="bld-rot-ccw" style="flex:1;padding:7px 0;background:#358164;color:white;font-size:12px;font-weight:bold;border-radius:6px;border:0;cursor:pointer;" title="逆时针旋转">↺ 左旋</button>
-            <button id="bld-rot-cw" style="flex:1;padding:7px 0;background:#358164;color:white;font-size:12px;font-weight:bold;border-radius:6px;border:0;cursor:pointer;" title="顺时针旋转">↻ 右旋</button>
-          </div>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span style="font-size:10px;color:#597368;">步长:</span>
-            <button id="bld-step-05" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">0.5m</button>
-            <button id="bld-step-1" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#215e48;color:white;border:0;cursor:pointer;">1.0m</button>
-            <button id="bld-step-3" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">3.0m</button>
-          </div>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span style="font-size:10px;color:#597368;">角度:</span>
-            <button id="bld-rot-1" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">1°</button>
-            <button id="bld-rot-5" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#215e48;color:white;border:0;cursor:pointer;">5°</button>
-            <button id="bld-rot-15" style="flex:1;padding:3px 0;font-size:10px;border-radius:4px;background:#e5ece8;color:#284d40;border:0;cursor:pointer;">15°</button>
-          </div>
+        <div class="editor-adjustments">
+          <div class="editor-row"><button id="bld-rot-ccw">↶ 左旋</button><button id="bld-rot-cw">右旋 ↷</button></div>
+          <div class="editor-row"><span class="editor-row-label">距离</span><button id="bld-step-05">0.5m</button><button id="bld-step-1" style="background:#215e48;color:white">1m</button><button id="bld-step-3">3m</button></div>
+          <div class="editor-row"><span class="editor-row-label">角度</span><button id="bld-rot-1">1°</button><button id="bld-rot-5" style="background:#215e48;color:white">5°</button><button id="bld-rot-15">15°</button></div>
         </div>
       </div>
-
-      <!-- 第四行：保存、复位与导出 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding-top:4px;border-top:1px dashed #e2ebe6;">
-        <div style="display:flex;gap:5px;">
-          <button id="bld-reset-cur" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#dfd8ce;color:#352e25;border:0;cursor:pointer;">↺ 复位当前</button>
-          <button id="bld-reset-all" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#ecdada;color:#8f2d2d;border:0;cursor:pointer;">全部复位</button>
-          <button id="bld-export" style="padding:5px 8px;font-size:11px;border-radius:6px;background:#e2ece7;color:#1b4a39;border:0;cursor:pointer;">📋 导出代码</button>
-        </div>
-        <button id="bld-save" style="padding:6px 14px;font-size:12px;font-weight:bold;border-radius:8px;background:#e37036;color:white;border:0;cursor:pointer;box-shadow:0 3px 10px rgba(227,112,54,0.45);">💾 保存生效</button>
-      </div>
-    </div>
-
-    <!-- 收起状态极简微调胶囊 -->
-    <div id="bld-panel-mini" style="display:none;position:absolute;top:10px;left:10px;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);padding:6px 14px;border-radius:24px;box-shadow:0 4px 14px rgba(0,0,0,0.2);pointer-events:auto;align-items:center;gap:10px;">
-      <span style="font-weight:bold;font-size:12px;color:#1e4d3c;">🏢 调整中</span>
-      <span id="bld-mini-name" style="font-size:11px;color:#3e6354;">点击任意建筑或场地</span>
-      <button id="bld-expand-btn" style="padding:3px 10px;font-size:11px;font-weight:bold;border-radius:12px;background:#215e48;color:white;border:0;cursor:pointer;">▼ 展开面板</button>
-    </div>
-
-    <!-- 底部操作提示 -->
-    <div id="bld-toast" style="position:absolute;bottom:40px;left:50%;transform:translateX(-50%);background:rgba(20,38,30,0.92);color:white;padding:8px 18px;border-radius:20px;font-size:12px;pointer-events:none;transition:opacity .3s ease;opacity:0;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.3);z-index:10;">点击场景建筑或场地进行微调</div>
+      <div class="editor-history"><button id="bld-undo">↶ 撤销</button><button id="bld-redo">重做 ↷</button></div>
+      <div class="editor-footer"><button id="bld-reset-cur">复位当前</button><button id="bld-reset-all" class="editor-danger">全部复位</button><button id="bld-export">导出布局</button><button id="bld-save" class="editor-primary">保存</button></div>
+      <p class="editor-caption">拖动地图调整视野 · 点击建筑切换对象 · 修改自动保存</p>
+    </section>
+    <div id="bld-panel-mini" class="editor-mini" style="display:none"><strong>调整建筑</strong><span id="bld-mini-name">点击建筑选择对象</span><button id="bld-expand-btn">展开 ↑</button></div>
+    <div id="bld-toast" class="editor-toast">点击建筑或场地开始调整</div>
    `;
    document.body.appendChild(hud);
 
@@ -452,9 +437,23 @@
    document.getElementById('bld-export').onclick=exportTransformsCode;
    document.getElementById('bld-save').onclick=saveTransforms;
    document.getElementById('bld-close-btn').onclick=toggleEditor;
+   document.getElementById('bld-undo').onclick=undo;
+   document.getElementById('bld-redo').onclick=redo;
+   updateHistoryButtons();
   }
 
   function toggleEditor(){
+   if(!isEditing){
+    window.CampusScene?.closeMore();
+    if(window.RoadEditor?.isEditing())window.RoadEditor.toggleEditor();
+    window.RoutePlanner?.suspend();
+    previousGroundMode=window.getGroundMode?window.getGroundMode():'schematic';
+    if(window.CampusScene?.stopMotion)window.CampusScene.stopMotion();
+   }else{
+    autoSaveTransforms();
+    if(window.setGroundMode)window.setGroundMode(previousGroundMode);
+    window.RoutePlanner?.refresh();
+   }
    isEditing=!isEditing;
    const hud=document.getElementById('building-editor-hud');
    const btn=document.getElementById('building-editor-btn');
@@ -475,12 +474,10 @@
    if(isEditing){
     // 进入移楼模式：自动切换实景底图，方便直接对着航拍图微调
     if(window.setGroundMode)window.setGroundMode('aerial');
-    const modeBtn=document.getElementById('mode');
-    if(modeBtn){modeBtn.textContent='实景';modeBtn.classList.add('active');}
     if(!selectedId&&placesRef.length>0){
      selectBuilding(placesRef[0].id);
     }
-    showToast('已进入物体微调模式：点击任意建筑或场地，使用方向键平移旋转');
+    showToast('点击建筑选择对象，使用方向键微调；拖动地图可调整视野。');
    }else{
     // 退出编辑模式：恢复所有物体默认颜色
     for(const [gId, g] of groupsRef){
@@ -500,7 +497,10 @@
    selectBuilding,
    nudge,
    getTransforms:()=>transforms,
-   applyAllTransforms
+   applyAllTransforms,
+   autoSave:autoSaveTransforms,
+   undo,
+   redo
   };
  }
 

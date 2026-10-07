@@ -52,12 +52,33 @@ let flyAnimation=null;
 function updateCamera(){
  camera.position.set(target.x+radius*Math.sin(phi)*Math.sin(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.cos(theta));
  camera.lookAt(target);
+ camera.updateMatrixWorld(true);
+ updateTopButton();
+}
+function updateTopButton(){
+ const btn=document.getElementById('top');
+ btn.classList.toggle('active',phi<.1);
+ btn.setAttribute('aria-pressed',String(phi<.1));
+}
+
+function syncCamera(){
+ const offset=camera.position.clone().sub(target);
+ radius=Math.max(1,offset.length());
+ phi=Math.acos(THREE.MathUtils.clamp(offset.y/radius,-1,1));
+ theta=Math.atan2(offset.x,offset.z);
+ updateTopButton();
+}
+function stopMotion(){
+ stopCruise();
+ if(flyAnimation){syncCamera();flyAnimation=null;}
 }
 
 function reset(){
  stopCruise();
+ flyAnimation=null;
  selected=null;
  const card=document.getElementById('card');
+ card.hidden=false;
  card.classList.remove('selected');
  document.getElementById('title').textContent='晴川 3D 校园';
  document.getElementById('info').textContent='独立建筑模型 · 真实航拍底图 · 情缘湖与运动场';
@@ -77,6 +98,8 @@ reset();
 
 function select(b){
  stopCruise();
+ flyAnimation=null;
+ document.getElementById('card').hidden=false;
  document.getElementById('card').classList.add('selected');
  selected=b.id;
  for(const [id,g] of groups)g.traverse(m=>{if(m.isMesh)m.material.emissive.set(id===b.id?'#344c12':'#000000');});
@@ -139,12 +162,17 @@ document.getElementById('fly').onclick=function(){
    camera.position.lerpVectors(startPos,endPos,ease);
    target.lerpVectors(startLook,endLook,ease);
    camera.lookAt(target);
-   if(t>=1)flyAnimation=null;
+   if(t>=1){syncCamera();flyAnimation=null;}
   }
  };
 };
 
-document.getElementById('close').onclick=reset;
+document.getElementById('close').onclick=()=>{
+ document.getElementById('card').hidden=true;
+ document.getElementById('card').classList.remove('selected');
+ selected=null;
+ for(const g of groups.values())g.traverse(m=>{if(m.isMesh&&m.material.emissive)m.material.emissive.set('#000000');});
+};
 
 const raycaster=new THREE.Raycaster();
 function pick(x,y){
@@ -168,13 +196,23 @@ for(const name of ['全部','教学','住宿','生活','文体']){
  btn.className=name==='全部'?'active':'';
  btn.onclick=()=>{
   filter=name;
-  for(const [id,g]of groups)g.visible=name==='全部'||CampusData.buildings.find(b=>b.id===id).category===name;
+  for(const [id,g]of groups)g.visible=name==='全部'||allPlaces.find(b=>b.id===id)?.category===name;
   for(const r of regionGroups)r.group.visible=name==='全部'||r.b.category===name;
   for(const {b,s}of labels)s.visible=name==='全部'||b.category===name;
-  document.querySelectorAll('#filters button').forEach(el=>el.classList.toggle('active',el===btn));
+  document.querySelectorAll('#filters button:not(#label-toggle)').forEach(el=>el.classList.toggle('active',el===btn));
  };
  document.getElementById('filters').append(btn);
 }
+const labelToggle=document.getElementById('label-toggle');
+document.getElementById('filters').append(labelToggle);
+labelToggle.onclick=()=>{
+ const labels=document.getElementById('labels');
+ labels.hidden=!labels.hidden;
+ labelToggle.textContent=labels.hidden?'显示名称':'隐藏名称';
+ labelToggle.classList.toggle('active',labels.hidden);
+ labelToggle.setAttribute('aria-pressed',String(labels.hidden));
+ labelToggle.setAttribute('aria-label',labels.hidden?'显示地图地点名称':'隐藏地图地点名称');
+};
 
 function search(){
  const q=document.getElementById('search').value.trim().replace('教1','教学楼1').replace('教2','教学楼2').replace('教3','教学楼3').replace('教4','教学楼4').replace(/^宿舍(\d+)$/,'$1号宿舍');
@@ -187,10 +225,10 @@ function search(){
 document.getElementById('find').onclick=search;
 document.getElementById('search').onkeydown=e=>{if(e.key==='Enter')search();};
 
-document.getElementById('plus').onclick=()=>{stopCruise();radius=Math.max(65,radius*.8);updateCamera();};
-document.getElementById('minus').onclick=()=>{stopCruise();radius=Math.min(1100,radius*1.25);updateCamera();};
+document.getElementById('plus').onclick=()=>{stopMotion();radius=Math.max(12,radius*.8);updateCamera();};
+document.getElementById('minus').onclick=()=>{stopMotion();radius=Math.min(1100,radius*1.25);updateCamera();};
 document.getElementById('reset').onclick=reset;
-document.getElementById('top').onclick=()=>{stopCruise();phi=phi<.1?.85:.025;updateCamera();};
+document.getElementById('top').onclick=()=>{stopMotion();phi=phi<.1?.85:.025;updateCamera();};
 
 // Cruise mode implementation
 const cruiseBtn=document.getElementById('cruise');
@@ -226,6 +264,7 @@ function startCruise(){
 function stopCruise(){
  if(!isCruising)return;
  isCruising=false;
+ syncCamera();
  cruiseBtn.classList.remove('active');
  cruiseBtn.textContent='巡航';
 }
@@ -233,13 +272,10 @@ cruiseBtn.onclick=function(){
  if(isCruising)stopCruise();else startCruise();
 };
 
-let currentGroundMode='schematic';
 const modeBtn=document.getElementById('mode');
 function toggleGroundMode(){
- currentGroundMode=currentGroundMode==='schematic'?'aerial':'schematic';
- if(window.setGroundMode)window.setGroundMode(currentGroundMode);
- modeBtn.textContent=currentGroundMode==='aerial'?'实景':'沙盘';
- modeBtn.classList.toggle('active',currentGroundMode==='aerial');
+ const mode=window.getGroundMode?window.getGroundMode():'schematic';
+ if(window.setGroundMode)window.setGroundMode(mode==='schematic'?'aerial':'schematic');
 }
 if(modeBtn){
  modeBtn.textContent='沙盘';
@@ -247,67 +283,92 @@ if(modeBtn){
  modeBtn.addEventListener('touchend',e=>{e.preventDefault();toggleGroundMode();});
 }
 
-const pointers=new Map();let down=null,moved=false,pinch=0;
+const pointers=new Map();let down=null,moved=false,pinch=0,gestureMode='pan';
+const gestureBtn=document.getElementById('gesture');
+gestureBtn.onclick=()=>{
+ gestureMode=gestureMode==='pan'?'rotate':'pan';
+ gestureBtn.textContent=gestureMode==='pan'?'平移':'旋转';
+ gestureBtn.classList.toggle('active',gestureMode==='rotate');
+ gestureBtn.setAttribute('aria-pressed',String(gestureMode==='rotate'));
+};
+function panMap(dx,dy){
+ const scale=2*radius*Math.tan(camera.fov*Math.PI/360)/innerHeight;
+ target.x-=scale*(dx*Math.cos(theta)+dy*Math.sin(theta)/Math.max(.2,Math.cos(phi)));
+ target.z+=scale*(dx*Math.sin(theta)-dy*Math.cos(theta)/Math.max(.2,Math.cos(phi)));
+ target.x=THREE.MathUtils.clamp(target.x,-50,380);
+ target.z=THREE.MathUtils.clamp(target.z,-50,390);
+}
 const canvas=renderer.domElement;
+function closeMore(){
+ document.getElementById('more-tools').hidden=true;
+ document.getElementById('more').setAttribute('aria-expanded','false');
+ document.getElementById('more').classList.remove('active');
+}
+document.getElementById('more').onclick=()=>{
+ const panel=document.getElementById('more-tools');panel.hidden=!panel.hidden;
+ document.getElementById('more').setAttribute('aria-expanded',String(!panel.hidden));
+ document.getElementById('more').classList.toggle('active',!panel.hidden);
+};
+const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+function groundPoint(x,y){
+ camera.updateMatrixWorld(true);
+ raycaster.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,1-y/innerHeight*2),camera);
+ return raycaster.ray.intersectPlane(groundPlane,new THREE.Vector3());
+}
 canvas.onpointerdown=e=>{
- stopCruise();
- flyAnimation=null;
+ closeMore();
+ stopMotion();
  canvas.setPointerCapture(e.pointerId);
  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(pointers.size===1){down={x:e.clientX,y:e.clientY};moved=false;}
- else{moved=true;pinch=0;}
+ else{moved=true;const [a,b]=[...pointers.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}
 };
 canvas.onpointermove=e=>{
  const old=pointers.get(e.pointerId);
  if(!old)return;
  const dx=e.clientX-old.x,dy=e.clientY-old.y;
+ const previousPair=[...pointers.values()].slice(0,2);
  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
  if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)moved=true;
  if(pointers.size===1){
   if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing()){
-   if(window.RoadEditor.getMode&&window.RoadEditor.getMode()==='pan'){
-    const panK=(radius*0.0016);
-    target.x-=dx*panK*Math.cos(theta);
-    target.z+=dx*panK*Math.sin(theta);
-    target.z-=dy*panK*Math.cos(theta);
-    target.x-=dy*panK*Math.sin(theta);
-    target.x=THREE.MathUtils.clamp(target.x,-50,380);
-    target.z=THREE.MathUtils.clamp(target.z,-50,380);
+   if(window.RoadEditor.getMode&&window.RoadEditor.getMode()==='pan'||window.RoadEditor.isGesturePaused?.()){
+    panMap(dx,dy);
     updateCamera();
    }
    return;
   }
-  theta-=dx*.007;
-  phi=THREE.MathUtils.clamp(phi+dy*.005,.025,1.4);
+  if(gestureMode==='pan'||window.BuildingEditor?.isEditing())panMap(dx,dy);
+  else{
+   theta-=dx*.007;
+   if(phi>=.1)phi=THREE.MathUtils.clamp(phi+dy*.005,.1,Math.PI-.025);
+  }
  }else{
   const [a,b]=[...pointers.values()],dist=Math.hypot(a.x-b.x,a.y-b.y);
-  if(pinch)radius=THREE.MathUtils.clamp(radius*pinch/Math.max(dist,1),65,1100);
+  const oldMid={x:(previousPair[0].x+previousPair[1].x)/2,y:(previousPair[0].y+previousPair[1].y)/2};
+  const mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+  const anchor=groundPoint(oldMid.x,oldMid.y);
+  if(pinch)radius=THREE.MathUtils.clamp(radius*pinch/Math.max(dist,1),12,1100);
   pinch=dist;
-  const k=radius*.001;
-  target.x-=dx*k*Math.cos(theta);
-  target.z+=dx*k*Math.sin(theta);
-  target.z-=dy*k*Math.cos(theta);
-  target.x-=dy*k*Math.sin(theta);
-  target.x=THREE.MathUtils.clamp(target.x,-30,330);
-  target.z=THREE.MathUtils.clamp(target.z,-30,390);
+  updateCamera();
+  const after=groundPoint(mid.x,mid.y);
+  if(anchor&&after){target.x+=anchor.x-after.x;target.z+=anchor.z-after.z;}
+  else panMap(dx/2,dy/2);
  }
  updateCamera();
 };
 function release(e){
- if(window.RoadEditor&&window.RoadEditor.isEditing&&window.RoadEditor.isEditing()){
-  pointers.delete(e.pointerId);pinch=0;down=null;
-  return;
- }
- if(!moved&&pointers.size===1&&down&&e.type!=='pointercancel')pick(e.clientX,e.clientY);
- pointers.delete(e.pointerId);pinch=0;down=null;
+ if(!window.RoadEditor?.isEditing()&&!moved&&pointers.size===1&&down&&e.type!=='pointercancel')pick(e.clientX,e.clientY);
+ pointers.delete(e.pointerId);pinch=0;
+ if(pointers.size===1){down={...[...pointers.values()][0]};moved=true;}
+ else if(!pointers.size){down=null;}
 }
 canvas.onpointerup=release;
 canvas.onpointercancel=release;
 canvas.onwheel=e=>{
- stopCruise();
- flyAnimation=null;
+ stopMotion();
  e.preventDefault();
- radius=THREE.MathUtils.clamp(radius*Math.exp(e.deltaY*.001),65,1100);
+ radius=THREE.MathUtils.clamp(radius*Math.exp(e.deltaY*.001),12,1100);
  updateCamera();
 };
 window.addEventListener('load',()=>requestAnimationFrame(reset));
@@ -318,7 +379,7 @@ window.onresize=()=>{
 };
 document.addEventListener('visibilitychange',()=>paused=document.hidden);
 window.resetCameraTop=function(){
- stopCruise();
+ stopMotion();
  selected=null;
  target.set(165,0,157.5);
  phi=0.025;
@@ -333,17 +394,43 @@ if(window.BuildingEditor&&typeof window.BuildingEditor.init==='function'){
  window.BuildingEditor.init({scene,camera,renderer,groups,labels,CampusData,select,allPlaces});
 }
 window.CampusScene={
+ stopMotion,
+ closeMore,
  select:id=>{const b=allPlaces.find(b=>b.id===id);if(b)select(b);},
  pause:v=>paused=v,
  buildings:CampusData.buildings,
  regions:CampusData.regions||[]
 };
+if(window.createRoutePlanner)window.RoutePlanner=createRoutePlanner({scene,groups,places:allPlaces,
+ getRoads:()=>CampusLayout.roads.map(r=>({...r,points:r.points.map(CampusLayout.world)})),
+ getObstacles:()=>{
+  scene.updateMatrixWorld(true);
+  const polygons=[];
+  for(const b of CampusData.buildings){
+   const g=groups.get(b.id),m=CampusFootprints[b.id];if(!g||!m)continue;
+   for(const outline of [m.outer,...(m.links||[]).map(l=>l.outline)])polygons.push({id:b.id,polygon:outline.map(p=>{const q=g.localToWorld(new THREE.Vector3(p[0],0,p[1]));return [q.x,q.z];})});
+  }
+  for(const r of CampusData.regions||[])if(r.kind==='lake'){
+   const g=groups.get(r.id);polygons.push({id:r.id,polygon:r.outline.map(p=>{const q=g.localToWorld(new THREE.Vector3(p[0],0,p[1]));return [q.x,q.z];})});
+  }
+  return polygons;
+ },
+ fitRoute:points=>{
+  stopMotion();document.getElementById('card').hidden=true;
+  const xs=points.map(p=>p[0]),zs=points.map(p=>p[1]);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);
+  phi=.025;theta=0;
+  radius=Math.max(130,Math.max((maxX-minX)/camera.aspect,maxZ-minZ+100)/(2*Math.tan(camera.fov*Math.PI/360)))*1.35;
+  target.set((minX+maxX)/2,0,(minZ+maxZ)/2+35);updateCamera();
+ }
+});
 
 function updateLabels(){
  const candidates=[];const close=radius<480;
  const top=document.getElementById('filters').getBoundingClientRect().bottom+8;
- const bottom=document.querySelector('.card').getBoundingClientRect().top-10;
- const reserved=['.badge','.tools'].map(q=>document.querySelector(q).getBoundingClientRect());
+ const card=document.getElementById('card');
+ const bottom=card.hidden||card.style.display==='none'?innerHeight-30:card.getBoundingClientRect().top-10;
+ const reserved=['.badge','.tools','#more-tools'].map(q=>document.querySelector(q).getBoundingClientRect());
  for(const {b,s}of labels){
   s.el.style.display='none';
   if(!s.visible)continue;
