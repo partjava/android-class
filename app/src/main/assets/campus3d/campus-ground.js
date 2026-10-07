@@ -105,22 +105,7 @@
  drawCrosswalk([480,1065],Math.PI/2,5);  // 食堂超市前斑马线
  drawCrosswalk([670,1070],0,4);          // 小剧场与运动场斑马线
 
- // Lake & Shimmering Waters
- const shore=new THREE.CatmullRomCurve3(L.lake.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
- const lakeMesh=polygon(shore,.22,'#207e8a');
- lakeMesh.material=new THREE.MeshStandardMaterial({
-  color:'#207e8a',
-  roughness:0.18,
-  metalness:0.75
- });
-
- // Lakeside Pedestrian Stone Promenade
- const outerShore=new THREE.CatmullRomCurve3(L.lake.map(p=>{
-  const cx=650,cz=600;
-  return new THREE.Vector3(cx+(p[0]-cx)*1.07,0,cz+(p[1]-cz)*1.07);
- }),true,'centripetal').getPoints(100).map(p=>[p.x,p.z]);
- const shorePath=new THREE.Line(new THREE.BufferGeometry().setFromPoints(outerShore.map(p=>new THREE.Vector3(p[0]/4,.26,p[1]/4))),new THREE.LineBasicMaterial({color:'#dfd9ce',linewidth:2}));
- groundSchematic.add(shorePath);
+ // The lake surface and shore are owned by SpecialTrace's movable region group.
 
  const line=(points,y=.4,color='#f5f0e1')=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0]/4,y,p[1]/4))),new THREE.LineBasicMaterial({color}));groundSchematic.add(mesh);};
  
@@ -241,10 +226,15 @@
    aerialGroup.add(aerialMesh);
  });
 
+ let groundMode='schematic';
+ window.getGroundMode=()=>groundMode;
  window.setGroundMode=function(mode){
+   groundMode=mode==='aerial'?'aerial':'schematic';
    const isAerial=(mode==='aerial');
    aerialGroup.visible=isAerial;
    groundSchematic.visible=!isAerial;
+   const btn=document.getElementById('mode');
+   if(btn){btn.textContent=isAerial?'实景':'沙盘';btn.classList.toggle('active',isAerial);}
  };
  // Default to the lush, detailed 3D Sandbox mode
  window.setGroundMode('schematic');

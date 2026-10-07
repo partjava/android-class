@@ -70,6 +70,11 @@ trace.render=function(data,{scene,flat,mat}){
   const y=r.kind==='plaza'?.1:.29,surface=flat(outline,y,r.kind==='training'?'#969e9b':r.kind==='street'?'#bbab91':r.color,group);surface.userData.id=r.id;
   trace.decorate(r,group,{flat,mat});
   const line=points=>{const mesh=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0],y+.05,p[1]))),new THREE.LineBasicMaterial({color:'#f1eddd'}));group.add(mesh);};
+  if(r.kind==='lake'){
+   surface.material.roughness=.18;surface.material.metalness=.75;
+   const shore=outline.map(p=>[r.x+(p[0]-r.x)*1.07,r.z+(p[1]-r.z)*1.07]);
+   line(shore);
+  }
   if(r.grid){const quad=r.grid.map(p=>trace.world(p).map((v,i)=>v+(r.offset?.[i]||0)));for(let row=0;row<r.rows;row++)for(let col=0;col<r.cols;col++){const p=(u,v)=>CampusLayout.bilinear(quad,(col+u)/r.cols,(row+v)/r.rows);line([p(.07,.07),p(.93,.07),p(.93,.93),p(.07,.93),p(.07,.07)]);line([p(.07,.5),p(.93,.5)]);
    if(r.kind==='basketball'){const circle=[];for(let i=0;i<=32;i++)circle.push(p(.5+.14*Math.cos(i*Math.PI/16),.5+.08*Math.sin(i*Math.PI/16)));line(circle);for(const end of [.07,.93]){const inner=end<.5?.24:.76;line([p(.32,end),p(.32,inner),p(.68,inner),p(.68,end)]);}}
    if(r.kind==='badminton'){for(const u of [.2,.8])line([p(u,.07),p(u,.93)]);for(const v of [.28,.72])line([p(.07,v),p(.93,v)]);}
