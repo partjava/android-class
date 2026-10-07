@@ -25,7 +25,7 @@
   let groundPlane=null;
   let sceneRef=null, cameraRef=null, rendererRef=null;
 
-  const GRID_STEP=20; // 网格步长（参考坐标系下每格 20 像素，对应世界尺寸 5 米）
+  const GRID_STEP=8; // 网格步长（参考坐标系下每格 20 像素，对应世界尺寸 5 米）
   const snap=v=>Math.round(v/GRID_STEP)*GRID_STEP;
 
   function init({scene, camera, renderer}){
@@ -37,7 +37,7 @@
    editorGroup.visible=false;
    scene.add(editorGroup);
 
-   // 1. 创建半透明辅助正交网格线（覆盖 1320 x 1260 校园沙盘，每格5米）
+   // 1. 创建半透明辅助正交网格线（覆盖 1320 x 1260 校园沙盘，每格2米）
    const gridGeo=new THREE.BufferGeometry();
    const gridPts=[];
    for(let x=0;x<=1320;x+=GRID_STEP){
@@ -147,7 +147,7 @@
    updateCollapsedLabel();
   }
 
-  function getWorldCoords(e){
+  function getWorldCoords(e, snapToGrid=true){
    if(!rendererRef||!cameraRef)return null;
    const rect=rendererRef.domElement.getBoundingClientRect();
    const x=((e.clientX-rect.left)/rect.width)*2-1;
@@ -155,8 +155,15 @@
    raycaster.setFromCamera(new THREE.Vector2(x,y),cameraRef);
    const hit=new THREE.Vector3();
    if(raycaster.ray.intersectPlane(groundPlane,hit)){
-    const refX=snap(hit.x*4);
-    const refZ=snap(hit.z*4);
+    let refX = hit.x*4;
+    let refZ = hit.z*4;
+    if(snapToGrid){
+     refX = snap(refX);
+     refZ = snap(refZ);
+    }else{
+     refX = Math.round(refX*10)/10;
+     refZ = Math.round(refZ*10)/10;
+    }
     if(refX>=0&&refX<=1320&&refZ>=0&&refZ<=1260){
      return [refX,refZ];
     }
@@ -217,7 +224,8 @@
     if(e.pointerType==='touch'&&e.isPrimary===false)return;
     if(drawMode==='pan')return; // 移动模式由 campus-scene.js 处理单指平移
 
-    const pt=getWorldCoords(e);
+    const shouldSnap = (drawMode === 'point');
+    const pt = getWorldCoords(e, shouldSnap);
     if(!pt)return;
 
     if(drawMode==='erase'){
@@ -256,16 +264,17 @@
 
    dom.addEventListener('pointermove',e=>{
     if(!isEditing||drawMode==='pan')return;
-    const pt=getWorldCoords(e);
+    const shouldSnap = (drawMode === 'point');
+    const pt = getWorldCoords(e, shouldSnap);
     if(pt){
      markerMesh.position.set(pt[0]/4,.42,pt[1]/4);
-     markerMesh.visible=true;
+     markerMesh.visible=(drawMode!=='pan');
     }
     if(drawMode==='erase'&&isDragging&&pt){
      eraseNear(pt);
     }else if(drawMode==='drag'&&isDragging&&pt&&lastDragPt){
      const dist=Math.hypot(pt[0]-lastDragPt[0],pt[1]-lastDragPt[1]);
-     if(dist>=GRID_STEP){
+     if(dist>=8){
       activePoints.push(pt);
       lastDragPt=pt;
       updatePreview();
@@ -279,7 +288,7 @@
      isDragging=false;
      if(activePoints.length>=2){
       roads.push({width:currentWidth,points:[...activePoints]});
-      showToast('已生成绘制道路（'+activePoints.length+'个节点）');
+      showToast('已生成自由绘制道路（'+activePoints.length+'个节点，顺滑随笔）');
      }
      activePoints=[];
      updatePreview();
@@ -344,7 +353,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2ebe6;padding-bottom:6px;">
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-weight:bold;font-size:13px;color:#1e4d3c;">🛠️ 路网网格编辑器</span>
-          <span style="font-size:10px;background:#e5f0eb;color:#215e48;padding:2px 6px;border-radius:4px;">5m吸附网格</span>
+          <span style="font-size:10px;background:#e5f0eb;color:#215e48;padding:2px 6px;border-radius:4px;">2m精细吸附网格</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <button id="ed-collapse-btn" style="padding:4px 9px;font-size:11px;border-radius:6px;background:#e2eeea;color:#1d4e3d;border:0;cursor:pointer;font-weight:bold;">▲ 收起面板</button>
@@ -425,7 +434,7 @@
     updateCollapsedLabel();
     if(mode==='pan')showToast('🖐️ 移动视野模式：单指滑动即可平移整个校园地图');
     else if(mode==='point')showToast('🔘 两点连线模式：点击起点交点，再点击终点生成道路');
-    else if(mode==='drag')showToast('🖌️ 涂抹连线模式：按住拖动即可连续铺路');
+    else if(mode==='drag')showToast('🖌️ 涂抹划线模式：随手指/鼠标任意滑动画线，不限网格，轻松画斜线！');
     else if(mode==='erase')showToast('🧹 橡皮擦模式：点击或划过任意已画道路即可精准擦除');
    };
 

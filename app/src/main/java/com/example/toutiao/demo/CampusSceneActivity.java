@@ -22,7 +22,17 @@ public class CampusSceneActivity extends AppCompatActivity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_campus_scene);
-        findViewById(R.id.scene_back).setOnClickListener(v -> finish());
+        findViewById(R.id.scene_back).setOnClickListener(v -> {
+            if (web != null) {
+                web.evaluateJavascript(
+                    "(function(){" +
+                    " try{ if(window.BuildingEditor&&window.BuildingEditor.autoSave) window.BuildingEditor.autoSave(); }catch(e){}" +
+                    " try{ if(window.RoadEditor&&window.RoadEditor.autoSave) window.RoadEditor.autoSave(); }catch(e){}" +
+                    "})()", r -> finish());
+            } else {
+                finish();
+            }
+        });
         web = findViewById(R.id.campus_scene_web);
         WebView.setWebContentsDebuggingEnabled(true);
         WebSettings settings = web.getSettings();
@@ -118,7 +128,15 @@ public class CampusSceneActivity extends AppCompatActivity {
     }
 
     @Override protected void onPause() {
-        if (web != null) { web.evaluateJavascript("window.CampusScene && CampusScene.pause(true)",null); web.onPause(); }
+        if (web != null) {
+            web.evaluateJavascript(
+                "(function(){" +
+                " try{ if(window.BuildingEditor&&window.BuildingEditor.autoSave) window.BuildingEditor.autoSave(); }catch(e){}" +
+                " try{ if(window.RoadEditor&&window.RoadEditor.autoSave) window.RoadEditor.autoSave(); }catch(e){}" +
+                " try{ if(window.CampusScene) CampusScene.pause(true); }catch(e){}" +
+                "})()", null);
+            web.onPause();
+        }
         super.onPause();
     }
     @Override protected void onResume() {

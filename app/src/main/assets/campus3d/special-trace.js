@@ -11,7 +11,7 @@ const shapes={
 };
 const regions=[
  {id:'lake',name:'情缘湖',kind:'lake',category:'文体',color:'#318e91',outline:[[506,399],[581,382],[621,438],[669,507],[712,572],[714,579],[633,622],[597,620],[589,615],[533,556],[501,519],[509,466]],info:'情缘湖 · 环湖步行区域'},
- {id:'gym_plaza',name:'体育场周边',kind:'plaza',category:'文体',color:'#dbd5c6',outline:[[347,160],[490,101],[504,323],[370,287],[339,221]],info:'体育馆及前方铺地区域'},
+ {id:'gym_plaza',name:'体育场周边',kind:'plaza',category:'文体',color:'#dbd5c6',outline:[[347,160],[490,101],[530,108],[504,131],[495,163],[498,322],[514,353],[370,287],[339,221]],info:'体育馆及前方铺地区域'},
  {id:'basketball_north',name:'北侧篮球场',kind:'basketball',category:'文体',color:'#6e9a8d',outline:[[291,439],[347,431],[370,564],[313,582]],grid:[[297,444],[341,440],[361,563],[316,573]],rows:2,cols:1,info:'篮球运动区域'},
  {id:'basketball_west',name:'西侧篮球场',kind:'basketball',category:'文体',color:'#789e9d',offset:[-9,0],outline:[[81,662],[144,662],[154,851],[71,855],[55,729],[80,729]],grid:[[82,668],[139,668],[150,844],[73,848]],rows:3,cols:2,info:'篮球运动区域'},
  {id:'badminton_courts',name:'羽毛球场',kind:'badminton',category:'文体',color:'#79a592',outline:[[617,675],[758,631],[788,776],[617,774]],grid:[[625,679],[752,642],[778,768],[625,768]],rows:2,cols:2,info:'羽毛球运动区域'},
