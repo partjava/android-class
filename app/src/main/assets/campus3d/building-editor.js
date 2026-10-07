@@ -230,6 +230,7 @@
   }
 
   function autoSaveTransforms(){
+
    if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
     try{ window.CampusNativeBridge.saveConfig('custom_building_transforms', JSON.stringify(transforms)); }catch(e){}
    }
@@ -238,6 +239,7 @@
      localStorage.setItem('custom_building_transforms', JSON.stringify(transforms));
     }
    }catch(e){}
+   window.CampusDefaults?.markSaved('buildings');
   }
 
   function rememberEdit(){
@@ -269,27 +271,32 @@
    showToast('🎉 位置与角度已成功保存到手机硬盘！');
   }
 
+  // Keep persisted transforms in original coordinates; expose edits relative to defaults.
+  function relativeTransform(id){
+   const t=transforms[id]||defaultTransforms[id]||{};
+   const baseline=defaultTransforms[id]||{};
+   const delta=key=>Math.round(((t[key]||0)-(baseline[key]||0))*10)/10;
+   return {dx:delta('dx'),dz:delta('dz'),rot:delta('rot')};
+  }
+
   function exportTransformsCode(){
    const active={};
-   for(const [id, t] of Object.entries(transforms)){
-    if(t.dx!==0||t.dz!==0||t.rot!==0){
-     active[id]=t;
-    }
-   }
+   const ids=new Set([...Object.keys(defaultTransforms),...Object.keys(transforms)]);
+   for(const id of ids)active[id]=relativeTransform(id);
    const json=JSON.stringify(active, null, 2);
    if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(json).catch(()=>{});
    }
-   prompt('位置与旋转偏移配置 JSON（已复制，可发给我固化到代码）：', json);
+   prompt('相对当前默认布局的偏移 JSON（全为 0 表示未调整；可发给我更新默认布局）：', json);
   }
 
   function updateReadout(){
    const info=document.getElementById('bld-readout');
-   const t=(selectedId&&transforms[selectedId])?transforms[selectedId]:{dx:0, dz:0, rot:0};
+   const t=relativeTransform(selectedId);
    if(info){
     const b=placesRef.find(item=>item.id===selectedId);
     const name=b?b.name:'未选择';
-    info.innerHTML=`<strong>${name}</strong>: X偏: <span style="color:#d46238;">${t.dx>=0?'+':''}${t.dx}m</span>, Z偏: <span style="color:#d46238;">${t.dz>=0?'+':''}${t.dz}m</span>, 角度: <span style="color:#215e48;">${t.rot>=0?'+':''}${t.rot}°</span>`;
+    info.innerHTML=`<strong>${name}</strong>（相对默认）: X偏: <span style="color:#d46238;">${t.dx>=0?'+':''}${t.dx}m</span>, Z偏: <span style="color:#d46238;">${t.dz>=0?'+':''}${t.dz}m</span>, 角度: <span style="color:#215e48;">${t.rot>=0?'+':''}${t.rot}°</span>`;
    }
   }
 
@@ -305,7 +312,7 @@
 
   function createUI(){
    // 1. 在右侧工具栏添加【移楼】按钮
-   const tools=document.getElementById('more-tools')||document.querySelector('.tools');
+   const tools=document.getElementById('tools-scroll')||document.getElementById('tools')||document.getElementById('more-tools')||document.querySelector('.tools');
    if(tools&&!document.getElementById('building-editor-btn')){
     const btn=document.createElement('button');
     btn.id='building-editor-btn';
@@ -313,6 +320,7 @@
     btn.title='开启建筑与场地位置/旋转微调面板';
     btn.onclick=toggleEditor;
     tools.appendChild(btn);
+    if(typeof window!=="undefined"&&window.restoreToolsScroll)window.restoreToolsScroll();
    }
 
    // 2. 创建建筑变换悬浮操作面板
@@ -496,6 +504,8 @@
    isEditing:()=>isEditing,
    selectBuilding,
    nudge,
+   resetDefaults:()=>{rememberEdit();transforms=JSON.parse(JSON.stringify(defaultTransforms));applyAllTransforms();updateReadout();autoSaveTransforms();},
+   replaceTransforms:value=>{rememberEdit();transforms=JSON.parse(JSON.stringify(value));applyAllTransforms();updateReadout();autoSaveTransforms();},
    getTransforms:()=>transforms,
    applyAllTransforms,
    autoSave:autoSaveTransforms,

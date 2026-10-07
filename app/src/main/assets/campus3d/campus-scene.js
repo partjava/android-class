@@ -215,8 +215,9 @@ labelToggle.onclick=()=>{
 };
 
 function search(){
- const q=document.getElementById('search').value.trim().replace('教1','教学楼1').replace('教2','教学楼2').replace('教3','教学楼3').replace('教4','教学楼4').replace(/^宿舍(\d+)$/,'$1号宿舍');
- const b=allPlaces.find(b=>q&&(b.name.includes(q)||b.id===q||(b.name&&q.includes(b.name))));
+ const raw=document.getElementById('search').value.trim();
+ const q=raw.replace('教1','教学楼1').replace('教2','教学楼2').replace('教3','教学楼3').replace('教4','教学楼4').replace(/^宿舍(\d+)$/,'$1号宿舍');
+ const b=allPlaces.find(b=>q&&(b.name.includes(q)||b.id===q||(b.name&&q.includes(b.name))||(b.id==='south_gate'&&['大门','南门','校门','南大门','正门'].some(k=>raw.includes(k)))));
  if(b){
   document.querySelector('#filters button').click();
   select(b);
@@ -233,17 +234,17 @@ document.getElementById('top').onclick=()=>{stopMotion();phi=phi<.1?.85:.025;upd
 // Cruise mode implementation
 const cruiseBtn=document.getElementById('cruise');
 const cruiseWaypoints=[
- new THREE.Vector3(204.5,14,310), // South Gate entrance
- new THREE.Vector3(204.5,20,240), // Central lawn / Flagpole
- new THREE.Vector3(180,18,180),   // Lake south bank
- new THREE.Vector3(135,22,145),   // Library curved terrace
- new THREE.Vector3(160,26,95),    // Athletic Stadium & Gym
- new THREE.Vector3(240,28,160),   // Teaching buildings 1-4
- new THREE.Vector3(215,45,285)    // High overview climb
+ new THREE.Vector3(305,14,124), // East Main Gate entrance
+ new THREE.Vector3(260,20,130), // Campus entrance boulevard
+ new THREE.Vector3(180,18,180), // Lake south bank
+ new THREE.Vector3(135,22,145), // Library curved terrace
+ new THREE.Vector3(160,26,95),  // Athletic Stadium & Gym
+ new THREE.Vector3(240,28,160), // Teaching buildings 1-4
+ new THREE.Vector3(215,45,285)  // High overview climb
 ];
 const cruiseLooks=[
- new THREE.Vector3(204.5,6,250),
- new THREE.Vector3(180,8,170),
+ new THREE.Vector3(275,6,124),
+ new THREE.Vector3(210,8,150),
  new THREE.Vector3(140,6,150),
  new THREE.Vector3(124,10,152),
  new THREE.Vector3(160,6,66),
@@ -300,15 +301,60 @@ function panMap(dx,dy){
 }
 const canvas=renderer.domElement;
 function closeMore(){
- document.getElementById('more-tools').hidden=true;
- document.getElementById('more').setAttribute('aria-expanded','false');
- document.getElementById('more').classList.remove('active');
+ const panel=document.getElementById('more-tools');if(panel)panel.hidden=true;
+ const btn=document.getElementById('more');if(btn){btn.setAttribute('aria-expanded','false');btn.classList.remove('active');}
 }
-document.getElementById('more').onclick=()=>{
- const panel=document.getElementById('more-tools');panel.hidden=!panel.hidden;
- document.getElementById('more').setAttribute('aria-expanded',String(!panel.hidden));
- document.getElementById('more').classList.toggle('active',!panel.hidden);
-};
+const moreBtn=document.getElementById('more');
+if(moreBtn){
+ moreBtn.onclick=()=>{
+  const panel=document.getElementById('more-tools');if(!panel)return;
+  panel.hidden=!panel.hidden;
+  moreBtn.setAttribute('aria-expanded',String(!panel.hidden));
+  moreBtn.classList.toggle('active',!panel.hidden);
+ };
+}
+
+const toolsEl=document.getElementById('tools-scroll')||document.getElementById('tools')||document.querySelector('.tools');
+const toolsDock=document.getElementById('tools')||document.querySelector('.tools');
+if(toolsDock){
+ toolsDock.addEventListener('pointerdown',e=>e.stopPropagation());
+ toolsDock.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+}
+if(toolsEl){
+ const STORAGE_KEY='campus3d_tools_scroll';
+ let scrollTimer=null;
+ function saveToolsScroll(){
+  try{if(typeof localStorage!=='undefined')localStorage.setItem(STORAGE_KEY,String(toolsEl.scrollTop));}catch(_){}
+ }
+ toolsEl.addEventListener('scroll',()=>{
+  if(typeof setTimeout!=='undefined'){
+   clearTimeout(scrollTimer);
+   scrollTimer=setTimeout(saveToolsScroll,50);
+  }else{saveToolsScroll();}
+ },{passive:true});
+ toolsEl.addEventListener('click',saveToolsScroll);
+ function restoreToolsScroll(){
+  try{
+   if(typeof localStorage!=='undefined'){
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved!==null){
+     const top=parseFloat(saved);
+     if(Number.isFinite(top)&&top>=0)toolsEl.scrollTop=top;
+    }
+   }
+  }catch(_){}
+ }
+ window.restoreToolsScroll=restoreToolsScroll;
+ restoreToolsScroll();
+ if(typeof setTimeout!=='undefined'){
+  setTimeout(restoreToolsScroll,50);
+  setTimeout(restoreToolsScroll,250);
+ }
+ toolsEl.addEventListener('pointerdown',e=>e.stopPropagation());
+ toolsEl.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true});
+ toolsEl.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+ toolsEl.addEventListener('wheel',e=>e.stopPropagation(),{passive:true});
+}
 const groundPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 function groundPoint(x,y){
  camera.updateMatrixWorld(true);
@@ -430,7 +476,7 @@ function updateLabels(){
  const top=document.getElementById('filters').getBoundingClientRect().bottom+8;
  const card=document.getElementById('card');
  const bottom=card.hidden||card.style.display==='none'?innerHeight-30:card.getBoundingClientRect().top-10;
- const reserved=['.badge','.tools','#more-tools'].map(q=>document.querySelector(q).getBoundingClientRect());
+ const reserved=['.badge','.tools','#more-tools'].map(q=>document.querySelector(q)).filter(Boolean).map(el=>el.getBoundingClientRect());
  for(const {b,s}of labels){
   s.el.style.display='none';
   if(!s.visible)continue;
@@ -474,5 +520,6 @@ function frame(now){
   updateLabels();
  }
 }
+window.CampusDefaults?.mount();
 requestAnimationFrame(frame);
 })();

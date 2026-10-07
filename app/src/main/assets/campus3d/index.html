@@ -43,19 +43,21 @@ button.active{background:#215e48;color:white}
 <div class="top"><input id="search" placeholder="搜索建筑或区域，如：教1、图书馆、体育馆" aria-label="搜索建筑或区域"><button id="find">查找</button></div>
 <div class="filters" id="filters"><button id="label-toggle" aria-label="隐藏地图地点名称" aria-pressed="false">隐藏名称</button></div>
 <div class="badge">晴川校园 · 三维导览</div>
-<div class="tools">
-  <button id="plus" aria-label="放大">＋</button>
-  <button id="minus" aria-label="缩小">－</button>
-  <button id="top" aria-label="俯视切换" aria-pressed="false">俯视</button>
-  <button id="route" aria-label="规划校园路线">路线</button>
-  <button id="more" aria-label="展开更多地图工具" aria-expanded="false" aria-controls="more-tools">更多</button>
+<div class="tools" id="tools" role="toolbar" aria-label="地图控制工具栏">
+  <div class="tools-fixed">
+    <button id="plus" aria-label="放大">＋</button>
+    <button id="minus" aria-label="缩小">－</button>
+  </div>
+  <div class="tools-scroll" id="tools-scroll">
+    <button id="mode" aria-label="底图模式" title="切换实景航拍/规划沙盘">沙盘</button>
+    <button id="top" aria-label="俯视切换" aria-pressed="false">俯视</button>
+    <button id="route" aria-label="规划校园路线">路线</button>
+    <button id="cruise" aria-label="漫游巡航" title="自动校园漫游巡航">巡航</button>
+    <button id="gesture" aria-label="切换拖动方式：平移或旋转" aria-pressed="false">平移</button>
+    <button id="reset" aria-label="复位">复位</button>
+  </div>
 </div>
-<div id="more-tools" class="more-tools" hidden>
-  <button id="mode" aria-label="底图模式" title="切换实景航拍/规划沙盘">沙盘</button>
-  <button id="cruise" aria-label="漫游巡航" title="自动校园漫游巡航">巡航</button>
-  <button id="gesture" aria-label="切换拖动方式：平移或旋转" aria-pressed="false">平移</button>
-  <button id="reset" aria-label="复位">复位</button>
-</div>
+<div id="more-tools" hidden style="display:none!important"></div>
 <div id="route-hud" class="route-hud" hidden>
   <section class="editor-panel route-panel" aria-label="校园路线规划">
     <header class="editor-header"><div><p class="editor-kicker">CAMPUS ROUTE</p><div class="editor-title">规划路线</div></div><button id="route-close" class="editor-icon" aria-label="关闭路线面板">×</button></header>
@@ -104,11 +106,14 @@ button.active{background:#215e48;color:white}
 <script src="route-planner.js"></script>
 <script src="campus-footprints.js"></script>
 <script src="campus-layout.js"></script>
+<script src="layout-defaults.js"></script>
 <script src="teaching-trace.js"></script>
 <script src="dorm-trace.js"></script>
 <script src="academic-trace.js"></script>
 <script src="special-trace.js"></script>
 <script src="campus-landmarks.js"></script>
+<script src="road-tools.js"></script>
+<script src="road-geometry.js"></script>
 <script src="campus-ground.js"></script>
 <script src="photo-models.js"></script>
 <script src="road-editor.js"></script>

@@ -26,7 +26,8 @@ const models={
  dorm_7:{source:'宿舍楼(已标记name-总楼层).jpg',outer:[[-17,-18],[-8,-18],[-8,9],[8,9],[8,-18],[17,-18],[17,18],[-17,18]],holes:[],infill:[],corners:[],roof:'open'},
  dorm_8:{source:'宿舍楼(已标记name-总楼层).jpg',outer:[[-17,-18],[-8,-18],[-8,9],[9,9],[9,-17],[17,-17],[17,18],[-17,18]],holes:[],infill:[],corners:[],roof:'open'},
  dorm_9:{source:'宿舍楼(已标记name-总楼层).jpg',outer:[[-16,-19],[-7,-19],[-7,9],[8,9],[8,-19],[17,-18],[17,18],[-16,18]],holes:[],infill:[],corners:[],roof:'open'},
- dorm_10:{source:'宿舍楼(已标记name-总楼层).jpg',outer:[[-18,-18],[-8,-18],[-8,9],[9,9],[9,-18],[18,-18],[18,18],[-18,18]],holes:[],infill:[],corners:[],roof:'open'}
+ dorm_10:{source:'宿舍楼(已标记name-总楼层).jpg',outer:[[-18,-18],[-8,-18],[-8,9],[9,9],[9,-18],[18,-18],[18,18],[-18,18]],holes:[],infill:[],corners:[],roof:'open'},
+ south_gate:{source:'photos/south_gate.jpg',outer:[[-12,-3],[12,-3],[12,3],[-12,3]],holes:[],infill:[],corners:[],roof:'gate'}
 };
 for(const m of Object.values(models))m.annex=m.annex||[];
 if(typeof module!=='undefined')module.exports=models;else root.CampusFootprints=models;

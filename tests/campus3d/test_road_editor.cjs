@@ -37,7 +37,7 @@ globalThis.THREE = {
   LineSegments: class { constructor(geo, mat) { this.geometry = geo; this.material = mat; } },
   Line: class { constructor(geo, mat) { this.geometry = geo; this.material = mat; } },
   RingGeometry: class { constructor() {} rotateX() {} },
-  MeshBasicMaterial: class { constructor(opt) { Object.assign(this, opt); } },
+  MeshBasicMaterial: class { constructor(opt) { Object.assign(this, opt); this.color={set() {}}; } },
   BoxGeometry: class { constructor(w, h, d) { this.w = w; this.h = h; this.d = d; } dispose() {} },
   Mesh: class {
     constructor(geo, mat) {
@@ -153,3 +153,16 @@ assert(!RoadEditor.isGesturePaused(),'A new single finger gesture may draw');
 RoadEditor.toggleEditor();
 
 console.log('✔ road-editor.js unit tests passed: state toggle, UI construction, clearRoads and mode verified');
+
+const packaged=[{width:6,points:[[0,0],[40,0]]}];
+CampusLayout={roads:JSON.parse(JSON.stringify(packaged))};
+localStorage._data={};createRoadEditor();RoadEditor.init({scene:mockScene,camera:mockCamera,renderer:mockRenderer});
+RoadEditor.clearRoads();RoadEditor.undo();assert.deepEqual(RoadEditor.getRoads(),packaged);
+RoadEditor.redo();assert.equal(RoadEditor.getRoads().length,0);
+RoadEditor.resetDefaults();assert.deepEqual(RoadEditor.getRoads(),packaged);
+RoadEditor.undo();assert.equal(RoadEditor.getRoads().length,0);
+RoadEditor.redo();assert.deepEqual(RoadEditor.getRoads(),packaged);
+RoadEditor.clearRoads();RoadEditor.redo();assert.equal(RoadEditor.getRoads().length,0,'New edit clears redo');
+for(let i=0;i<105;i++)RoadEditor.replaceRoads([{width:3,points:[[i,0],[i+20,0]]}]);
+for(let i=0;i<101;i++)RoadEditor.undo();assert.equal(RoadEditor.getRoads()[0].points[0][0],4,'Undo history is limited to 100');
+console.log('Road default reset, persistent undo/redo and bounded history passed');

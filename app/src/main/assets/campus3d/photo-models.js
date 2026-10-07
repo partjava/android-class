@@ -10,6 +10,35 @@ window.buildPhotoModel=function(b,g,api){
  function ringRoof(outer,hole,y,rise){const v=[];for(let i=0;i<4;i++){const a=outer[i],c=hole[i];v.push([a[0],y,a[1]],[(a[0]+c[0])/2,y+rise,(a[1]+c[1])/2],[c[0],y,c[1]]);}const indices=[];for(let i=0;i<4;i++){const a=i*3,n=((i+1)%4)*3;indices.push(a,n,n+1,a,n+1,a+1,a+1,n+1,n+2,a+1,n+2,a+2);}surface(v,indices,'#62656b');}
  function hipRoof(outer,y,rise,color='#686970'){const cx=outer.reduce((s,p)=>s+p[0],0)/outer.length,cz=outer.reduce((s,p)=>s+p[1],0)/outer.length;const v=[];for(const p of outer)v.push([p[0],y,p[1]]);for(const p of outer)v.push([cx+(p[0]-cx)*.40,y+rise,cz+(p[1]-cz)*.65]);const indices=[],n=outer.length;for(let i=0;i<n;i++){const j=(i+1)%n;indices.push(i,j,j+n,i,j+n,i+n);}const cap=v.slice(n).map(p=>new THREE.Vector2(p[0],p[2]));for(const triangle of THREE.ShapeUtils.triangulateShape(cap,[]))indices.push(...triangle.map(i=>n+i));surface(v,indices,color);}
  function rect(x,z,w,d){return [[x-w/2,z-d/2],[x+w/2,z-d/2],[x+w/2,z+d/2],[x-w/2,z+d/2]];}
+ function gbox(w,h,d,x,y,z,color){const mesh=box(w,h,d,x,y,z,color,g);if(mesh){mesh.userData.id=b.id;pickables.push(mesh);}return mesh;}
+ if(m.roof==='gate'){
+  gbox(24,.6,6,0,0,0,'#ded8cb');
+  gbox(25.5,.2,7.2,0,0,0,'#ede8dc');
+  for(const x of [-7.5,-2.5,2.5,7.5]){
+   gbox(1.2,7.5,1.2,x,.6,0,'#f0ede6');
+   gbox(1.6,.8,1.6,x,.6,0,'#8d3b32');
+   gbox(1.5,.4,1.5,x,8.1,0,'#9e392c');
+  }
+  gbox(18.2,1.2,1.6,0,7.2,0,'#9e392c');
+  gbox(10.2,1.0,1.8,0,7.3,0,'#2b2623');
+  gbox(8.6,.7,1.88,0,7.3,0,'#dfc476');
+  gbox(22.6,.5,4.0,0,8.5,0,'#3f3833');
+  gbox(19.2,.9,3.2,0,8.9,0,'#b84937');
+  gbox(15.2,.8,2.4,0,9.7,0,'#c74f3b');
+  gbox(14.0,.35,1.0,0,10.4,0,'#dfc476');
+  for(const sx of [-11.2,11.2]){
+   gbox(3.4,3.8,3.4,sx,.6,0,'#ded7cb');
+   gbox(3.5,1.2,3.5,sx,1.6,0,'#789a9c');
+   gbox(4.4,.6,4.4,sx,4.4,0,'#b04636');
+   hipRoof(rect(sx,0,4.2,4.2),5.0,1.4,'#a64332');
+  }
+  for(const z of [-1.8,1.8]){
+   gbox(0.5,1.1,0.5,0,0.6,z,'#ffcc00');
+   gbox(2.2,0.12,0.12,-1.2,1.2,z,'#ffffff');
+   gbox(2.2,0.12,0.12,1.2,1.2,z,'#ffffff');
+  }
+  return m;
+ }
  // A single polygon extrusion preserves corners and holes, rather than four generic boxes.
  volume(m.outer,m.holes,h,.4,b.category==='住宿'?'#d3c7b9':'#cfc6b7');
  for(const hole of m.holes)volume(hole,[],.15,.15,'#8d9b78');

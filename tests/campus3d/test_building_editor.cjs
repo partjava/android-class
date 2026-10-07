@@ -234,3 +234,21 @@ BuildingEditor.toggleEditor();
 assert.equal(groundMode, 'schematic', 'Closing editor restores previous ground mode');
 
 console.log('✔ building-editor.js unit tests passed: editing, calibrated resets and persistent reopening verified');
+
+// Exports and readouts use the packaged default as their baseline.
+let exportedLayout;
+globalThis.prompt = (title, json) => { exportedLayout = {title, data: JSON.parse(json)}; };
+document.getElementById('bld-reset-all').onclick();
+document.getElementById('bld-export').onclick();
+assert.deepEqual(exportedLayout.data.teach_1, {dx:0,dz:0,rot:0});
+assert.deepEqual(exportedLayout.data.driving_school, {dx:0,dz:0,rot:0});
+BuildingEditor.selectBuilding('teach_1');
+BuildingEditor.nudge(2,-3,5);
+document.getElementById('bld-export').onclick();
+assert.deepEqual(exportedLayout.data.teach_1, {dx:2,dz:-3,rot:5});
+assert.equal(BuildingEditor.getTransforms().teach_1.dx,7, 'Export keeps stored transforms compatible');
+assert.match(document.getElementById('bld-readout').innerHTML,/相对默认/);
+document.getElementById('bld-reset-cur').onclick();
+document.getElementById('bld-export').onclick();
+assert.deepEqual(exportedLayout.data.teach_1, {dx:0,dz:0,rot:0});
+console.log('Default-relative exports and readouts passed');

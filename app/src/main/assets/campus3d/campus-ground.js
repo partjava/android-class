@@ -40,49 +40,17 @@
    }
   }catch(e){}
 
- // Realistic Asphalt Roads with Granite Curbs, Junction Caps & Center Lane Markings
- function drawRoad(points,width,y=.12){
-  for(let i=0;i<points.length;i++){
-   const p=W(points[i]);
-   box(width+1.2,.06,width+1.2,p[0],y,p[1],'#d5cfc2',roadGroup);
-   box(width,.08,width,p[0],y+.02,p[1],'#383d42',roadGroup);
-  }
-  for(let i=1;i<points.length;i++){
-   const a=W(points[i-1]),b=W(points[i]);
-   const dx=b[0]-a[0],dz=b[1]-a[1];
-   const len=Math.hypot(dx,dz);
-   if(len<.1)continue;
-   const angle=Math.atan2(dx,dz);
-   const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
-
-   const isWhitePaved=(width<=3.2); // 3m 支路为米白色白板路
-   const roadColor=isWhitePaved?'#eae5dc':'#383d42';
-   const curbColor=isWhitePaved?'#ded9ce':'#d5cfc2';
-
-   // Sidewalk curb base
-   const curb=box(width+(isWhitePaved?0.6:1.2),.06,len,mx,y,mz,curbColor,roadGroup);
-   curb.rotation.y=angle;
-
-   // Road surface
-   const road=box(width,.08,len,mx,y+.02,mz,roadColor,roadGroup);
-   road.rotation.y=angle;
-
-   // Center white dashed dividing line on main roads
-   if(!isWhitePaved&&width>=4.5&&len>5.5){
-    const stripe=box(.26,.09,len*.92,mx,y+.03,mz,'#eae6dc',roadGroup);
-    stripe.rotation.y=angle;
-   }
-  }
- }
- for(const road of L.roads)drawRoad(road.points,road.width);
+ // All curb surfaces sit below all road surfaces, keeping crossings seamless.
+ function drawRoadNetwork(roads){roadGroup.add(window.CampusRoadGeometry.build(THREE,roads));}
+ drawRoadNetwork(L.roads);
 
  window.rebuildCampusRoads=function(newRoads){
   while(roadGroup.children.length>0){
    const obj=roadGroup.children[0];
-   if(obj.geometry)obj.geometry.dispose();
+   obj.traverse(child=>{if(child.geometry)child.geometry.dispose();if(child.material)child.material.dispose();});
    roadGroup.remove(obj);
   }
-  for(const road of newRoads)drawRoad(road.points,road.width);
+  drawRoadNetwork(newRoads);
   L.roads=newRoads;
   if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
     try{ window.CampusNativeBridge.saveConfig('custom_campus_roads', JSON.stringify(newRoads)); }catch(e){}
@@ -169,29 +137,6 @@
   }
  }
 
- // --- 3D South Gate Archway (晴川大门牌坊) ---
- function buildSouthGate(parentGroup){
-  const gateGroup=new THREE.Group();
-  gateGroup.position.set(204.5,0,302.5);
-  box(24,.6,6,0,0,0,'#ded8cb',gateGroup);
-  for(const x of [-7.5,-2.5,2.5,7.5]){
-   box(1.2,7.5,1.2,x,.6,0,'#e5ded2',gateGroup);
-   box(1.5,.8,1.5,x,.6,0,'#8d3b32',gateGroup);
-  }
-  box(18,1.2,1.6,0,7.2,0,'#9e392c',gateGroup);
-  box(10,1.0,1.8,0,7.3,0,'#352e2a',gateGroup);
-  box(8.5,.7,1.85,0,7.3,0,'#e8d28c',gateGroup);
-  box(22,.5,3.6,0,8.4,0,'#3f3833',gateGroup);
-  box(19,.9,3.0,0,8.8,0,'#ab4434',gateGroup);
-  box(15,.8,2.2,0,9.6,0,'#b84937',gateGroup);
-  for(const sx of [-11,11]){
-   box(3.2,3.8,3.2,sx,.6,0,'#ded7cb',gateGroup);
-   box(4.2,.6,4.2,sx,4.4,0,'#b04636',gateGroup);
-  }
-  parentGroup.add(gateGroup);
- }
- buildSouthGate(groundSchematic);
-
  // --- High-Resolution Perfectly Aligned Aerial Satellite Ground Texture Layer ---
  const aerialGroup=new THREE.Group();
  scene.add(aerialGroup);
@@ -203,8 +148,6 @@
  plinthMesh.position.set(165,-2.02,157.5);
  plinthMesh.receiveShadow=true;
  aerialGroup.add(plinthMesh);
-
- buildSouthGate(aerialGroup);
 
  const texLoader=new THREE.TextureLoader();
  texLoader.load('campus_aerial.jpg',function(tex){

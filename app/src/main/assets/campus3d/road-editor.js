@@ -17,6 +17,8 @@
   let currentWidth=6.0; // 道路宽度：6.0 (主路), 4.5 (次干), 3.0 (白板路)
   let roads=[];         // 当前草稿道路列表
   let activePoints=[];  // 当前正在绘制的折线点
+  let redoHistory=[],diagnosticsVisible=false;
+  const packagedRoads=JSON.parse(JSON.stringify(window.CampusDefaults?.roads||window.CampusLayout?.roads||[]));
   let history=[];       // 撤销历史栈
   let editorGroup=null;
   let gridHelper=null;
@@ -70,7 +72,12 @@
   }
 
   
+  function recordHistory(){history.push(JSON.parse(JSON.stringify(roads)));if(history.length>100)history.shift();redoHistory=[];}
+  function restoreGesture(){if(!gestureSnapshot)return;roads=gestureSnapshot.roads;activePoints=gestureSnapshot.activePoints;history=gestureSnapshot.history;redoHistory=gestureSnapshot.redo;}
+  function undoRedo(redo=false){const from=redo?redoHistory:history,to=redo?history:redoHistory;if(!from.length)return;to.push(JSON.parse(JSON.stringify(roads)));if(to.length>100)to.shift();roads=from.pop();activePoints=[];updatePreview();autoSaveRoads();}
+  function resetDefaultRoads(){recordHistory();roads=JSON.parse(JSON.stringify(packagedRoads));activePoints=[];updatePreview();autoSaveRoads();showToast('已恢复默认道路，可撤销');}
   function autoSaveRoads(){
+
    if(window.CampusNativeBridge && typeof window.CampusNativeBridge.saveConfig === 'function'){
     try{ window.CampusNativeBridge.saveConfig('custom_campus_roads', JSON.stringify(roads)); }catch(e){}
    }
@@ -79,6 +86,7 @@
      localStorage.setItem('custom_campus_roads', JSON.stringify(roads));
     }
    }catch(e){}
+   window.CampusDefaults?.markSaved('roads');
   }
 
   function loadInitialRoads(){
@@ -94,8 +102,8 @@
      if(stored !== null){ roads = JSON.parse(stored); return; }
     }
    }catch(e){}
-   if(window.CampusLayout&&window.CampusLayout.roads&&window.CampusLayout.roads.length>0){
-    roads=JSON.parse(JSON.stringify(window.CampusLayout.roads));
+   if(packagedRoads.length>0){
+    roads=JSON.parse(JSON.stringify(packagedRoads));
    }else{
     roads=[];
    }
@@ -104,11 +112,16 @@
   function updatePreview(){
    while(previewGroup.children.length>0){
     const obj=previewGroup.children[0];
-    if(obj.geometry)obj.geometry.dispose();
+    const dispose=child=>{if(child.geometry)child.geometry.dispose();if(child.material&&child.material.dispose)child.material.dispose();};
+    if(obj.traverse)obj.traverse(dispose);else dispose(obj);
     previewGroup.remove(obj);
    }
    const W=(window.CampusLayout&&window.CampusLayout.world)?window.CampusLayout.world:p=>[p[0]/4,p[1]/4];
 
+   // Use the same junction geometry as the saved map.
+   if(window.CampusRoadGeometry){
+    previewGroup.add(window.CampusRoadGeometry.build(THREE,roads,{y:.4,preview:true}));
+   }else{
    // 渲染已绘制的所有路段
    for(const r of roads){
     const pts=r.points;
@@ -136,6 +149,8 @@
     }
    }
 
+   }
+
    // 渲染当前正在连线的临时活动线段
    if(activePoints.length>0){
     for(let i=1;i<activePoints.length;i++){
@@ -145,6 +160,7 @@
      previewGroup.add(new THREE.Line(lineGeo,lineMat));
     }
    }
+   drawDiagnostics();
    updateCollapsedLabel();
   }
 
@@ -158,6 +174,11 @@
    if(raycaster.ray.intersectPlane(groundPlane,hit)){
     let refX = hit.x*4;
     let refZ = hit.z*4;
+    if(drawMode!=='erase'&&window.CampusRoadTools){
+     const result=window.CampusRoadTools.snapPoint([refX,refZ],roads,10);
+     if(result.kind){if(markerMesh?.material?.color)markerMesh.material.color.set('#34b78b');return result.point;}
+    }
+    if(markerMesh?.material?.color)markerMesh.material.color.set('#ffc83b');
     if(snapToGrid){
      refX = snap(refX);
      refZ = snap(refZ);
@@ -204,7 +225,7 @@
    }
 
    if(erased){
-    history.push(JSON.parse(JSON.stringify(roads)));
+    recordHistory();
     roads=remainingRoads;
     updatePreview();
     autoSaveRoads();
@@ -227,12 +248,12 @@
     drawingPointers.add(e.pointerId);
     if(drawingPointers.size>1){
      gesturePaused=true;isDragging=false;lastDragPt=null;
-     if(gestureSnapshot){roads=gestureSnapshot.roads;activePoints=gestureSnapshot.activePoints;history.length=gestureSnapshot.historyLength;autoSaveRoads();updatePreview();}
+     if(gestureSnapshot){restoreGesture();autoSaveRoads();updatePreview();}
      markerMesh.visible=false;
      return;
     }
     if(gesturePaused)return;
-    gestureSnapshot={roads:JSON.parse(JSON.stringify(roads)),activePoints:JSON.parse(JSON.stringify(activePoints)),historyLength:history.length};
+    gestureSnapshot={roads:JSON.parse(JSON.stringify(roads)),activePoints:JSON.parse(JSON.stringify(activePoints)),history:history.slice(),redo:redoHistory.slice()};
     if(drawMode==='pan')return; // 移动模式由 campus-scene.js 处理单指平移
 
     const shouldSnap = (drawMode === 'point');
@@ -255,7 +276,7 @@
      }else{
       const prev=activePoints[activePoints.length-1];
       if(prev[0]!==pt[0]||prev[1]!==pt[1]){
-       history.push(JSON.parse(JSON.stringify(roads)));
+       recordHistory();
        roads.push({width:currentWidth,points:[prev,pt]});
        activePoints=[pt];
        updatePreview();
@@ -266,7 +287,6 @@
     }else if(drawMode==='drag'){
      // 涂抹模式：按下开始
      isDragging=true;
-     history.push(JSON.parse(JSON.stringify(roads)));
      activePoints=[pt];
      lastDragPt=pt;
      updatePreview();
@@ -298,8 +318,10 @@
     if(gesturePaused){if(!drawingPointers.size){gesturePaused=false;gestureSnapshot=null;}return;}
     if(!isEditing||drawMode==='pan')return;
     if(drawMode==='drag'&&isDragging){
+     const end=getWorldCoords(e,false);if(end&&activePoints.length&&Math.hypot(end[0]-activePoints.at(-1)[0],end[1]-activePoints.at(-1)[1])>.1)activePoints.push(end);
      isDragging=false;
      if(activePoints.length>=2){
+      recordHistory();
       roads.push({width:currentWidth,points:[...activePoints]});
       showToast('已生成自由绘制道路（'+activePoints.length+'个节点，顺滑随笔）');
      }
@@ -312,12 +334,24 @@
    });
    dom.addEventListener('pointercancel',e=>{
     drawingPointers.delete(e.pointerId);isDragging=false;lastDragPt=null;
-    if(gestureSnapshot&&!gesturePaused){roads=gestureSnapshot.roads;activePoints=gestureSnapshot.activePoints;history.length=gestureSnapshot.historyLength;autoSaveRoads();updatePreview();}
+    if(gestureSnapshot&&!gesturePaused){restoreGesture();autoSaveRoads();updatePreview();}
     if(!drawingPointers.size){gesturePaused=false;gestureSnapshot=null;}
     markerMesh.visible=false;
    });
   }
 
+  function drawDiagnostics(){
+   const el=document.getElementById('ed-network-status');if(!window.CampusRoadTools)return;
+   if(!diagnosticsVisible){if(el)el.textContent='';return;}
+   const report=window.CampusRoadTools.analyze(roads);
+   if(el)el.textContent=diagnosticsVisible?'检查结果：'+report.components+' 个路网分区 · '+report.deadEnds.length+' 个端点 · '+report.gaps.length+' 处近距离间隙（端点可能是正常入口）':'';
+   if(!diagnosticsVisible)return;
+   const mark=p=>{const geo=new THREE.RingGeometry(1.4,1.8,20);geo.rotateX(-Math.PI/2);const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:'#e79c35',side:THREE.DoubleSide}));m.position.set(p[0]/4,.65,p[1]/4);previewGroup.add(m);};
+   report.deadEnds.forEach(mark);
+   const lines=(a,b,color)=>previewGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a[0]/4,.67,a[1]/4),new THREE.Vector3(b[0]/4,.67,b[1]/4)]),new THREE.LineBasicMaterial({color})));
+   report.gaps.forEach(g=>lines(g.from,g.to,'#ed7048'));
+   for(const id of report.isolated){const pts=roads[id].points;for(let i=1;i<pts.length;i++)lines(pts[i-1],pts[i],'#db755d');}
+  }
   function showToast(msg){
    const el=document.getElementById('editor-toast');
    if(el){
@@ -343,6 +377,8 @@
   }
 
   function updateCollapsedLabel(){
+   const undo=document.getElementById('ed-undo'),redo=document.getElementById('ed-redo');
+   if(undo)undo.disabled=!history.length;if(redo)redo.disabled=!redoHistory.length;
    const lbl=document.getElementById('ed-collapsed-label');
    if(lbl){
     lbl.textContent=getModeName()+' · '+getWidthName()+' ('+roads.length+'段)';
@@ -351,7 +387,7 @@
 
   function createUI(){
    // 1. 在右侧工具栏添加【画路】按钮
-   const tools=document.getElementById('more-tools')||document.querySelector('.tools');
+   const tools=document.getElementById('tools-scroll')||document.getElementById('tools')||document.getElementById('more-tools')||document.querySelector('.tools');
    if(tools&&!document.getElementById('road-editor-btn')){
     const btn=document.createElement('button');
     btn.id='road-editor-btn';
@@ -359,6 +395,7 @@
     btn.title='开启网格画路编辑面板';
     btn.onclick=toggleEditor;
     tools.appendChild(btn);
+    if(typeof window!=="undefined"&&window.restoreToolsScroll)window.restoreToolsScroll();
    }
 
    // 2. 创建顶部和底部编辑器 HUD 面板（支持收起与展开）
@@ -377,9 +414,10 @@
       <div class="editor-section"><span class="editor-section-label">道路类型</span><div class="editor-options editor-widths">
         <button id="ed-w-6" style="background:#215e48;color:white">主路 · 6m</button><button id="ed-w-4">次干路 · 4.5m</button><button id="ed-w-3">步行道 · 3m</button>
       </div></div>
-      <div class="editor-history"><button id="ed-finish-active">结束当前段</button><button id="ed-undo">↶ 撤销</button></div>
+      <div class="editor-history"><button id="ed-finish-active">结束当前段</button><button id="ed-undo">↶ 撤销</button><button id="ed-redo">↷ 重做</button></div>
+      <div class="editor-history"><button id="ed-reset-default">恢复默认道路</button><button id="ed-check-network">检查连通</button></div><p id="ed-network-status" class="editor-caption" aria-live="polite"></p>
       <div class="editor-footer"><button id="ed-clear" class="editor-danger">清空道路</button><button id="ed-export">导出路网</button><button id="ed-save" class="editor-primary">应用路网</button></div>
-      <p class="editor-caption">2m 网格吸附 · 步行道使用米白石板 · 修改自动保存</p>
+      <p class="editor-caption">端点与路段自动吸附 · 绿色光圈表示已接上 · 修改自动保存</p>
     </section>
     <div id="ed-panel-mini" class="editor-mini" style="display:none"><strong>绘制道路</strong><span id="ed-collapsed-label">两点连线 · 主路 6m</span><button id="ed-expand-btn">展开 ↑</button></div>
     <div id="editor-toast" class="editor-toast">点击网格开始连线</div>
@@ -451,22 +489,15 @@
    };
 
    // 撤销一步
-   document.getElementById('ed-undo').onclick=()=>{
-    if(history.length>0){
-     roads=history.pop();
-     activePoints=[];
-     updatePreview();
-     autoSaveRoads();
-     showToast('↩ 已撤销一步操作');
-    }else{
-     showToast('没有可撤销的步骤了');
-    }
-   };
+   document.getElementById('ed-undo').onclick=()=>undoRedo();
+   document.getElementById('ed-redo').onclick=()=>undoRedo(true);
+   document.getElementById('ed-reset-default').onclick=resetDefaultRoads;
+   document.getElementById('ed-check-network').onclick=()=>{diagnosticsVisible=!diagnosticsVisible;document.getElementById('ed-check-network').textContent=diagnosticsVisible?'隐藏检查':'检查连通';updatePreview();};
 
    // 清空所有道路
    document.getElementById('ed-clear').onclick=()=>{
     if(confirm('确定要清空画布上的所有道路吗？(可随时点撤销恢复)')){
-     history.push(JSON.parse(JSON.stringify(roads)));
+     recordHistory();
      roads=[];activePoints=[];
      updatePreview();
      autoSaveRoads();
@@ -539,8 +570,11 @@
    isEditing:()=>isEditing,
    getMode:()=>drawMode,
    isGesturePaused:()=>gesturePaused,
-   clearRoads:()=>{history.push(JSON.parse(JSON.stringify(roads)));roads=[];activePoints=[];updatePreview();},
+   clearRoads:()=>{recordHistory();roads=[];activePoints=[];updatePreview();autoSaveRoads();},
    getRoads:()=>roads,
+   resetDefaults:resetDefaultRoads,
+   replaceRoads:value=>{recordHistory();roads=JSON.parse(JSON.stringify(value));activePoints=[];updatePreview();autoSaveRoads();},
+   undo:()=>undoRedo(),redo:()=>undoRedo(true),
    autoSave:autoSaveRoads
   };
  }

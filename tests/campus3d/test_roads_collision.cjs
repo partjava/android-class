@@ -29,9 +29,10 @@ function distToSegmentSquared(p, v, w) {
   return (p[0] - projX) * (p[0] - projX) + (p[1] - projY) * (p[1] - projY);
 }
 
-// Build list of all building reference polygons
+// Build list of all building reference polygons (gates naturally have roads passing through them)
 const buildingPolys = [];
 for (const [id, p] of Object.entries(layout.placements)) {
+  if (id === 'south_gate') continue;
   if (p.quad) buildingPolys.push({ id, poly: p.quad });
   else if (p.outline) buildingPolys.push({ id, poly: p.outline });
 }

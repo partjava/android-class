@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const data={},roads=[{width:6,points:[[0,0],[40,0]]}],transforms={gate:{dx:0,dz:0,rot:-75}};
+const c={CampusLayout:{roads},CampusData:{defaultTransforms:transforms},localStorage:{getItem:k=>data[k]??null,setItem:(k,v)=>data[k]=v}};c.window=c;vm.runInNewContext(fs.readFileSync('app/src/main/assets/campus3d/layout-defaults.js','utf8'),c);
+const D=c.CampusDefaults;assert(!D.status().custom);c.CampusLayout.roads=[];assert.equal(D.roads.length,1,'Capture defaults before runtime mutation');
+data.custom_campus_roads='[]';assert(D.status().unversioned);data.campus_default_versions=JSON.stringify({roads:'old'});assert(D.status().outdated);D.markSaved('roads');assert(D.status().custom&&!D.status().outdated);
+data.custom_building_transforms=JSON.stringify({gate:{dx:3,dz:0,rot:-75}});assert(D.status().unversioned);
+let editedRoads=[],editedBuildings={gate:{dx:3,dz:0,rot:-75}};
+c.RoadEditor={getRoads:()=>editedRoads,resetDefaults:()=>{editedRoads=roads;data.custom_campus_roads=JSON.stringify(roads);},replaceRoads:r=>{editedRoads=r;data.custom_campus_roads=JSON.stringify(r);}};
+c.BuildingEditor={getTransforms:()=>editedBuildings,resetDefaults:()=>{editedBuildings=transforms;data.custom_building_transforms=JSON.stringify(transforms);},replaceTransforms:t=>{editedBuildings=t;data.custom_building_transforms=JSON.stringify(t);}};
+D.useDefaults();assert(!D.status().custom);assert(D.status().backup);D.restoreBackup();assert.equal(editedRoads.length,0);assert.equal(editedBuildings.gate.dx,3);assert(D.status().custom);console.log('Packaged layout capture, stale-default status, switching and backup restoration passed');
