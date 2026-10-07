@@ -2,6 +2,13 @@
 
 Java + XML 开发的 Android 校园应用，采用松绿与浅米白界面，整合校园资讯、三维导览、个人内容和生活服务演示。
 
+## 下载安装
+
+[**下载 APK · 2026-10-07 地图体验版**](https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07/qingchuan-campus-2026-10-07.apk) · [发布说明与 SHA-256 校验文件](https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07)
+
+适用于 Android 10 及以上，约 20.6 MB。这是测试签名安装包，包含下文开发预览的最新本地地图功能；功能代码尚未全部提交，Release 自动生成的源码压缩包与 APK 不完全一致。已通过 Android 单元测试与构建，尚未进行本轮完整真机验证。覆盖安装通常保留本地数据，签名不同则无法直接覆盖。
+
+
 主界面提供资讯、影像、发布、导览、生活和我的六个入口。校园资讯可连接本地 Python 服务，三维校园资源随 APK 打包，基础场景可离线浏览。
 
 详细功能、操作范围及演示限制见 [项目功能说明.txt](项目功能说明.txt)。
