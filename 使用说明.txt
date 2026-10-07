@@ -2,13 +2,13 @@
 更新日期：2026-10-07
 
 一、直接下载安装
-APK：https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07/qingchuan-campus-2026-10-07.apk
-发布说明和 SHA-256：https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07
+APK：https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07-r2/qingchuan-campus-2026-10-07-r2.apk
+发布说明和 SHA-256：https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07-r2
 适用于 Android 10 及以上，安装包约 20.6 MB。下载 APK 后打开，按系统提示允许本次安装。
-这是 debug 测试签名体验包，包含最新本地地图功能；功能源码尚未全部提交，Release 的自动源码压缩包与 APK 不完全一致。
+这是 debug 测试签名体验包，包含最新地图功能；功能源码已推送，R2 Release 的源码对应提交 268261c。
 签名相同通常能覆盖安装并保留本地数据。签名不同时无法直接覆盖，卸载或清除数据会丢失设备上的个人内容和地图配置。
 APK 校验（Windows PowerShell）：
-Get-FileHash -Algorithm SHA256 .\qingchuan-campus-2026-10-07.apk
+Get-FileHash -Algorithm SHA256 .\qingchuan-campus-2026-10-07-r2.apk
 将输出与 Release 的 SHA256SUMS.txt 比较。
 
 二、地图快速操作
@@ -44,7 +44,7 @@ sdk.dir=C:/Users/你的用户名/AppData/Local/Android/Sdk
 输出 APK：app/build/outputs/apk/debug/app-debug.apk
 Node.js 地图检查：
 Get-ChildItem tests/campus3d/test_*.cjs | ForEach-Object { node $_.FullName; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }
-当前工作区共 17 个检查，仓库数量会随功能代码提交更新。
+仓库共 17 个地图检查。
 
 五、提交修改
 首次提交前使用自己的身份配置当前仓库：

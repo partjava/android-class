@@ -22,4 +22,6 @@ Preserve the user's latest 31 default transforms and existing road data. Routes 
 - [x] Publish preview APK, screenshots and download instructions.
 - [x] Synchronize README, feature inventory, usage guide and checkpoint notes.
 
-Remaining: commit all feature source changes for reproducible APK builds; perform complete device regression.
+- [x] Commit and push all feature source changes (268261c), publish matching R2 APK/source, and update download links.
+
+Remaining: perform complete device regression.

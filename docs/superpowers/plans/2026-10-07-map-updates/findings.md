@@ -21,4 +21,4 @@ Implementation notes: graph uses world coordinates, splits intersections and obs
 - Connectivity diagnostics report schematic geometric connections, not verified access through buildings. Marked endpoints can be legitimate entrances.
 - Layout version metadata detects known updates; legacy saved data without a version is described as different from packaged defaults. Switching defaults retains one local backup.
 - Building exports and readouts are default-relative; persisted transforms remain original-relative for compatibility.
-- APK downloads and screenshots are available from README. Feature source changes are still partly uncommitted; source archives do not fully reproduce the published preview APK.
+- APK downloads and screenshots are available from README. All feature source changes were subsequently committed as 268261c and pushed to main. The R2 release tag and source archives match that implementation.

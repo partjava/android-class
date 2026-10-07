@@ -4,9 +4,9 @@ Java + XML 开发的 Android 校园应用，采用松绿与浅米白界面，整
 
 ## 下载安装
 
-[**下载 APK · 2026-10-07 地图体验版**](https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07/qingchuan-campus-2026-10-07.apk) · [发布说明与 SHA-256 校验文件](https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07)
+[**下载 APK · 2026-10-07 地图体验版 R2**](https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07-r2/qingchuan-campus-2026-10-07-r2.apk) · [发布说明与 SHA-256 校验文件](https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07-r2)
 
-适用于 Android 10 及以上，约 20.6 MB。这是测试签名安装包，包含下文开发预览的最新本地地图功能；功能代码尚未全部提交，Release 自动生成的源码压缩包与 APK 不完全一致。已通过 Android 单元测试与构建，尚未进行本轮完整真机验证。覆盖安装通常保留本地数据，签名不同则无法直接覆盖。
+适用于 Android 10 及以上，约 20.6 MB。这是测试签名安装包，包含下文最新地图功能；功能源码已完整推送，R2 Release 源码对应功能提交 `268261c`。已通过 Android 单元测试与构建，尚未进行本轮完整真机验证。覆盖安装通常保留本地数据，签名不同则无法直接覆盖。
 
 
 主界面提供资讯、影像、发布、导览、生活和我的六个入口。校园资讯可连接本地 Python 服务，三维校园资源随 APK 打包，基础场景可离线浏览。
@@ -40,9 +40,9 @@ Java + XML 开发的 Android 校园应用，采用松绿与浅米白界面，整
 | --- | --- |
 | ![校园导览](screenshots/qingchuan/guide.png) | ![三维校园](screenshots/qingchuan/campus3d.png) |
 
-## 三维校园开发预览 · 2026-10-07
+## 三维校园运行截图 · 2026-10-07
 
-以下 4 张图片由当前工作区的真实网页场景在 420px 浏览器中运行截取，未使用设计稿或合成图片。它们展示本地最新地图功能；新增功能源码尚未全部提交；这些截图所示功能已包含在上方体验 APK 中，下载当前 main 不一定包含全部开发预览。手机 WebView 的实际效果以 APK 运行为准。
+以下 4 张图片由当前工作区的真实网页场景在 420px 浏览器中运行截取，未使用设计稿或合成图片。它们展示最新地图功能，已包含在上方 R2 体验 APK 和仓库 main 源码中。手机 WebView 的实际效果以 APK 运行为准。
 
 | 地图与建筑标注 | 校园路线规划 |
 | --- | --- |
@@ -67,7 +67,7 @@ Java + XML 开发的 Android 校园应用，采用松绿与浅米白界面，整
 
 路线使用当前道路和建筑位置，编辑完成后会重新计算已显示的路线。湖泊目的地使用可连接道路的湖岸位置。地图为截图近似重建，未标注真实建筑入口，未提供 GPS、室内导航或真实步行距离。
 
-建筑默认配置在 `app/src/main/assets/campus3d/campus-data.js`，道路默认配置在 `campus-layout.js`。覆盖安装保留设备上的编辑数据；建筑可以在“移楼”中点“全部复位”，开发预览还提供道路复位及整套布局切换入口。
+建筑默认配置在 `app/src/main/assets/campus3d/campus-data.js`，道路默认配置在 `campus-layout.js`。覆盖安装保留设备上的编辑数据；建筑可以在“移楼”中点“全部复位”，当前版本还提供道路复位及整套布局切换入口。
 
 ### 道路编辑与布局管理
 
@@ -133,7 +133,7 @@ python -u campus_news_server.py
 gradlew.bat testDebugUnitTest assembleDebug
 ```
 
-安装 Node.js 后，在 PowerShell 中运行地图检查（当前开发工作区共 17 个，仓库中的数量随功能提交更新）：
+安装 Node.js 后，在 PowerShell 中运行地图检查（共 17 个）：
 
 ```powershell
 Get-ChildItem tests/campus3d/test_*.cjs | ForEach-Object {
@@ -142,7 +142,7 @@ Get-ChildItem tests/campus3d/test_*.cjs | ForEach-Object {
 }
 ```
 
-2026-10-07 更新已验证 320px、420px 和 1100px 浏览器界面，以及双指缩放、松指继续拖动、绘制/擦除防误触、路线交换、湖岸路线和编辑后的路线更新；最新开发预览还验证了连通检查、道路复位、撤销重做和布局备份恢复。Android 单元测试与 debug APK 构建通过；本次尚未进行真机验证。更新记录见 `docs/superpowers/plans/2026-10-07-map-updates/`。
+2026-10-07 更新已验证 320px、420px 和 1100px 浏览器界面，以及双指缩放、松指继续拖动、绘制/擦除防误触、路线交换、湖岸路线和编辑后的路线更新；最新版本还验证了连通检查、道路复位、撤销重做和布局备份恢复。Android 单元测试与 debug APK 构建通过；本次尚未进行真机验证。更新记录见 `docs/superpowers/plans/2026-10-07-map-updates/`。
 
 - Android 源码：`app/src/main/java`、`app/src/main/res`
 - 离线三维场景：`app/src/main/assets/campus3d`

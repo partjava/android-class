@@ -1,6 +1,6 @@
 晴川校园应用 — 项目功能说明
 更新日期：2026-10-07
-适用版本：2026-10-07 地图体验 APK 与当前开发工作区；相关功能源码尚未全部提交，仓库 main 不完全等同于体验包。
+适用版本：2026-10-07 地图体验 APK R2 与仓库 main；功能源码已完整推送，R2 源码对应提交 268261c。
 
 一、项目定位与实现
 面向校园资讯、校园导览与生活服务的 Android 课程项目。
@@ -119,10 +119,10 @@ App 个人内容主要存储于本地，校园资讯依赖官网及 Python 服�
 更多启动步骤和真实运行截图见 README.md；下载与安装步骤见 使用说明.txt。
 
 十二、下载安装与验证
-APK 下载：https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07/qingchuan-campus-2026-10-07.apk
-发布说明及 SHA-256 校验文件：https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07
+APK 下载：https://github.com/partjava/android-class/releases/download/campus-preview-2026-10-07-r2/qingchuan-campus-2026-10-07-r2.apk
+发布说明及 SHA-256 校验文件：https://github.com/partjava/android-class/releases/tag/campus-preview-2026-10-07-r2
 约 20.6 MB，Android 10 及以上可安装，使用 debug 测试签名。
-体验包包含当前本地地图改动；功能源码尚未全部提交，Release 自动生成的 Source code 压缩包不能完整复现该 APK。
+R2 体验包包含已提交的地图改动；Release tag 指向对应源码提交 268261c，Source code 压缩包包含完整功能源码。
 当前开发工作区的 17 个地图检查、Android 单元测试和 debug 构建通过。
 浏览器已验证 320px、420px 和 1100px 下的主要地图操作；本轮未进行完整真机逐页回归。
 已有包签名相同通常可覆盖安装，签名不同则不能直接覆盖；不要为安装新包直接卸载而忽略本地数据。

@@ -2,9 +2,9 @@
 
 ## Latest status · 2026-10-07
 
-Published documentation commits 17dfaab and c5a1141 to main, and published the campus-preview-2026-10-07 APK release with a direct download and verified SHA-256. The APK includes working-tree feature changes that have not all been committed; the release notes identify the source mismatch.
+Published documentation commits 17dfaab and c5a1141 to main, and published the campus-preview-2026-10-07 APK release with a direct download and verified SHA-256. That first APK used uncommitted working-tree changes at publication time. The follow-up R2 release points to committed source 268261c and includes the corresponding APK; its 46 campus assets were verified against the source working tree.
 
-The current working tree includes 212 default roads, south gate rotation -75°, default-relative building exports, round road joints, shared road rendering, endpoint/segment snapping, 100-step road undo/redo, road reset, connectivity diagnostics, and layout status with local backup restoration. The toolbar now uses a scrollable tool rail rather than the original More menu.
+The committed implementation includes 212 default roads, south gate rotation -75°, default-relative building exports, round road joints, shared road rendering, endpoint/segment snapping, 100-step road undo/redo, road reset, connectivity diagnostics, and layout status with local backup restoration. The toolbar now uses a scrollable tool rail rather than the original More menu.
 
 All 17 map checks, Android unit tests and debug assembly passed. Browser checks cover 320/420/1100px layouts, road resets, undo/redo, connectivity displays and layout switching/backup. Full device regression remains outstanding. README, feature inventory and usage instructions were synchronized with this status.
 
