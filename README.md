@@ -22,6 +22,19 @@ Java + XML 开发的 Android 校园应用，采用松绿与浅米白界面，整
 
 ## 快速开始
 
+### 三维校园：地图操作与路线规划
+
+- 单指默认平移，双指围绕手指中心缩放；松开一根手指后可继续拖动。
+- 点“俯视”切换顶视图；俯视状态下旋转保持俯视角度。
+- 顶部“隐藏名称 / 显示名称”切换建筑及场地标签。
+- 右侧“路线”选择起点、终点并显示路线，支持交换地点与清除路线。实线为沿路网计算的路线，虚线为地点连接段；没有可用道路或道路不连通时显示原因。
+- “更多”中包含底图、巡航、平移/旋转、复位、画路和移楼。编辑面板可收起，退出编辑恢复原底图；画路与移楼自动互相切换。
+- 移楼支持撤销、重做和自动保存；复位恢复用户校准后的默认布局。画路时双指缩放会撤回本次未完成的编辑，避免误画、误擦。
+
+路线使用当前道路和建筑位置，编辑完成后会重新计算已显示的路线。湖泊目的地使用可连接道路的湖岸位置。地图为截图近似重建，未标注真实建筑入口，未提供 GPS、室内导航或真实步行距离。
+
+默认布局已固化在 `app/src/main/assets/campus3d/campus-data.js` 中。覆盖安装保留本地编辑数据；需要使用仓库默认布局时，在“移楼”中点“全部复位”。
+
 ### Android 客户端
 
 1. 用 Android Studio 打开项目，配置本机 Android SDK。
@@ -75,6 +88,17 @@ python -u campus_news_server.py
 ```shell
 gradlew.bat testDebugUnitTest assembleDebug
 ```
+
+安装 Node.js 后，在 PowerShell 中运行地图的 13 个几何、交互及路线检查：
+
+```powershell
+Get-ChildItem tests/campus3d/test_*.cjs | ForEach-Object {
+    node $_.FullName
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+```
+
+2026-10-07 更新已验证 320px、420px 和 1100px 浏览器界面，以及双指缩放、松指继续拖动、绘制/擦除防误触、路线交换、湖岸路线和编辑后的路线更新。Android 单元测试与 debug APK 构建通过；本次尚未进行真机验证。更新记录见 `docs/superpowers/plans/2026-10-07-map-updates/`。
 
 - Android 源码：`app/src/main/java`、`app/src/main/res`
 - 离线三维场景：`app/src/main/assets/campus3d`
