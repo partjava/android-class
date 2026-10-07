@@ -57,6 +57,7 @@
   let selectedId=null;
   let stepMove=1.0; // 米
   let stepRot=5;    // 度 (DEG)
+  let defaultTransforms={};
   let transforms={}; // { [id]: { dx: 0, dz: 0, rot: 0 } }
   let baseTransforms={}; // { [id]: { x, z, rot, cx, cz, isRegion } }
 
@@ -93,21 +94,24 @@
    highlightMarker.visible=false;
    scene.add(highlightMarker);
 
+   defaultTransforms = (CampusData && CampusData.defaultTransforms) ? JSON.parse(JSON.stringify(CampusData.defaultTransforms)) : {};
    loadTransforms();
+   applyAllTransforms();
    createUI();
   }
 
   function loadTransforms(){
+   transforms = JSON.parse(JSON.stringify(defaultTransforms));
    if(window.CampusNativeBridge && typeof window.CampusNativeBridge.loadConfig === 'function'){
     try{
      const nativeStr = window.CampusNativeBridge.loadConfig('custom_building_transforms');
-     if(nativeStr){ transforms = JSON.parse(nativeStr); return; }
+     if(nativeStr){ Object.assign(transforms, JSON.parse(nativeStr)); return; }
     }catch(e){}
    }
    try{
     if(typeof localStorage !== 'undefined' && localStorage){
      const stored = localStorage.getItem('custom_building_transforms');
-     if(stored) transforms = JSON.parse(stored);
+     if(stored) Object.assign(transforms, JSON.parse(stored));
     }
    }catch(e){}
   }
@@ -192,7 +196,7 @@
 
   function nudge(dx, dz, drot){
    if(!selectedId)return;
-   if(!transforms[selectedId])transforms[selectedId]={dx:0, dz:0, rot:0};
+   if(!transforms[selectedId])transforms[selectedId] = defaultTransforms[selectedId] ? {...defaultTransforms[selectedId]} : {dx:0, dz:0, rot:0};
    const t=transforms[selectedId];
    t.dx=Math.round((t.dx+dx)*10)/10;
    t.dz=Math.round((t.dz+dz)*10)/10;
