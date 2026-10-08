@@ -28,7 +28,7 @@ public class EditProfileActivity extends AppCompatActivity {
             String[] items = {"保密", "男", "女"};
             int cur = "男".equals(store.get("gender")) ? 1 : "女".equals(store.get("gender")) ? 2 : 0;
             new AlertDialog.Builder(this).setTitle("选择性别")
-                    .setSingleChoiceItems(items, cur, (dialog, which) -> {
+                    .setNegativeButton("取消", null).setSingleChoiceItems(items, cur, (dialog, which) -> {
                         store.set("gender", items[which]);
                         showValue(R.id.item_gender, "gender");
                         dialog.dismiss();
@@ -36,8 +36,8 @@ public class EditProfileActivity extends AppCompatActivity {
         });
         findViewById(R.id.item_birth).setOnClickListener(v -> {
             Calendar date = Calendar.getInstance();
-            String[] saved = store.get("birth").split("-");
-            if (saved.length == 3) date.set(Integer.parseInt(saved[0]), Integer.parseInt(saved[1]) - 1, Integer.parseInt(saved[2]));
+            java.util.Date saved = ProfileStore.parseBirth(store.get("birth"));
+            if (saved != null) date.setTime(saved);
             DatePickerDialog picker = new DatePickerDialog(this, (view, year, month, day) -> {
                 store.set("birth", String.format(Locale.CHINA, "%04d-%02d-%02d", year, month + 1, day));
                 showValue(R.id.item_birth, "birth");
@@ -92,12 +92,19 @@ public class EditProfileActivity extends AppCompatActivity {
             input.setText(store.get(key));
             input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(maxLen)});
             input.setSelection(input.getText().length());
-            new AlertDialog.Builder(this).setTitle("修改" + title).setView(input)
-                    .setPositiveButton("保存", (dialog, which) -> {
+            input.setSingleLine(!"intro".equals(key));
+            AlertDialog edit = new AlertDialog.Builder(this).setTitle("修改" + title).setView(input)
+                    .setPositiveButton("保存", null).setNegativeButton("取消", null).create();
+            edit.setOnShowListener(d -> {
+                edit.getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                edit.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button -> {
+                    try {
                         store.set(key, input.getText().toString().trim());
-                        showValue(rowId, key);
-                    })
-                    .setNegativeButton("取消", null).show();
+                        showValue(rowId, key); edit.dismiss();
+                    } catch (IllegalArgumentException e) { input.setError(e.getMessage()); input.requestFocus(); }
+                });
+            });
+            edit.show();
         });
     }
     private void showValue(int rowId, String key) {

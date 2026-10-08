@@ -63,12 +63,13 @@
                     android:contentDescription="设置"/>
             </LinearLayout>
 
-            <LinearLayout
+            <LinearLayout android:id="@+id/profile_header"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:paddingHorizontal="@dimen/page_padding">
 
+                <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center_horizontal">
                 <ImageView
                     android:id="@+id/iv_avatar"
                     android:layout_width="72dp"
@@ -76,6 +77,8 @@
                     android:src="@drawable/avatar"
                     android:scaleType="centerCrop"
                     android:contentDescription="头像"/>
+                    <TextView android:id="@+id/profile_avatar_badge" android:layout_width="72dp" android:layout_height="wrap_content" android:gravity="center" android:textColor="@color/brand_red" android:textSize="11sp" android:visibility="gone" />
+                </LinearLayout>
 
                 <LinearLayout
                     style="@style/Widget.Toutiao.SettingLabelColumn"

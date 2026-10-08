@@ -366,10 +366,12 @@ public class PublishActivity extends AppCompatActivity {
         // 1. 存入 ContentStore 的 "posts"（我的作品）
         ContentStore store = new ContentStore(this);
         JSONObject article = ContentStore.article(title, info, content, img1, type);
+        String postId="post-"+java.util.UUID.randomUUID();
+        try {article.put("news_id",postId);article.put("img2",img2);article.put("img3",img3);article.put("detail_type",type==News.TYPE_VIDEO?NewsContract.VIDEO:"native");}catch(org.json.JSONException invalid){throw new IllegalStateException(invalid);}
         store.put("posts", article);
 
         // 2. 插入到 HomeFragment 推荐信息流顶部
-        News newNewsItem = new News(type, title, info, "刚刚", img1, img2, img3).withContent(content);
+        News newNewsItem = new News(type, title, info, "刚刚", img1, img2, img3).withId(postId).withContent(content);
         HomeFragment.addUserPost(newNewsItem);
 
         Toast.makeText(this, "🎉 发布成功！已同步至「推荐」与「我的作品」", Toast.LENGTH_SHORT).show();

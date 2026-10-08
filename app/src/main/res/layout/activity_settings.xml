@@ -354,6 +354,7 @@
         </LinearLayout>
         <View style="@style/Widget.Toutiao.Divider"/>
 
+        <LinearLayout android:id="@+id/item_storage_demo" style="@style/Widget.Toutiao.SettingRow"><TextView style="@style/Widget.Toutiao.SettingLabel" android:text="配置文件存储演示（实验8 / 10）"/><ImageView style="@style/Widget.Toutiao.SettingArrow"/></LinearLayout><View style="@style/Widget.Toutiao.Divider"/>
         <!--退出登录。单独居中，不套 SettingRow（那会变成左对齐的小字）。-->
         <TextView
             android:id="@+id/tv_logout"

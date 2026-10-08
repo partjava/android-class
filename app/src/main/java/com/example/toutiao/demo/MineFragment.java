@@ -619,7 +619,7 @@ public class MineFragment extends PageFragment {
         delTv.setOnClickListener(v -> new AlertDialog.Builder(c)
                 .setMessage("确定删除该校园动态作品吗？")
                 .setPositiveButton("删除", (d, w) -> {
-                    store.remove("posts", post.optString("title"));
+                    store.remove("posts", post.optString("news_id",post.optString("title")));
                     renderContent();
                 })
                 .setNegativeButton("取消", null)
@@ -629,13 +629,7 @@ public class MineFragment extends PageFragment {
         card.addView(botRow);
 
         card.setOnClickListener(v -> {
-            Intent intent = new Intent(c, NewsDetailActivity.class);
-            intent.putExtra("title", post.optString("title"));
-            intent.putExtra("info", post.optString("info"));
-            intent.putExtra("content", post.optString("content"));
-            intent.putExtra("img", post.optInt("img"));
-            intent.putExtra("type", post.optInt("type"));
-            startActivity(intent);
+            startActivity(NewsContract.intent(c,post));
         });
 
         return card;
@@ -695,16 +689,7 @@ public class MineFragment extends PageFragment {
         }
 
         card.setOnClickListener(v -> {
-            Intent intent = new Intent(c, NewsDetailActivity.class);
-            intent.putExtra("title", art.optString("title"));
-            intent.putExtra("info", art.optString("info"));
-            intent.putExtra("content", art.optString("content"));
-            intent.putExtra("img", art.optInt("img"));
-            intent.putExtra("type", art.optInt("type"));
-            for (String key : new String[]{"img_url", "img_url_2", "img_url_3", "blocks_json", "link"}) {
-                intent.putExtra(key, art.optString(key));
-            }
-            startActivity(intent);
+            startActivity(NewsContract.intent(c,art));
         });
 
         return card;
@@ -822,6 +807,30 @@ public class MineFragment extends PageFragment {
         ImageView avatar = findViewById(R.id.iv_avatar);
         if (avatar != null) {
             avatar.setImageResource(profile.getAvatarRes());
+        }
+        TextView badge = findViewById(R.id.profile_avatar_badge);
+        String frame = profile.get("avatar_frame");
+        boolean decorated = !frame.isEmpty() && !"无挂件".equals(frame);
+        if (badge != null) { badge.setText("★ " + frame); badge.setVisibility(decorated ? View.VISIBLE : View.GONE); }
+        if (avatar != null) {
+            android.graphics.drawable.GradientDrawable border = new android.graphics.drawable.GradientDrawable();
+            border.setColor(Color.TRANSPARENT); border.setCornerRadius(dp(12));
+            border.setStroke(decorated ? dp(3) : 0, Color.rgb(220, 156, 42));
+            avatar.setBackground(border); avatar.setPadding(decorated ? dp(3) : 0, decorated ? dp(3) : 0, decorated ? dp(3) : 0, decorated ? dp(3) : 0);
+        }
+        View header = findViewById(R.id.profile_header);
+        if (header != null) {
+            String background = profile.get("profile_bg");
+            int[] colors = "星空深蓝".equals(background) ? new int[]{0xFFC2D6F2, 0xFFE8F0FF}
+                    : "渐变晚霞".equals(background) ? new int[]{0xFFFFD0D9, 0xFFFFE8CB}
+                    : "极简雅灰".equals(background) ? new int[]{0xFFDDE0E5, 0xFFF1F2F4}
+                    : "青春活力橙".equals(background) ? new int[]{0xFFFFD49D, 0xFFFFEDCF} : new int[]{Color.TRANSPARENT, Color.TRANSPARENT};
+            header.setBackground(new android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TL_BR, colors));
+        }
+        TextView tags = findViewById(R.id.tv_tag_edit);
+        if (tags != null) {
+            String details = profile.get("gender") + " · " + profile.get("school") + " · " + profile.get("job");
+            tags.setText(details);
         }
         refreshWalletAssets();
         renderContent();
