@@ -1,0 +1,17 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_surface" android:fillViewport="true">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+  <TextView android:id="@+id/storage_back" android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical" android:text="‹ 返回设置" android:textColor="@color/text_primary" android:textSize="16sp" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="配置文件存储演示" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="22sp" />
+  <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingVertical="12dp" android:text="实验8 / 实验10 · 三种方式实际读写\n文本和XML位于应用私有目录，重启后仍保留。" android:textColor="@color/text_secondary" />
+  <Button android:id="@+id/storage_prefs_write" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="SharedPreferences · 写入昵称" />
+  <Button android:id="@+id/storage_prefs_read" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="SharedPreferences · 读取主资料" />
+  <Button android:id="@+id/storage_text_write" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="UTF-8文本 · 写入备份" />
+  <Button android:id="@+id/storage_text_read" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="UTF-8文本 · 读取备份" />
+  <Button android:id="@+id/storage_text_restore" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="从文本备份恢复资料" />
+  <Button android:id="@+id/storage_xml_write" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="XML · 写入独立备份" />
+  <Button android:id="@+id/storage_xml_read" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="XML · 读取独立备份" />
+  <Button android:id="@+id/storage_xml_restore" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="从XML备份恢复资料" />
+  <Button android:id="@+id/storage_sqlite_read" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="SQLite · 查看真实记录与迁移状态" />
+  <TextView android:id="@+id/storage_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:textIsSelectable="true" android:textColor="@color/text_primary" android:background="@drawable/bg_banner" />
+ </LinearLayout>
+</ScrollView>

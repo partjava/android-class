@@ -92,18 +92,7 @@ public class ContentLibraryActivity extends AppCompatActivity {
 
         lvContent.setOnItemClickListener((parent, view, position, id) -> {
             JSONObject item = dataList.get(position);
-            Intent intent = new Intent(this, NewsDetailActivity.class);
-            intent.putExtra("title", item.optString("title"));
-            intent.putExtra("info", item.optString("info"));
-            intent.putExtra("content", item.optString("content"));
-            intent.putExtra("img", item.optInt("img", 0));
-            intent.putExtra("type", item.optInt("type", News.TYPE_TEXT));
-            if (item.has("img_url")) intent.putExtra("img_url", item.optString("img_url"));
-            if (item.has("img_url_2")) intent.putExtra("img_url_2", item.optString("img_url_2"));
-            if (item.has("img_url_3")) intent.putExtra("img_url_3", item.optString("img_url_3"));
-            if (item.has("blocks_json")) intent.putExtra("blocks_json", item.optString("blocks_json"));
-            if (item.has("link")) intent.putExtra("link", item.optString("link"));
-            startActivity(intent);
+            startActivity(NewsContract.intent(this, item));
         });
     }
 
@@ -153,7 +142,7 @@ public class ContentLibraryActivity extends AppCompatActivity {
                 .setTitle("确认删除")
                 .setMessage("确定要删除这条记录吗？")
                 .setPositiveButton("删除", (dialog, which) -> {
-                    new ContentStore(this).remove(currentKind, item.optString("title"));
+                    new ContentStore(this).remove(currentKind, item.optString("news_id", item.optString("title")));
                     loadData();
                     Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show();
                 })

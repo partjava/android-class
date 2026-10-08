@@ -112,6 +112,8 @@ public final class ShopStore {
     }
 
     public static class CartItem {
+        public String productId;
+        public String sku;
         public String title;
         public long priceCents;
         public int quantity;
@@ -120,12 +122,25 @@ public final class ShopStore {
         public boolean selected;
 
         public CartItem(String title, long priceCents, int quantity, int imgRes, String category, boolean selected) {
+            this(ShopItem.legacyProductId(imgRes, title, category), "默认规格", title, priceCents, quantity, imgRes, category, selected);
+        }
+
+        public CartItem(String productId, String sku, String title, long priceCents, int quantity, int imgRes, String category, boolean selected) {
+            this.productId = productId;
+            this.sku = sku == null || sku.isEmpty() ? "默认规格" : sku;
             this.title = title;
-            this.priceCents = priceCents;
-            this.quantity = Math.max(1, quantity);
+            this.priceCents = Math.min(Long.MAX_VALUE / 99, Math.max(0, priceCents));
+            this.quantity = Math.min(99, Math.max(1, quantity));
             this.imgRes = imgRes;
             this.category = category;
             this.selected = selected;
+        }
+
+        public String key() { return productId + "|" + sku; }
+
+        public long subtotalCents() {
+            if (priceCents < 0 || quantity <= 0 || quantity > 99) throw new IllegalArgumentException("商品金额或数量无效");
+            return Math.multiplyExact(priceCents, (long) quantity);
         }
 
         public double getPrice() {
@@ -133,13 +148,16 @@ public final class ShopStore {
         }
 
         public double getSubtotal() {
-            return (priceCents * quantity) / 100.0;
+            return subtotalCents() / 100.0;
         }
 
         public JSONObject toJson() {
             JSONObject obj = new JSONObject();
             try {
                 obj.put("title", title);
+                obj.put("id", key());
+                obj.put("productId", productId);
+                obj.put("sku", sku);
                 obj.put("priceCents", priceCents);
                 obj.put("quantity", quantity);
                 obj.put("imgRes", imgRes);
@@ -153,6 +171,8 @@ public final class ShopStore {
         public static CartItem fromJson(JSONObject obj) {
             if (obj == null) return null;
             return new CartItem(
+                    obj.optString("productId", ShopItem.legacyProductId(obj.optInt("imgRes", 0), obj.optString("title"), obj.optString("category"))),
+                    obj.optString("sku", "默认规格"),
                     obj.optString("title", ""),
                     obj.optLong("priceCents", 0),
                     obj.optInt("quantity", 1),
@@ -202,6 +222,7 @@ public final class ShopStore {
         public JSONObject toJson() {
             JSONObject obj = new JSONObject();
             try {
+                obj.put("id", orderId);
                 obj.put("orderId", orderId);
                 obj.put("createTime", createTime);
                 obj.put("status", status);
@@ -230,7 +251,8 @@ public final class ShopStore {
         public static OrderItem fromJson(JSONObject obj) {
             if (obj == null) return null;
             OrderItem item = new OrderItem();
-            item.orderId = obj.optString("orderId", "");
+            item.orderId = obj.optString("orderId", obj.optString("id", ""));
+            if (item.orderId.isEmpty()) throw new IllegalArgumentException("订单缺少ID");
             item.createTime = obj.optString("createTime", "");
             item.status = obj.optString("status", "待发货");
             item.totalCents = obj.optLong("totalCents", 0);
@@ -257,141 +279,137 @@ public final class ShopStore {
     }
 
     private final SharedPreferences prefs;
+    private final DemoDatabase database;
 
     public ShopStore(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        migrateLegacyData(context);
-    }
-
-    private void migrateLegacyData(Context context) {
-        // 迁移旧版 ContentStore 中的购物车与订单数据
-        if (prefs.getBoolean("migrated_legacy", false)) return;
-        try {
-            ContentStore legacy = new ContentStore(context);
-            JSONArray legacyCart = legacy.list("cart");
-            if (legacyCart.length() > 0 && !prefs.contains(KEY_CART)) {
-                List<CartItem> list = new ArrayList<>();
-                for (int i = 0; i < legacyCart.length(); i++) {
-                    JSONObject obj = legacyCart.optJSONObject(i);
-                    if (obj != null) {
-                        list.add(new CartItem(
-                                obj.optString("title"),
-                                obj.optLong("cents", 0),
-                                obj.optInt("quantity", 1),
-                                obj.optInt("img", 0),
-                                "推荐",
-                                true
-                        ));
-                    }
-                }
-                saveCart(list);
-            }
-        } catch (Exception ignored) {
-        }
-        prefs.edit().putBoolean("migrated_legacy", true).apply();
+        database = new DemoDatabase(context);
     }
 
     // ====== 购物车操作 ======
 
-    public synchronized List<CartItem> getCartItems() {
+    public List<CartItem> getCartItems() {
         List<CartItem> list = new ArrayList<>();
-        try {
-            JSONArray arr = new JSONArray(prefs.getString(KEY_CART, "[]"));
+        {
+            JSONArray arr = database.list("cart");
             for (int i = 0; i < arr.length(); i++) {
                 CartItem ci = CartItem.fromJson(arr.optJSONObject(i));
                 if (ci != null) list.add(ci);
             }
-        } catch (Exception ignored) {
         }
         return list;
     }
 
-    public synchronized void saveCart(List<CartItem> list) {
+    public void saveCart(List<CartItem> list) {
         JSONArray arr = new JSONArray();
         for (CartItem it : list) {
             arr.put(it.toJson());
         }
-        prefs.edit().putString(KEY_CART, arr.toString()).apply();
+        database.replace("cart", arr);
     }
 
-    public synchronized void addToCart(String title, long priceCents, int imgRes, String category, int addQty) {
-        List<CartItem> list = getCartItems();
-        boolean found = false;
-        for (CartItem it : list) {
-            if (it.title.equals(title)) {
-                it.quantity += addQty;
-                it.selected = true;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            list.add(0, new CartItem(title, priceCents, addQty, imgRes, category, true));
-        }
-        saveCart(list);
+    public void addToCart(String title, long priceCents, int imgRes, String category, int addQty) {
+        addToCart(ShopItem.legacyProductId(imgRes, title, category), "默认规格", title, priceCents, imgRes, category, addQty);
     }
 
-    public synchronized void updateQuantity(String title, int newQty) {
-        List<CartItem> list = getCartItems();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).title.equals(title)) {
-                if (newQty <= 0) {
-                    list.remove(i);
-                } else {
-                    list.get(i).quantity = newQty;
+    public void addToCart(String productId, String sku, String title, long priceCents, int imgRes, String category, int addQty) {
+        database.transaction(() -> {
+            if (addQty <= 0 || priceCents < 0 || priceCents > Long.MAX_VALUE / 99) throw new IllegalArgumentException("商品金额或数量无效");
+            List<CartItem> list = getCartItems();
+            String key = new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true).key();
+            boolean found = false;
+            for (CartItem it : list) {
+                if (it.key().equals(key)) {
+                    it.quantity = (int) Math.min(99L, (long) it.quantity + addQty);
+                    it.selected = true;
+                    found = true;
+                    break;
                 }
-                break;
             }
-        }
-        saveCart(list);
-    }
-
-    public synchronized void setItemSelected(String title, boolean selected) {
-        List<CartItem> list = getCartItems();
-        for (CartItem it : list) {
-            if (it.title.equals(title)) {
-                it.selected = selected;
-                break;
+            if (!found) {
+                list.add(0, new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true));
             }
-        }
-        saveCart(list);
+            saveCart(list);
+            return null;
+        });
     }
 
-    public synchronized void selectAll(boolean select) {
-        List<CartItem> list = getCartItems();
-        for (CartItem it : list) {
-            it.selected = select;
-        }
-        saveCart(list);
-    }
-
-    public synchronized void removeFromCart(String title) {
-        List<CartItem> list = getCartItems();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).title.equals(title)) {
-                list.remove(i);
-                break;
+    public void updateQuantity(String key, int newQty) {
+        database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).key().equals(key)) {
+                    if (newQty <= 0) {
+                        list.remove(i);
+                    } else {
+                        list.get(i).quantity = Math.min(99, newQty);
+                    }
+                    break;
+                }
             }
-        }
-        saveCart(list);
+            saveCart(list);
+            return null;
+        });
     }
 
-    public synchronized void removeSelectedFromCart() {
-        List<CartItem> list = getCartItems();
-        List<CartItem> remaining = new ArrayList<>();
-        for (CartItem it : list) {
-            if (!it.selected) {
-                remaining.add(it);
+    public void setItemSelected(String key, boolean selected) {
+        database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            for (CartItem it : list) {
+                if (it.key().equals(key)) {
+                    it.selected = selected;
+                    break;
+                }
             }
-        }
-        saveCart(remaining);
+            saveCart(list);
+            return null;
+        });
     }
 
-    public synchronized void clearCart() {
-        prefs.edit().remove(KEY_CART).apply();
+    public void selectAll(boolean select) {
+        database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            for (CartItem it : list) {
+                it.selected = select;
+            }
+            saveCart(list);
+            return null;
+        });
     }
 
-    public synchronized int getCartCount() {
+    public void removeFromCart(String key) {
+        database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).key().equals(key)) {
+                    list.remove(i);
+                    break;
+                }
+            }
+            saveCart(list);
+            return null;
+        });
+    }
+
+    public void removeSelectedFromCart() {
+        database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            List<CartItem> remaining = new ArrayList<>();
+            for (CartItem it : list) {
+                if (!it.selected) {
+                    remaining.add(it);
+                }
+            }
+            saveCart(remaining);
+            return null;
+        });
+    }
+
+    public void clearCart() {
+        database.replace("cart", new JSONArray());
+    }
+
+    public int getCartCount() {
         int count = 0;
         for (CartItem it : getCartItems()) {
             count += it.quantity;
@@ -401,97 +419,109 @@ public final class ShopStore {
 
     // ====== 订单操作 ======
 
-    public synchronized List<OrderItem> getOrders() {
+    public List<OrderItem> getOrders() {
         List<OrderItem> list = new ArrayList<>();
-        try {
-            JSONArray arr = new JSONArray(prefs.getString(KEY_ORDERS, "[]"));
+        {
+            JSONArray arr = database.list("orders");
             for (int i = 0; i < arr.length(); i++) {
                 OrderItem oi = OrderItem.fromJson(arr.optJSONObject(i));
                 if (oi != null) list.add(oi);
             }
-        } catch (Exception ignored) {
         }
         return list;
     }
 
-    public synchronized void saveOrders(List<OrderItem> list) {
+    public void saveOrders(List<OrderItem> list) {
         JSONArray arr = new JSONArray();
         for (OrderItem it : list) {
             arr.put(it.toJson());
         }
-        prefs.edit().putString(KEY_ORDERS, arr.toString()).apply();
+        database.replace("orders", arr);
     }
 
-    public synchronized OrderItem getOrder(String orderId) {
+    public OrderItem getOrder(String orderId) {
         for (OrderItem it : getOrders()) {
             if (it.orderId.equals(orderId)) return it;
         }
         return null;
     }
 
-    public synchronized OrderItem createOrder(List<CartItem> buyItems, String receiverName, String phone, String address, long discountCents) {
-        OrderItem order = new OrderItem();
-        String dateStr = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(new Date());
-        order.orderId = "TT" + dateStr + (int) (Math.random() * 900 + 100);
-        order.createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).format(new Date());
-        order.status = "待发货";
-        order.receiverName = (receiverName == null || receiverName.trim().isEmpty()) ? "李同学" : receiverName.trim();
-        order.receiverPhone = (phone == null || phone.trim().isEmpty()) ? "13800138000" : phone.trim();
-        order.receiverAddress = (address == null || address.trim().isEmpty()) ? "湖北省武汉市东湖高新区光谷软件园F座" : address.trim();
-        order.expressCompany = "顺丰速运";
-        order.expressNumber = "SF" + (System.currentTimeMillis() % 10000000000L);
-        order.items.addAll(buyItems);
+    public OrderItem createOrder(List<CartItem> buyItems, String receiverName, String phone, String address, long discountCents) {
+        return createOrder(buyItems, receiverName, phone, address, discountCents, true);
+    }
 
-        long sum = 0;
-        for (CartItem it : buyItems) {
-            sum += (it.priceCents * it.quantity);
-        }
-        order.totalCents = sum;
-        order.discountCents = Math.min(discountCents, sum);
-        order.actualCents = Math.max(0, sum - order.discountCents);
+    public OrderItem createOrder(List<CartItem> buyItems, String receiverName, String phone, String address, long discountCents, boolean removePurchasedFromCart) {
+        return database.transaction(() -> {
+            if (buyItems == null || buyItems.isEmpty()) throw new IllegalArgumentException("暂无待结算商品");
+            OrderItem order = new OrderItem();
+            order.orderId = "TT" + java.util.UUID.randomUUID().toString().replace("-", "");
+            order.createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).format(new Date());
+            order.status = "待发货";
+            order.receiverName = (receiverName == null || receiverName.trim().isEmpty()) ? "李同学" : receiverName.trim();
+            order.receiverPhone = (phone == null || phone.trim().isEmpty()) ? "13800138000" : phone.trim();
+            order.receiverAddress = (address == null || address.trim().isEmpty()) ? "湖北省武汉市东湖高新区光谷软件园F座" : address.trim();
+            order.expressCompany = "顺丰速运";
+            order.expressNumber = "SF" + (System.currentTimeMillis() % 10000000000L);
+            for (CartItem it : buyItems) order.items.add(CartItem.fromJson(it.toJson()));
 
-        List<OrderItem> list = getOrders();
-        list.add(0, order);
-        saveOrders(list);
+            long sum = 0;
+            for (CartItem it : buyItems) {
+                sum = Math.addExact(sum, it.subtotalCents());
+            }
+            order.totalCents = sum;
+            order.discountCents = Math.max(0, Math.min(discountCents, sum));
+            order.actualCents = Math.max(0, sum - order.discountCents);
 
-        // 从购物车移除已购买商品
-        List<CartItem> cart = getCartItems();
-        for (CartItem bought : buyItems) {
-            for (int i = 0; i < cart.size(); i++) {
-                if (cart.get(i).title.equals(bought.title)) {
-                    cart.remove(i);
+            List<OrderItem> list = getOrders();
+            list.add(0, order);
+            saveOrders(list);
+
+            // 从购物车移除已购买商品
+            List<CartItem> cart = getCartItems();
+            if (removePurchasedFromCart) for (CartItem bought : buyItems) {
+                for (int i = 0; i < cart.size(); i++) {
+                    if (cart.get(i).key().equals(bought.key())) {
+                        int remaining = cart.get(i).quantity - bought.quantity;
+                        if (remaining <= 0) cart.remove(i); else cart.get(i).quantity = remaining;
+                        break;
+                    }
+                }
+            }
+            saveCart(cart);
+
+            return order;
+        });
+    }
+
+    public void updateOrderStatus(String orderId, String newStatus) {
+        database.transaction(() -> {
+            List<OrderItem> list = getOrders();
+            for (OrderItem it : list) {
+                if (it.orderId.equals(orderId)) {
+                    it.status = newStatus;
                     break;
                 }
             }
-        }
-        saveCart(cart);
-
-        return order;
+            saveOrders(list);
+            return null;
+        });
     }
 
-    public synchronized void updateOrderStatus(String orderId, String newStatus) {
-        List<OrderItem> list = getOrders();
-        for (OrderItem it : list) {
-            if (it.orderId.equals(orderId)) {
-                it.status = newStatus;
-                break;
+    public void deleteOrder(String orderId) {
+        database.transaction(() -> {
+            List<OrderItem> list = getOrders();
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).orderId.equals(orderId)) {
+                    list.remove(i);
+                    break;
+                }
             }
-        }
-        saveOrders(list);
+            saveOrders(list);
+            return null;
+        });
     }
 
-    public synchronized void deleteOrder(String orderId) {
-        List<OrderItem> list = getOrders();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).orderId.equals(orderId)) {
-                list.remove(i);
-                break;
-            }
-        }
-        saveOrders(list);
-    }
-
-    public synchronized List<CouponItem> getCoupons() {
+    public List<CouponItem> getCoupons() {
         String json = prefs.getString(KEY_COUPONS, null);
         List<CouponItem> list = new ArrayList<>();
         if (json != null && !json.isEmpty()) {
@@ -511,7 +541,7 @@ public final class ShopStore {
         return list;
     }
 
-    public synchronized void saveCoupons(List<CouponItem> list) {
+    public void saveCoupons(List<CouponItem> list) {
         JSONArray arr = new JSONArray();
         for (CouponItem item : list) {
             arr.put(item.toJson());
@@ -519,7 +549,7 @@ public final class ShopStore {
         prefs.edit().putString(KEY_COUPONS, arr.toString()).apply();
     }
 
-    public synchronized boolean addCoupon(int discountAmount, String title, int minSpend, String desc) {
+    public boolean addCoupon(int discountAmount, String title, int minSpend, String desc) {
         List<CouponItem> list = getCoupons();
         for (CouponItem it : list) {
             if (it.title.equals(title) && !it.used) {
@@ -533,7 +563,7 @@ public final class ShopStore {
         return true;
     }
 
-    public synchronized void markCouponUsed(String couponId) {
+    public void markCouponUsed(String couponId) {
         if (couponId == null) return;
         List<CouponItem> list = getCoupons();
         for (CouponItem it : list) {
@@ -545,12 +575,11 @@ public final class ShopStore {
         saveCoupons(list);
     }
 
-    public synchronized List<CouponItem> getAvailableCoupons(long orderAmountCents) {
+    public List<CouponItem> getAvailableCoupons(long orderAmountCents) {
         List<CouponItem> all = getCoupons();
         List<CouponItem> available = new ArrayList<>();
-        double orderYuan = orderAmountCents / 100.0;
         for (CouponItem c : all) {
-            if (!c.used && orderYuan >= c.minSpend) {
+            if (!c.used && c.discountAmount > 0 && orderAmountCents >= Math.max(0, c.minSpend) * 100L) {
                 available.add(c);
             }
         }
@@ -559,7 +588,7 @@ public final class ShopStore {
 
     // ====== 收货地址管理 ======
 
-    public synchronized List<AddressItem> getAddresses() {
+    public List<AddressItem> getAddresses() {
         String json = prefs.getString(KEY_ADDRESSES, null);
         List<AddressItem> list = new ArrayList<>();
         if (json != null && !json.isEmpty()) {
@@ -580,7 +609,7 @@ public final class ShopStore {
         return list;
     }
 
-    public synchronized void saveAddresses(List<AddressItem> list) {
+    public void saveAddresses(List<AddressItem> list) {
         JSONArray arr = new JSONArray();
         for (AddressItem item : list) {
             arr.put(item.toJson());
@@ -588,7 +617,7 @@ public final class ShopStore {
         prefs.edit().putString(KEY_ADDRESSES, arr.toString()).apply();
     }
 
-    public synchronized void addAddress(String name, String phone, String tag, String fullAddress, boolean isDefault) {
+    public void addAddress(String name, String phone, String tag, String fullAddress, boolean isDefault) {
         List<AddressItem> list = getAddresses();
         String id = "addr_" + System.currentTimeMillis();
         if (isDefault) {
@@ -598,7 +627,7 @@ public final class ShopStore {
         saveAddresses(list);
     }
 
-    public synchronized AddressItem getDefaultAddress() {
+    public AddressItem getDefaultAddress() {
         List<AddressItem> list = getAddresses();
         for (AddressItem a : list) {
             if (a.isDefault) return a;
@@ -606,7 +635,7 @@ public final class ShopStore {
         return list.isEmpty() ? null : list.get(0);
     }
 
-    public synchronized void setDefaultAddress(String addressId) {
+    public void setDefaultAddress(String addressId) {
         List<AddressItem> list = getAddresses();
         for (AddressItem a : list) {
             a.isDefault = a.id.equals(addressId);
@@ -616,7 +645,7 @@ public final class ShopStore {
 
     // ====== 订单全生命周期流转 ======
 
-    public synchronized void shipOrder(String orderId) {
+    public void shipOrder(String orderId) {
         List<OrderItem> list = getOrders();
         for (OrderItem it : list) {
             if (it.orderId.equals(orderId)) {
@@ -629,7 +658,7 @@ public final class ShopStore {
         saveOrders(list);
     }
 
-    public synchronized void evaluateOrder(String orderId, int rating, String comment) {
+    public void evaluateOrder(String orderId, int rating, String comment) {
         List<OrderItem> list = getOrders();
         for (OrderItem it : list) {
             if (it.orderId.equals(orderId)) {

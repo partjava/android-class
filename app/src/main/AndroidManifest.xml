@@ -35,12 +35,14 @@
             android:name=".HomeActivity"
             android:exported="true"/>
         <activity android:name=".NewsDetailActivity"/>
+        <activity android:name=".AudioDetailActivity" android:exported="false"/>
+        <activity android:name=".StorageDemoActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".MineActivity"/>
         <activity android:name=".ShopActivity"/>
         <activity android:name=".ProductDetailActivity"/>
         <activity android:name=".VideoActivity"/>
         <activity android:name=".VideoDetailActivity"/>
-        <activity android:name=".EditProfileActivity"/>
+        <activity android:name=".EditProfileActivity" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".SettingsActivity"/>
         <activity android:name=".MsgActivity"/>
         <!-- 全项目唯一一个带软键盘交互的页面：
@@ -49,7 +51,7 @@
             android:name=".ChatActivity"
             android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".CartActivity" android:exported="true"/>
-        <activity android:name=".OrderConfirmActivity" android:exported="true"/>
+        <activity android:name=".OrderConfirmActivity" android:exported="true" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".OrderListActivity" android:exported="true"/>
         <activity android:name=".OrderDetailActivity" android:exported="true"/>
         <activity android:name=".WebActivity" android:exported="true"/>
