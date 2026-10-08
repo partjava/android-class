@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Before;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -19,10 +20,17 @@ public class ShopCartOrderTest {
     private Context context;
     private ShopStore store;
 
+    private List<ShopStore.CartItem> savedCart;
+    private List<ShopStore.OrderItem> savedOrders;
+
+    @After public void restore() { if (savedCart != null) store.saveCart(savedCart); if (savedOrders != null) store.saveOrders(savedOrders); }
+
     @Before
     public void setUp() {
         context = ApplicationProvider.getApplicationContext();
         store = new ShopStore(context);
+        savedCart = store.getCartItems();
+        savedOrders = store.getOrders();
         store.clearCart();
         for (ShopStore.OrderItem oi : store.getOrders()) {
             store.deleteOrder(oi.orderId);
@@ -50,7 +58,10 @@ public class ShopCartOrderTest {
         assertEquals(4, store.getCartCount());
 
         // 更新数量
-        store.updateQuantity("不锈钢保温杯", 2);
+        String cupKey = null;
+        for (ShopStore.CartItem it : store.getCartItems()) if ("不锈钢保温杯".equals(it.title)) cupKey = it.key();
+        assertNotNull(cupKey);
+        store.updateQuantity(cupKey, 2);
         items = store.getCartItems();
         for (ShopStore.CartItem ci : items) {
             if ("不锈钢保温杯".equals(ci.title)) {
@@ -59,7 +70,7 @@ public class ShopCartOrderTest {
         }
 
         // 移除单件
-        store.removeFromCart("不锈钢保温杯");
+        store.removeFromCart(cupKey);
         assertEquals(1, store.getCartItems().size());
         assertEquals("无线蓝牙耳机", store.getCartItems().get(0).title);
     }
@@ -111,5 +122,36 @@ public class ShopCartOrderTest {
         // 删除订单
         freshStore.deleteOrder(order.orderId);
         assertNull(freshStore.getOrder(order.orderId));
+    }
+    @Test public void skuIsolationAndBoundedDiscount() {
+        store.addToCart("fixed-1", "红色", "商品", 1200, 0, "精选", 2);
+        store.addToCart("fixed-1", "蓝色", "商品", 1200, 0, "精选", 1);
+        assertEquals(2, store.getCartItems().size());
+        ShopStore.CartItem red = null;
+        for (ShopStore.CartItem it : store.getCartItems()) if ("红色".equals(it.sku)) red = it;
+        assertNotNull(red);
+        ShopStore.OrderItem order = store.createOrder(Collections.singletonList(red), "A", "1", "地址", -500);
+        assertEquals(0, order.discountCents);
+        assertEquals(2400, order.actualCents);
+        assertEquals("红色", new ShopStore(context).getOrder(order.orderId).items.get(0).sku);
+        assertEquals(1, store.getCartItems().size());
+        assertEquals("蓝色", store.getCartItems().get(0).sku);
+    }
+    @Test public void stableIdentityAndDiscountCap() {
+        ShopItem original = new ShopItem("旧标题", 12, 0, R.drawable.shop_1, "数码");
+        ShopItem renamed = new ShopItem("新标题", 12, 0, R.drawable.shop_1, "数码");
+        assertEquals(original.getProductId(), renamed.getProductId());
+        ShopStore.CartItem item = new ShopStore.CartItem("p", "标准", "商品", 1200, 1, 0, "精选", true);
+        ShopStore.OrderItem capped = store.createOrder(Collections.singletonList(item), "A", "1", "地址", Long.MAX_VALUE, false);
+        assertEquals(1200, capped.discountCents);
+        assertEquals(0, capped.actualCents);
+        item.quantity = 2;
+        assertEquals(1, store.getOrder(capped.orderId).items.get(0).quantity);
+    }
+
+    @Test(expected = ArithmeticException.class) public void rejectsMoneyOverflow() {
+        ShopStore.CartItem item = new ShopStore.CartItem("p", "标准", "商品", 100, 99, 0, "精选", true);
+        item.priceCents = Long.MAX_VALUE;
+        store.createOrder(Collections.singletonList(item), "A", "1", "地址", 0);
     }
 }
