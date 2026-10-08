@@ -64,7 +64,7 @@ public class NewsDetailActivity extends AppCompatActivity {
 
         // 查询正文全文
         if (content == null || content.trim().isEmpty()) {
-            content = NewsContentStore.contentOf(title);
+            content = NewsContentStore.contentOf(getIntent().getStringExtra("news_id"), title);
         }
         if (content == null || content.trim().isEmpty()) {
             content = "　　本网讯（来源：" + (info != null && !info.isEmpty() ? info : "官方发布") + "）\n\n　　"
@@ -84,7 +84,30 @@ public class NewsDetailActivity extends AppCompatActivity {
         float currentFontSize = getSharedPreferences("user_settings", MODE_PRIVATE).getFloat("news_font_size", 16.5f);
 
         boolean renderedBlocks = false;
-        if (blocksJson != null && !blocksJson.trim().isEmpty()) {
+        String detailType = getIntent().getStringExtra("detail_type");
+        if (NewsContract.WEB.equals(detailType)) {
+            webView = new android.webkit.WebView(this);
+            webView.getSettings().setJavaScriptEnabled(false);
+            webView.getSettings().setAllowFileAccess(true);
+            webView.setWebViewClient(new android.webkit.WebViewClient() {
+                @Override public void onReceivedError(android.webkit.WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
+                    if (request.isForMainFrame()) Toast.makeText(NewsDetailActivity.this, "网页加载失败，请返回重试", Toast.LENGTH_SHORT).show();
+                }
+            });
+            llRichContent.addView(webView, new LinearLayout.LayoutParams(-1, dpToPx(520)));
+            String uri = getIntent().getStringExtra("media_uri");
+            if (uri != null && (uri.startsWith("file:///android_asset/news/") || uri.startsWith("https://"))) webView.loadUrl(uri);
+            renderedBlocks = true;
+        } else if (content.trim().startsWith("<")) {
+            TextView html = new TextView(this);
+            html.setText(android.text.Html.fromHtml(content, android.text.Html.FROM_HTML_MODE_LEGACY));
+            html.setTextSize(currentFontSize);
+            html.setLineSpacing(dpToPx(8), 1f);
+            llRichContent.addView(html);
+            paragraphViews.add(html);
+            renderedBlocks = true;
+        }
+        if (!renderedBlocks && blocksJson != null && !blocksJson.trim().isEmpty()) {
             try {
                 org.json.JSONArray arr = new org.json.JSONArray(blocksJson);
                 if (arr.length() > 0) {
@@ -181,6 +204,8 @@ public class NewsDetailActivity extends AppCompatActivity {
         // 底部动作栏：收藏与分享，完整持久化网络配图与图文流
         ContentStore store = new ContentStore(this);
         org.json.JSONObject article = ContentStore.article(title, info, content, img1, type, imgUrl, imgUrl2, imgUrl3, blocksJson, link);
+        final String newsId = getIntent().getStringExtra("news_id") == null ? LegacyIds.news(title) : getIntent().getStringExtra("news_id");
+        try { article.put("news_id", newsId); article.put("detail_type", detailType == null ? NewsContract.HTML : detailType); article.put("media_uri", getIntent().getStringExtra("media_uri")); article.put("img2",img2); article.put("img3",img3); } catch (Exception ignored) {}
         store.put("history", article);
 
         LinearLayout actions = new LinearLayout(this);
@@ -192,15 +217,15 @@ public class NewsDetailActivity extends AppCompatActivity {
         actions.setLayoutParams(lpActions);
 
         android.widget.Button save = new android.widget.Button(this);
-        save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+        save.setText(store.contains("saved", newsId) ? "已收藏 · 点击取消" : "收藏文章");
         save.setOnClickListener(v -> {
-            if (store.contains("saved", title)) {
-                store.remove("saved", title);
+            if (store.contains("saved", newsId)) {
+                store.remove("saved", newsId);
             } else {
                 store.put("saved", article);
             }
-            save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
-            updateCollectUi(title, store);
+            save.setText(store.contains("saved", newsId) ? "已收藏 · 点击取消" : "收藏文章");
+            updateCollectUi(newsId, store);
         });
 
         android.widget.Button share = new android.widget.Button(this);
@@ -243,7 +268,7 @@ public class NewsDetailActivity extends AppCompatActivity {
         renderComments(title);
         if (commentStore.isArticleLiked(title)) store.put("liked", article);
         updateLikeUi(title);
-        updateCollectUi(title, store);
+        updateCollectUi(newsId, store);
 
         // 底部评论输入触发
         View llCommentInputTrigger = findViewById(R.id.ll_comment_input_trigger);
@@ -268,7 +293,7 @@ public class NewsDetailActivity extends AppCompatActivity {
                 boolean wasLiked = commentStore.isArticleLiked(title);
                 commentStore.toggleArticleLike(title);
                 if (commentStore.isArticleLiked(title)) store.put("liked", article);
-                else store.remove("liked", title);
+                else store.remove("liked", newsId);
                 updateLikeUi(title);
                 if (ivBottomLike != null) {
                     ivBottomLike.animate().scaleX(1.35f).scaleY(1.35f).setDuration(150)
@@ -283,15 +308,15 @@ public class NewsDetailActivity extends AppCompatActivity {
         View flBottomCollectBtn = findViewById(R.id.fl_bottom_collect_btn);
         if (flBottomCollectBtn != null) {
             flBottomCollectBtn.setOnClickListener(v -> {
-                if (store.contains("saved", title)) {
-                    store.remove("saved", title);
+                if (store.contains("saved", newsId)) {
+                    store.remove("saved", newsId);
                     Toast.makeText(this, "已取消收藏", Toast.LENGTH_SHORT).show();
                 } else {
                     store.put("saved", article);
                     Toast.makeText(this, "⭐ 已加入我的收藏", Toast.LENGTH_SHORT).show();
                 }
-                updateCollectUi(title, store);
-                save.setText(store.contains("saved", title) ? "已收藏 · 点击取消" : "收藏文章");
+                updateCollectUi(newsId, store);
+                save.setText(store.contains("saved", newsId) ? "已收藏 · 点击取消" : "收藏文章");
             });
         }
 
@@ -300,6 +325,12 @@ public class NewsDetailActivity extends AppCompatActivity {
         if (flBottomShareBtn != null) {
             flBottomShareBtn.setOnClickListener(v -> doShareArticle(title, info, finalShareText, finalLink));
         }
+    }
+
+    private android.webkit.WebView webView;
+    @Override protected void onDestroy() {
+        if (webView != null) { webView.stopLoading(); webView.destroy(); webView = null; }
+        super.onDestroy();
     }
 
     private final List<TextView> paragraphViews = new ArrayList<>();

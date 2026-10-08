@@ -321,45 +321,24 @@ public class HomeFragment extends PageFragment {
             }
         });
 
-        newsAdapter.setOnItemClickListener(news -> {
-            if (news.getType() == News.TYPE_VIDEO) {
-                Intent intent = new Intent(requireContext(), VideoDetailActivity.class);
-                intent.putExtra(VideoDetailActivity.EXTRA_TITLE, news.getTitle());
-
-                intent.putExtra(VideoDetailActivity.EXTRA_SOURCE,
-                        news.getSource() + "  " + news.getTime());
-                intent.putExtra(VideoDetailActivity.EXTRA_DESC,
-                        news.getContent() == null ? "" : news.getContent());
-                intent.putExtra(VideoDetailActivity.EXTRA_COVER, news.getImg1());
-
-                startActivity(intent);
-                return;
-            }
-            Intent intent = new Intent(requireContext(), NewsDetailActivity.class);
-            intent.putExtra("title", news.getTitle());
-            intent.putExtra("info", news.getSource() + "  " + news.getTime());
-            intent.putExtra("img", news.getImg1());
-            intent.putExtra("img2", news.getImg2());
-            intent.putExtra("img3", news.getImg3());
-            intent.putExtra("type", news.getType());
-            String body = news.getContent();
-            if (body == null || body.trim().isEmpty()) {
-                body = NewsContentStore.contentOf(news.getTitle());
-            }
-            intent.putExtra("content", body == null ? "" : body);
-            intent.putExtra("img_url", news.getImageUrl() == null ? "" : news.getImageUrl());
-            intent.putExtra("img_url_2", news.getImageUrl2() == null ? "" : news.getImageUrl2());
-            intent.putExtra("img_url_3", news.getImageUrl3() == null ? "" : news.getImageUrl3());
-            intent.putExtra("blocks_json", news.getBlocksJson() == null ? "" : news.getBlocksJson());
-            intent.putExtra("link", news.getLinkUrl() == null ? "" : news.getLinkUrl());
-            startActivity(intent);
-        });
+        newsAdapter.setOnItemClickListener(news -> startActivity(NewsContract.intent(requireContext(), news)));
     }
 
     //列表页只组装摘要字段（标题/来源/时间/图片）；站内文章正文统一放在
     //NewsContentStore 里，点进详情页才按标题查询，主页不再一次性加载全部全文
     private List<News> buildRecommend(){
-        List<News> list = new ArrayList<>(userCreatedPosts);
+        List<News> list = new ArrayList<>();
+        org.json.JSONArray posts = new ContentStore(requireContext()).list("posts");
+        for(int i=0;i<posts.length();i++) {
+            org.json.JSONObject row=posts.optJSONObject(i);if(row==null)continue;
+            News post=new News(row.optInt("type",News.TYPE_TEXT),row.optString("title"),row.optString("info"),"本地作品",row.optInt("img"),row.optInt("img2"),row.optInt("img3")).withId(row.optString("news_id",LegacyIds.news(row.optString("title")))).withContent(row.optString("content"));
+            if(row.has("detail_type"))post.withDetail(row.optString("detail_type"),row.optString("media_uri",null));
+            list.add(post);
+        }
+        for(News memory:userCreatedPosts) {
+            boolean present=false;for(News persisted:list)if(persisted.getId().equals(memory.getId())){present=true;break;}
+            if(!present)list.add(0,memory);
+        }
         //接口拉回的实时头条排在用户动态之后、本地文章之前；key 未配置时为空列表
         list.addAll(NewsApiStore.cachedHeadlines());
         list.addAll(NewsContentStore.recommend());

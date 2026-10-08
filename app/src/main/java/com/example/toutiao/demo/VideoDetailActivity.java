@@ -187,6 +187,18 @@ public class VideoDetailActivity extends AppCompatActivity {
         if(cover==0) cover=R.drawable.image7;
         currentItem=new VideoItem(title==null?"光影练习":title,"离线影像课堂","00:08","本地样片",desc==null?"离线播放器课程演示":desc,cover,0,0);
         tvTitle.setText(currentItem.getTitle());
+        org.json.JSONObject snapshot = NewsContract.snapshot(intent);
+        try { snapshot.put("detail_type",NewsContract.VIDEO); snapshot.put("content",desc); snapshot.put("info",source); snapshot.put("img",cover); } catch(Exception ignored) {}
+        ContentStore store = new ContentStore(this);
+        store.put("history",snapshot);
+        android.widget.Button save = new android.widget.Button(this);
+        String newsId=snapshot.optString("news_id");
+        save.setText(store.contains("saved",newsId)?"取消收藏":"收藏视频");
+        save.setOnClickListener(v->{if(store.contains("saved",newsId))store.remove("saved",newsId);else store.put("saved",snapshot);save.setText(store.contains("saved",newsId)?"取消收藏":"收藏视频");});
+        LinearLayout descriptionParent=(LinearLayout)tvDesc.getParent();
+        View oldSave=descriptionParent.findViewWithTag("news_save");
+        if(oldSave!=null)descriptionParent.removeView(oldSave);
+        save.setTag("news_save");descriptionParent.addView(save);
         ivCover.setImageResource(cover);
         player.setResource(currentItem.getVideoRes());
         tvDuration.setVisibility(View.VISIBLE);

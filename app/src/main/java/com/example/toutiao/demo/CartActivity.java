@@ -156,7 +156,7 @@ public class CartActivity extends AppCompatActivity {
         for (ShopStore.CartItem it : cartList) {
             if (it.selected) {
                 selectedCount += it.quantity;
-                totalCents += (it.priceCents * it.quantity);
+                totalCents = Math.addExact(totalCents, it.subtotalCents());
             } else {
                 allSelected = false;
             }
@@ -208,7 +208,7 @@ public class CartActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull VH holder, int position) {
             ShopStore.CartItem item = cartList.get(position);
             holder.tvTitle.setText(item.title);
-            holder.tvCategory.setText(item.category);
+            holder.tvCategory.setText(item.category + " · " + item.sku);
             holder.tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", item.getPrice()));
             holder.tvQuantity.setText(String.valueOf(item.quantity));
             holder.cbSelect.setChecked(item.selected);
@@ -221,14 +221,14 @@ public class CartActivity extends AppCompatActivity {
 
             holder.cbSelect.setOnClickListener(v -> {
                 item.selected = holder.cbSelect.isChecked();
-                store.setItemSelected(item.title, item.selected);
+                store.setItemSelected(item.key(), item.selected);
                 updateBottomBar();
             });
 
             holder.btnMinus.setOnClickListener(v -> {
                 if (item.quantity > 1) {
                     item.quantity--;
-                    store.updateQuantity(item.title, item.quantity);
+                    store.updateQuantity(item.key(), item.quantity);
                     holder.tvQuantity.setText(String.valueOf(item.quantity));
                     updateBottomBar();
                 } else {
@@ -236,7 +236,7 @@ public class CartActivity extends AppCompatActivity {
                             .setTitle("移除商品")
                             .setMessage("确定要从购物车移除【" + item.title + "】吗？")
                             .setPositiveButton("移除", (d, w) -> {
-                                store.removeFromCart(item.title);
+                                store.removeFromCart(item.key());
                                 loadCartData();
                             })
                             .setNegativeButton("取消", null)
@@ -247,7 +247,7 @@ public class CartActivity extends AppCompatActivity {
             holder.btnPlus.setOnClickListener(v -> {
                 if (item.quantity < 99) {
                     item.quantity++;
-                    store.updateQuantity(item.title, item.quantity);
+                    store.updateQuantity(item.key(), item.quantity);
                     holder.tvQuantity.setText(String.valueOf(item.quantity));
                     updateBottomBar();
                 } else {
@@ -259,7 +259,7 @@ public class CartActivity extends AppCompatActivity {
                 new AlertDialog.Builder(CartActivity.this)
                         .setTitle("商品操作")
                         .setItems(new String[]{"移出购物车"}, (d, w) -> {
-                            store.removeFromCart(item.title);
+                            store.removeFromCart(item.key());
                             loadCartData();
                         })
                         .show();

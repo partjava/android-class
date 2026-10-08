@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:background="#FFFFFF">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+<Button android:id="@+id/audio_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="返回" />
+<TextView android:id="@+id/audio_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="24sp" android:textColor="#202020" android:layout_marginTop="24dp" />
+<TextView android:id="@+id/audio_content" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="17sp" android:textColor="#404040" android:layout_marginTop="24dp" />
+<TextView android:id="@+id/audio_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="正在加载音频" android:layout_marginTop="32dp" />
+<SeekBar android:id="@+id/audio_seek" android:layout_width="match_parent" android:layout_height="wrap_content" android:contentDescription="音频播放进度" />
+<Button android:id="@+id/audio_play" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="播放" />
+<Button android:id="@+id/audio_save" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="收藏音频" />
+</LinearLayout></ScrollView>

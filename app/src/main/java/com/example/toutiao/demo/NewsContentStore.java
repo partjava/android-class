@@ -7,23 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 文章数据源（模拟服务端的文章库）。
- *
- * 数据分两层，对应真实资讯 App 的两段式加载：
- * · 列表层：首页只从 recommend() 等方法拿标题/来源/时间/图片这些摘要字段，
- *   News 对象上不带正文，主页一进来不会把几十篇全文都读进内存；
- * · 正文层：全文统一放在 CONTENTS 里，NewsDetailActivity / VideoDetailActivity
- *   进入时才调 contentOf(标题) 查询——相当于“详情接口按 id 拉全文”。
- *   另有一个 RUNTIME 运行时层：天行数据接口拉回的头条正文注册在那里，
- *   contentOf 会优先查它，查不到再落回本地静态文章库。
- *
- * add() 在组装列表的同时把正文登记进 CONTENTS，标题在全项目只出现一次，
- * 不存在列表和正文库对不上的问题。
- */
+/** Local editorial content keyed by stable news ID, with title lookup for legacy callers. */
 public final class NewsContentStore {
 
-    /** 标题 -> 正文全文。列表页不读它，只有详情页进来才按标题查询 */
+    /** Stable ID -> body, plus legacy title aliases. */
     private static final Map<String, String> CONTENTS =
             Collections.synchronizedMap(new HashMap<>());
 
@@ -48,10 +35,24 @@ public final class NewsContentStore {
         return hit != null ? hit : CONTENTS.get(title);
     }
 
+    public static String contentOf(String newsId, String legacyTitle) {
+        String body = newsId == null ? null : CONTENTS.get(newsId);
+        return body != null ? body : contentOf(legacyTitle);
+    }
+
+    public static List<News> labExamples() {
+        List<News> list = new ArrayList<>();
+        list.add(new News(News.TYPE_SINGLE_IMG,"实验7 · 网页新闻：校园阅读指南","课程编辑部","本地网页",R.drawable.news_school_study,0,0).withId("lab7-web-reading").withDetail(NewsContract.WEB,"file:///android_asset/news/reading.html").withContent("校园阅读指南：查看本地网页中的阅读方法和课程说明。"));
+        list.add(new News(News.TYPE_TEXT,"实验7 · HTML图文：让阅读更清晰","课程编辑部","富文本",0,0,0).withId("lab7-html-reading").withDetail(NewsContract.HTML,null).withContent("<h2>让阅读更清晰</h2><p>先读<strong>标题与导语</strong>，再梳理核心事实。</p><p><em>划分段落</em>能够帮助理解文章结构。阅读后用自己的话概括主要观点。</p>"));
+        list.add(new News(News.TYPE_VIDEO,"实验7 · 视频新闻：光影运动课堂","课程编辑部","本地视频",R.drawable.news_smart_city,0,0).withId("lab7-video-motion").withDetail(NewsContract.VIDEO,null).withContent("自制无声动画样片，演示移动图形与画面节奏。点击画面可播放或暂停。"));
+        list.add(new News(News.TYPE_SINGLE_IMG,"实验7 · 音频新闻：校园提示音","课程编辑部","本地音频",R.drawable.news_music_concert,0,0).withId("lab7-audio-campus").withDetail(NewsContract.AUDIO,"news/campus_tone.wav").withContent("课程自制校园提示音。播放后可暂停、拖动进度，离开页面会停止播放并释放资源。"));
+        return list;
+    }
+
     //===== 推荐 =====
 
     public static List<News> recommend() {
-        List<News> list = new ArrayList<>();
+        List<News> list = new ArrayList<>(labExamples());
         add(list, new News(News.TYPE_SINGLE_IMG, "深中通道正式通车运营：世界级跨海集群工程创下十项世界之最", "新华社 3.8万评", "刚刚", R.drawable.news_smart_city, 0, 0),
                 "　　历时七年艰苦建设，连接深圳与中山的核心跨海交通大动脉——深中通道正式开通试运营。作为当今世界上建设难度极高的跨海集群工程之一，深中通道集“桥、岛、隧、水下互通”于一体，全长约24公里。\n\n　　通车后，深圳至中山的车程从原本的两小时大幅缩短至30分钟左右，珠江口东西两岸正式迈入“半小时生活交通圈”。工程在超宽钢壳混凝土沉管隧道、超大跨度悬索桥抗风等技术领域攻克多项世界级难题，创造了十项国际工程建设新纪录。\n\n　　交通运输部相关负责人表示，深中通道的贯通将加速粤港澳大湾区人流、物流、资金流高效互联互通，为区域经济高质量一体化发展注入澎湃动能。");
         add(list, new News(News.TYPE_THREE_IMG, "中国空间站生命科学实验获突破进展：水稻空间全生命周期培养成功", "央视新闻 2.6万评", "15分钟前", R.drawable.news_space_rocket, R.drawable.news_tech_chip, R.drawable.news_medical_health),
@@ -410,6 +411,7 @@ public final class NewsContentStore {
 
     /** 组装列表摘要字段的同时把正文登记进 CONTENTS：标题全项目只写这一次，列表和正文库必然对得上 */
     private static void add(List<News> list, News news, String content) {
+        CONTENTS.put(news.getId(), content);
         CONTENTS.put(news.getTitle(), content);
         list.add(news);
     }

@@ -133,7 +133,7 @@ public class OrderDetailActivity extends AppCompatActivity {
 
             if (ci.imgRes != 0) iv.setImageResource(ci.imgRes);
             tvTitle.setText(ci.title);
-            tvCat.setText(ci.category);
+            tvCat.setText(ci.category + " · " + ci.sku);
             tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", ci.getPrice()));
             tvQty.setText("× " + ci.quantity);
 
@@ -158,7 +158,7 @@ public class OrderDetailActivity extends AppCompatActivity {
             case "待发货":
                 llStatusHeader.setBackgroundColor(Color.parseColor("#FF9800"));
                 tvDetailStatusTitle.setText("等待商家发货");
-                tvDetailStatusDesc.setText("您的订单正在加急打包中，预计24小时内发出");
+                tvDetailStatusDesc.setText("本地模拟支付成功 · 订单已保存（不涉及真实资金）");
                 break;
             case "待收货":
                 llStatusHeader.setBackgroundColor(Color.parseColor("#2196F3"));
@@ -173,7 +173,7 @@ public class OrderDetailActivity extends AppCompatActivity {
             default: // 已退款
                 llStatusHeader.setBackgroundColor(Color.parseColor("#78909C"));
                 tvDetailStatusTitle.setText("退款成功");
-                tvDetailStatusDesc.setText("款项已成功退回，退款金额 ¥" + String.format(Locale.CHINA, "%.2f", currentOrder.getActual()));
+                tvDetailStatusDesc.setText("模拟退款已完成，金额 ¥" + String.format(Locale.CHINA, "%.2f", currentOrder.getActual()));
                 break;
         }
     }
@@ -186,7 +186,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 btnActionSecondary.setOnClickListener(v -> {
                     new AlertDialog.Builder(this)
                             .setTitle("申请退款")
-                            .setMessage("确定要申请退款吗？退款将原路返还。")
+                            .setMessage("确定要申请退款吗？此为本地模拟退款，不涉及真实资金。")
                             .setPositiveButton("申请退款", (d, w) -> {
                                 store.updateOrderStatus(orderId, "已退款");
                                 Toast.makeText(this, "退款已受理", Toast.LENGTH_SHORT).show();
@@ -241,7 +241,7 @@ public class OrderDetailActivity extends AppCompatActivity {
                 btnActionSecondary.setText("再次购买");
                 btnActionSecondary.setOnClickListener(v -> {
                     for (ShopStore.CartItem ci : currentOrder.items) {
-                        store.addToCart(ci.title, ci.priceCents, ci.imgRes, ci.category, ci.quantity);
+                        store.addToCart(ci.productId, ci.sku, ci.title, ci.priceCents, ci.imgRes, ci.category, ci.quantity);
                     }
                     Toast.makeText(this, "商品已重新加入购物车", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(this, CartActivity.class));

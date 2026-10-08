@@ -20,7 +20,10 @@ import java.util.Locale;
 
 public class OrderConfirmActivity extends AppCompatActivity {
 
+    public static final String EXTRA_DIRECT_ID = "extra_direct_id";
+    public static final String EXTRA_DIRECT_SKU = "extra_direct_sku";
     public static final String EXTRA_DIRECT_TITLE = "extra_direct_title";
+    public static final String EXTRA_DIRECT_PRICE_CENTS = "extra_direct_price_cents";
     public static final String EXTRA_DIRECT_PRICE = "extra_direct_price";
     public static final String EXTRA_DIRECT_IMG = "extra_direct_img";
     public static final String EXTRA_DIRECT_CAT = "extra_direct_cat";
@@ -111,10 +114,14 @@ public class OrderConfirmActivity extends AppCompatActivity {
         String directTitle = getIntent().getStringExtra(EXTRA_DIRECT_TITLE);
         if (directTitle != null && !directTitle.isEmpty()) {
             double price = getIntent().getDoubleExtra(EXTRA_DIRECT_PRICE, 99.0);
+            long priceCents = getIntent().getLongExtra(EXTRA_DIRECT_PRICE_CENTS, Math.round(price * 100));
             int img = getIntent().getIntExtra(EXTRA_DIRECT_IMG, R.drawable.shop_1);
             String cat = getIntent().getStringExtra(EXTRA_DIRECT_CAT);
             int qty = getIntent().getIntExtra(EXTRA_DIRECT_QTY, 1);
-            buyItems.add(new ShopStore.CartItem(directTitle, Math.round(price * 100), qty, img, cat != null ? cat : "精选", true));
+            String productId = getIntent().getStringExtra(EXTRA_DIRECT_ID);
+            String sku = getIntent().getStringExtra(EXTRA_DIRECT_SKU);
+            if (productId == null) productId = ShopItem.legacyProductId(img, directTitle, cat);
+            buyItems.add(new ShopStore.CartItem(productId, sku, directTitle, priceCents, qty, img, cat != null ? cat : "精选", true));
         } else {
             for (ShopStore.CartItem ci : store.getCartItems()) {
                 if (ci.selected) {
@@ -127,7 +134,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
     private void initCouponsAndCoins() {
         subtotalCents = 0;
         for (ShopStore.CartItem it : buyItems) {
-            subtotalCents += (it.priceCents * it.quantity);
+            subtotalCents = Math.addExact(subtotalCents, it.subtotalCents());
         }
         availableCoupons = store.getAvailableCoupons(subtotalCents);
         if (!availableCoupons.isEmpty()) {
@@ -165,7 +172,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
 
             if (it.imgRes != 0) iv.setImageResource(it.imgRes);
             tvTitle.setText(it.title);
-            tvCat.setText(it.category);
+            tvCat.setText(it.category + " · " + it.sku);
             tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", it.getPrice()));
             tvQty.setText("× " + it.quantity);
 
@@ -178,7 +185,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
     private void recalculateDiscounts() {
         // 1. 优惠券计算
         if (selectedCoupon != null) {
-            couponDiscountCents = selectedCoupon.discountAmount * 100L;
+            couponDiscountCents = Math.max(0, Math.min(subtotalCents, selectedCoupon.discountAmount * 100L));
             if (tvCouponLabel != null) tvCouponLabel.setText("店铺优惠券 · " + selectedCoupon.title);
             if (tvCouponDiscount != null) tvCouponDiscount.setText("-¥" + String.format(Locale.CHINA, "%.2f", couponDiscountCents / 100.0) + " >");
         } else {
@@ -270,7 +277,10 @@ public class OrderConfirmActivity extends AppCompatActivity {
             llCouponSelector.setOnClickListener(v -> showCouponSelectorDialog());
         }
 
+        btnSubmitOrder.setText("模拟支付并创建订单");
         btnSubmitOrder.setOnClickListener(v -> {
+            btnSubmitOrder.setEnabled(false);
+            recalculateDiscounts();
             String name = tvReceiverName.getText().toString();
             String phone = tvReceiverPhone.getText().toString();
             String addr = tvReceiverAddress.getText().toString();
@@ -278,17 +288,17 @@ public class OrderConfirmActivity extends AppCompatActivity {
 
             long totalDiscount = couponDiscountCents + coinDiscountCents;
 
-            // 1. 业务闭环：核销已使用的优惠券
-            if (selectedCoupon != null) {
-                store.markCouponUsed(selectedCoupon.id);
+            ShopStore.OrderItem order;
+            try {
+                order = store.createOrder(buyItems, name, phone, addr, totalDiscount,
+                        getIntent().getStringExtra(EXTRA_DIRECT_TITLE) == null);
+            } catch (RuntimeException failure) {
+                btnSubmitOrder.setEnabled(true);
+                Toast.makeText(this, "订单保存失败，请重试", Toast.LENGTH_LONG).show();
+                return;
             }
-
-            // 2. 业务闭环：扣减已抵扣的淘金币
-            if (coinsToDeduct > 0) {
-                profileStore.deductCoins(coinsToDeduct);
-            }
-
-            ShopStore.OrderItem order = store.createOrder(buyItems, name, phone, addr, totalDiscount);
+            if (selectedCoupon != null && couponDiscountCents > 0) store.markCouponUsed(selectedCoupon.id);
+            if (coinsToDeduct > 0) profileStore.deductCoins(coinsToDeduct);
             String successMsg = "模拟支付成功！实付 ¥" + String.format(Locale.CHINA, "%.2f", order.actualCents / 100.0);
             if (selectedCoupon != null) {
                 successMsg += " (券省¥" + selectedCoupon.discountAmount + ")";

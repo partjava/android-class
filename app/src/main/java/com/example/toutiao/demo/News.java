@@ -8,6 +8,14 @@ public class News {
     public static final int TYPE_VIDEO = 4;
     public static final int TYPE_BIG_IMG = 5;
 
+    private String id;
+    private String detailType;
+    private String mediaUri;
+    public String getId() { return id; }
+    public String getDetailType() { return detailType; }
+    public String getMediaUri() { return mediaUri; }
+    public News withId(String id) { this.id = id; return this; }
+    public News withDetail(String type, String uri) { detailType = type; mediaUri = uri; return this; }
     private int type;
     private String title;
     private String source;
@@ -25,6 +33,9 @@ public class News {
     public News withRemote(String imageUrl, String linkUrl) {
         this.imageUrl = imageUrl;
         this.linkUrl = linkUrl;
+        if (linkUrl != null && !linkUrl.trim().isEmpty()) {
+            this.id = "news-url-" + java.util.UUID.nameUUIDFromBytes(linkUrl.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
         return this;
     }
 
@@ -65,6 +76,8 @@ public class News {
 
     public News(int type, String title, String source, String time, int img1, int img2, int img3) {
         this.type = type;
+        this.id = "news-" + java.util.UUID.nameUUIDFromBytes((source + "|" + title).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        this.detailType = type == TYPE_VIDEO ? NewsContract.VIDEO : NewsContract.HTML;
         this.title = title;
         this.source = source;
         this.time = time;

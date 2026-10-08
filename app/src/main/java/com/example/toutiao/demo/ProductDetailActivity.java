@@ -142,6 +142,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         return intent;
     }
 
+    public static void open(Context context, ShopItem item) {
+        Intent launch = intent(context, item);
+        if (!(context instanceof android.app.Activity)) launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(launch);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -420,9 +426,9 @@ public class ProductDetailActivity extends AppCompatActivity {
         photo.setImageResource(item.getImgRes());
 
         String[] paragraphs = DESC_PARAGRAPHS[catIndex];
-        tvDescBody1.setText(paragraphs[0]);
-        tvDescBody2.setText(paragraphs[1]);
-        tvDescBody3.setText(paragraphs[2]);
+        tvDescBody1.setText(android.text.Html.fromHtml("<h3>" + "商品亮点" + "</h3><p>" + android.text.TextUtils.htmlEncode(paragraphs[0]) + "</p><p><b>品质承诺：</b><font color=\"#E53935\">校园精选，安心选购</font></p>"));
+        tvDescBody2.setText(android.text.Html.fromHtml("<h3>" + "使用说明" + "</h3><p>" + android.text.TextUtils.htmlEncode(paragraphs[1]) + "</p><p><b>品质承诺：</b><font color=\"#E53935\">校园精选，安心选购</font></p>"));
+        tvDescBody3.setText(android.text.Html.fromHtml("<h3>" + "服务保障" + "</h3><p>" + android.text.TextUtils.htmlEncode(paragraphs[2]) + "</p><p><b>品质承诺：</b><font color=\"#E53935\">校园精选，安心选购</font></p>"));
 
         //参数表：label/value 两列行 + 分隔线，行数固定所以用代码拼
         String[][] params = {
@@ -619,10 +625,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void onAddToCart() {
-        //⚠️ 规格是纯展示项，不拼进 title：ShopStore 按 title 合并购物车行，
-        //   而购物车/订单的行布局（item_cart_product）也没有规格列——
-        //   同一商品选不同规格会合并成一行数量，这是有意简化
-        store.addToCart(item.getTitle(), Math.round(item.getPrice() * 100),
+        store.addToCart(item.getProductId(), specs[specIndex], item.getTitle(), Math.round(item.getPrice() * 100),
                 item.getImgRes(), item.getCategory(), skuQty);
         toast("已加入购物车");
         refreshCartBadge(); //不跳页就没有 onResume，得手动刷
@@ -630,8 +633,10 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void onBuyNow() {
         Intent intent = new Intent(this, OrderConfirmActivity.class);
+        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_ID, item.getProductId());
+        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_SKU, specs[specIndex]);
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_TITLE, item.getTitle());
-        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_PRICE, item.getPrice());
+        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_PRICE_CENTS, Math.round(item.getPrice() * 100));
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_IMG, item.getImgRes());
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_CAT, item.getCategory());
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_QTY, skuQty);
