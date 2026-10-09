@@ -3,7 +3,10 @@
 const error=document.getElementById('error');
 window.addEventListener('error',e=>{error.style.display='block';error.textContent='三维场景加载失败：'+e.message+'。请返回航拍导览。';});
 const scene=new THREE.Scene();scene.background=new THREE.Color('#e7efec');scene.fog=new THREE.Fog('#e7efec',1500,2800);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.6));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.prepend(renderer.domElement);
+let renderer;
+try{renderer=SceneUtils.createRenderer(THREE,innerWidth,innerHeight,window.devicePixelRatio);}
+catch(e){error.style.display='block';error.textContent='此设备暂时无法创建三维渲染环境，请返回航拍导览。';console.error('Campus WebGL initialization failed',e);return;}
+document.body.prepend(renderer.domElement);
 const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,1,1800);scene.add(new THREE.HemisphereLight(0xffffff,0x73816d,1.5));
 const sun=new THREE.DirectionalLight(0xfff4dc,2.0);sun.position.set(-200,450,180);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-360,right:360,top:400,bottom:-400,far:1000});sun.shadow.bias=-.001;scene.add(sun);
 const materials=new Map();function mat(color){if(!materials.has(color))materials.set(color,new THREE.MeshStandardMaterial({color,roughness:.86}));return materials.get(color).clone();}
@@ -46,6 +49,16 @@ for(const b of CampusData.buildings){
  const s=label(b.name,b.x,b.floors*3.2+10,b.z,b);labels.push({b,s});groups.set(b.id,g);
 }
 let theta=.42,phi=.85,radius=560,target=new THREE.Vector3(165,0,155),selected=null,filter='全部',paused=false;
+let contextLost=false;
+const contextLostMessage='三维渲染正在恢复，请稍候…';
+renderer.domElement.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();contextLost=true;
+ error.style.display='block';error.textContent=contextLostMessage;
+});
+renderer.domElement.addEventListener('webglcontextrestored',()=>{
+ contextLost=false;
+ if(error.textContent===contextLostMessage){error.style.display='none';error.textContent='';}
+});
 let isCruising=false,cruiseTime=0;
 let flyAnimation=null;
 
@@ -503,7 +516,7 @@ function updateLabels(){
 let lastFrame=0;
 function frame(now){
  requestAnimationFrame(frame);
- if(paused)return;
+ if(paused||contextLost)return;
  if(flyAnimation)flyAnimation.update(now);
  else if(isCruising){
   cruiseTime+=0.0006;

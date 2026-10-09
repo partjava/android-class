@@ -5,6 +5,8 @@ const path = require('node:path');
 const assets = path.resolve(__dirname, '../../app/src/main/assets/campus3d');
 const THREE = require(path.join(assets, 'three.min.js'));
 const elements = new Map();
+const canvasEvents = {};
+let renderCount = 0;
 function element(id) {
   if (!elements.has(id)) elements.set(id, {
     children: [],
@@ -15,9 +17,10 @@ function element(id) {
   return elements.get(id);
 }
 const canvas = element('canvas');
+canvas.addEventListener = (name, listener) => { canvasEvents[name] = listener; };
 class Renderer {
   constructor() { this.domElement = canvas; this.shadowMap = {}; }
-  setPixelRatio() {} setSize() {} render() {}
+  setPixelRatio() {} setSize() {} render() { renderCount++; }
 }
 const places = [{ id: 'teach_1', name: '教1', category: '教学', x: 100, z: 100, floors: 5 }];
 const region = { id: 'lake', name: '情缘湖', category: '文体', x: 140, z: 140, region: true };
@@ -37,6 +40,18 @@ vm.createContext(context);
 const source = fs.readFileSync(path.join(assets, 'campus-scene.js'), 'utf8')
   .replace('window.CampusScene={', 'window.__ground=groundPoint;window.__view=()=>({theta,phi,radius,x:target.x,z:target.z,cam:camera.position.toArray()});window.CampusScene={');
 vm.runInContext(source, context);
+const initialView = context.__view();
+let prevented = false;
+assert.equal(typeof canvasEvents.webglcontextlost, 'function');
+canvasEvents.webglcontextlost({ preventDefault() { prevented = true; } });
+context.nextFrame(100);
+assert(prevented, 'Context loss must allow browser restoration');
+assert.equal(renderCount, 0, 'Lost context suspends rendering');
+canvasEvents.webglcontextrestored();
+context.nextFrame(200);
+assert.equal(renderCount, 1, 'Restored context resumes rendering');
+assert.deepEqual(context.__view(), initialView, 'GPU recovery preserves default camera');
+assert.equal(element('error').style.display, 'none');
 function drag() {
   canvas.onpointerdown({ pointerId: 1, clientX: 150, clientY: 300 });
   canvas.onpointermove({ pointerId: 1, clientX: 190, clientY: 320 });
