@@ -54,7 +54,7 @@
         <activity android:name=".OrderConfirmActivity" android:exported="true" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".OrderListActivity" android:exported="true"/>
         <activity android:name=".OrderDetailActivity" android:exported="true"/>
-        <activity android:name=".WebActivity" android:exported="true"/>
+        <activity android:name=".WebActivity" android:exported="false"/>
         <activity android:name=".CampusGuideActivity" android:exported="true"/>
         <activity android:name=".CampusSceneActivity" android:exported="true" android:hardwareAccelerated="true"/>
     </application>

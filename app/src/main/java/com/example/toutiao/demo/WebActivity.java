@@ -11,6 +11,8 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -51,6 +53,12 @@ public class WebActivity extends AppCompatActivity {
 
         String initialTitle = getIntent().getStringExtra(EXTRA_TITLE);
         String url = getIntent().getStringExtra(EXTRA_URL);
+        if (url == null || url.isEmpty()) url = "file:///android_asset/web/subsidy.html";
+        if (!WebPagePolicy.isTrustedPage(url)) {
+            loadPage(url);
+            finish();
+            return;
+        }
 
         // 沉浸式状态栏与主题统一：状态栏统一设置为头条主题红，浅色文字图标
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
@@ -80,9 +88,9 @@ public class WebActivity extends AppCompatActivity {
         setupWebView();
 
         if (url != null && !url.isEmpty()) {
-            webView.loadUrl(url);
+            loadPage(url);
         } else {
-            webView.loadUrl("file:///android_asset/web/subsidy.html");
+            loadPage("file:///android_asset/web/subsidy.html");
         }
     }
 
@@ -96,7 +104,7 @@ public class WebActivity extends AppCompatActivity {
             tvTitle.setText(title);
         }
         if (url != null && !url.isEmpty() && webView != null) {
-            webView.loadUrl(url);
+            loadPage(url);
         }
     }
 
@@ -111,10 +119,10 @@ public class WebActivity extends AppCompatActivity {
         settings.setSupportZoom(false);
         settings.setBuiltInZoomControls(false);
         settings.setDisplayZoomControls(false);
-        settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
-        settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setAllowFileAccess(false);
+        settings.setAllowContentAccess(false);
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         webView.addJavascriptInterface(new WebAppInterface(), "Android");
@@ -149,21 +157,44 @@ public class WebActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url == null) return false;
-                if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("file:///")) {
-                    view.loadUrl(url);
-                    return true;
-                }
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (!WebPagePolicy.isTrustedPage(url)) return null;
                 try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    startActivity(intent);
-                    return true;
-                } catch (Exception e) {
-                    return false;
+                    java.util.Map<String, String> headers = new java.util.HashMap<>();
+                    // Images may load remotely, but executable content and frames stay local.
+                    headers.put("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self'; frame-src 'none'; object-src 'none'; connect-src 'none'; base-uri 'none'");
+                    return new WebResourceResponse("text/html", "UTF-8", 200, "OK", headers,
+                            getAssets().open(request.getUrl().getPath().substring("/android_asset/".length())));
+                } catch (java.io.IOException failure) {
+                    return new WebResourceResponse("text/plain", "UTF-8", new java.io.ByteArrayInputStream(new byte[0]));
                 }
             }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (request.isForMainFrame()) loadPage(request.getUrl().toString());
+                return true;
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                loadPage(url);
+                return true;
+            }
         });
+    }
+
+    private void loadPage(String url) {
+        if (WebPagePolicy.isTrustedPage(url)) {
+            webView.loadUrl(url);
+            return;
+        }
+        Uri uri = url == null ? Uri.EMPTY : Uri.parse(url);
+        if ("https".equals(uri.getScheme()) || "http".equals(uri.getScheme())) {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)); }
+            catch (android.content.ActivityNotFoundException e) { Toast.makeText(this, "没有可用的浏览器", Toast.LENGTH_SHORT).show(); }
+        } else {
+            Toast.makeText(this, "无法打开此页面", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void handleBack() {
@@ -240,13 +271,13 @@ public class WebActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
-        public void addCoins(int count) {
-            runOnUiThread(() -> {
-                ProfileStore store = new ProfileStore(WebActivity.this);
-                store.addCoins(count);
-                vibrate(50);
-                Toast.makeText(WebActivity.this, "✨ 签到打卡成功！金币 +" + count + " (当前余额: " + store.getCoins() + ")", Toast.LENGTH_SHORT).show();
-            });
+        public boolean signIn() {
+            return new ProfileStore(WebActivity.this).signInToday();
+        }
+
+        @JavascriptInterface
+        public boolean hasSignedInToday() {
+            return new ProfileStore(WebActivity.this).hasSignedInToday();
         }
 
         @JavascriptInterface

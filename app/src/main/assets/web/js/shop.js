@@ -72,6 +72,20 @@ function doSignin(btn) {
         showToast("今日已打卡签到，明天再来领更多金币吧！");
         return;
     }
+    if (!window.Android || typeof window.Android.signIn !== 'function') {
+        showToast("请在应用内打开签到页面");
+        return;
+    }
+    var awarded;
+    try { awarded = window.Android.signIn(); }
+    catch (e) { showToast("签到保存失败，请重试"); return; }
+    markSignedIn(btn);
+    var goldEl = document.getElementById('my_gold_count');
+    if (goldEl) goldEl.innerText = window.Android.getCoins();
+    showToast(awarded ? "✨ 签到成功！淘金币 +50" : "今日已打卡签到，明天再来领更多金币吧！");
+}
+
+function markSignedIn(btn) {
     btn.classList.add('signed');
     btn.innerText = "今日已签到";
     btn.style.background = "#4CAF50";
@@ -83,21 +97,16 @@ function doSignin(btn) {
         todayEl.classList.remove('active');
         todayEl.classList.add('done');
     }
-    var goldEl = document.getElementById('my_gold_count');
-    if (goldEl) {
-        var cur = parseInt(goldEl.innerText) || 0;
-        goldEl.innerText = cur + 50;
-    }
-
-    if (window.Android && typeof window.Android.addCoins === 'function') {
-        window.Android.addCoins(50);
-    } else {
-        showToast("✨ 签到成功！淘金币 +50，当前可抵 0.50 元");
-    }
 }
 
 // 页面加载完成后自动与 Android 原生数据双向同步
 document.addEventListener('DOMContentLoaded', function() {
+    if (window.Android && typeof window.Android.hasSignedInToday === 'function') {
+        try {
+            var signin = document.querySelector('[onclick="doSignin(this)"]');
+            if (signin && window.Android.hasSignedInToday()) markSignedIn(signin);
+        } catch (e) {}
+    }
     if (window.Android && typeof window.Android.getCoins === 'function') {
         try {
             var coins = window.Android.getCoins();

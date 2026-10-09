@@ -193,6 +193,7 @@ public final class ShopStore {
         public String receiverName;
         public String receiverPhone;
         public String receiverAddress;
+        public String buyerNote = "";
         public String expressCompany;
         public String expressNumber;
         public boolean isEvaluated;
@@ -232,6 +233,7 @@ public final class ShopStore {
                 obj.put("receiverName", receiverName);
                 obj.put("receiverPhone", receiverPhone);
                 obj.put("receiverAddress", receiverAddress);
+                obj.put("buyerNote", buyerNote);
                 obj.put("expressCompany", expressCompany);
                 obj.put("expressNumber", expressNumber);
                 obj.put("isEvaluated", isEvaluated);
@@ -261,6 +263,7 @@ public final class ShopStore {
             item.receiverName = obj.optString("receiverName", "张同学");
             item.receiverPhone = obj.optString("receiverPhone", "138****0001");
             item.receiverAddress = obj.optString("receiverAddress", "湖北省武汉市江夏区 武汉晴川学院 5号宿舍楼402室");
+            item.buyerNote = obj.optString("buyerNote", "");
             item.expressCompany = obj.optString("expressCompany", "顺丰速运");
             item.expressNumber = obj.optString("expressNumber", "SF" + System.currentTimeMillis() % 1000000000L);
             item.isEvaluated = obj.optBoolean("isEvaluated", false);
@@ -451,12 +454,17 @@ public final class ShopStore {
     }
 
     public OrderItem createOrder(List<CartItem> buyItems, String receiverName, String phone, String address, long discountCents, boolean removePurchasedFromCart) {
+        return createOrder(buyItems, receiverName, phone, address, discountCents, removePurchasedFromCart, "");
+    }
+
+    public OrderItem createOrder(List<CartItem> buyItems, String receiverName, String phone, String address, long discountCents, boolean removePurchasedFromCart, String buyerNote) {
         return database.transaction(() -> {
             if (buyItems == null || buyItems.isEmpty()) throw new IllegalArgumentException("暂无待结算商品");
             OrderItem order = new OrderItem();
             order.orderId = "TT" + java.util.UUID.randomUUID().toString().replace("-", "");
             order.createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).format(new Date());
             order.status = "待发货";
+            order.buyerNote = buyerNote == null ? "" : buyerNote.trim();
             order.receiverName = (receiverName == null || receiverName.trim().isEmpty()) ? "李同学" : receiverName.trim();
             order.receiverPhone = (phone == null || phone.trim().isEmpty()) ? "13800138000" : phone.trim();
             order.receiverAddress = (address == null || address.trim().isEmpty()) ? "湖北省武汉市东湖高新区光谷软件园F座" : address.trim();

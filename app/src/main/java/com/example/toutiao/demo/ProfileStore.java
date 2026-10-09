@@ -10,6 +10,7 @@ import java.util.Date;
 
 /** Device-local course demo profile; independent of login credentials. */
 public final class ProfileStore {
+    private static final Object COIN_LOCK = new Object();
     static final String[] FIELDS = {"nickname", "intro", "gender", "birth", "location", "school", "job", "profile_bg", "avatar_frame", "avatar_res"};
     private final SharedPreferences prefs;
     public ProfileStore(Context context) { this(context, "profile"); }
@@ -81,11 +82,30 @@ public final class ProfileStore {
     }
     public void setAvatarRes(int resId) { prefs.edit().putInt("avatar_res", resId).apply(); }
     public int getCoins() { return prefs.getInt("user_coins", 680); }
-    public void addCoins(int count) { if (count > 0) prefs.edit().putInt("user_coins", getCoins() + count).apply(); }
+    public void addCoins(int count) {
+        synchronized (COIN_LOCK) { if (count > 0) prefs.edit().putInt("user_coins", Math.addExact(getCoins(), count)).apply(); }
+    }
+    public boolean hasSignedInToday() {
+        return java.time.LocalDate.now().toString().equals(prefs.getString("last_signin_date", ""));
+    }
+    public boolean signInToday() { return signIn(java.time.LocalDate.now()); }
+    boolean signIn(java.time.LocalDate date) {
+        synchronized (COIN_LOCK) {
+            String day = date.toString();
+            if (prefs.getString("last_signin_date", "").compareTo(day) >= 0) return false;
+            if (!prefs.edit().putString("last_signin_date", day)
+                    .putInt("user_coins", Math.addExact(getCoins(), 50)).commit()) {
+                throw new IllegalStateException("签到保存失败，请重试");
+            }
+            return true;
+        }
+    }
     public boolean deductCoins(int count) {
-        if (count <= 0) return true;
-        int current = getCoins();
-        if (current < count) return false;
-        prefs.edit().putInt("user_coins", current - count).apply(); return true;
+        synchronized (COIN_LOCK) {
+            if (count <= 0) return true;
+            int current = getCoins();
+            if (current < count) return false;
+            prefs.edit().putInt("user_coins", current - count).apply(); return true;
+        }
     }
 }

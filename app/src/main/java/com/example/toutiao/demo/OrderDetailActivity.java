@@ -148,6 +148,9 @@ public class OrderDetailActivity extends AppCompatActivity {
         // Meta
         tvMetaOrderId.setText("订单编号: " + currentOrder.orderId);
         tvMetaCreateTime.setText("创建时间: " + currentOrder.createTime);
+        TextView note = findViewById(R.id.tv_buyer_note);
+        note.setText("订单备注: " + currentOrder.buyerNote);
+        note.setVisibility(currentOrder.buyerNote.isEmpty() ? View.GONE : View.VISIBLE);
 
         // Bottom Actions
         updateBottomActions();

@@ -81,6 +81,22 @@ public class OrderConfirmActivity extends AppCompatActivity {
         setupEvents();
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (store != null) { refreshCoupons(); recalculateDiscounts(); }
+    }
+
+    private void refreshCoupons() {
+        availableCoupons = store.getAvailableCoupons(subtotalCents);
+        if (selectedCoupon != null) {
+            String selectedId = selectedCoupon.id;
+            selectedCoupon = null;
+            for (ShopStore.CouponItem coupon : availableCoupons) {
+                if (selectedId.equals(coupon.id)) { selectedCoupon = coupon; break; }
+            }
+        }
+    }
+
     private void loadDefaultAddress() {
         ShopStore.AddressItem defaultAddr = store.getDefaultAddress();
         if (defaultAddr != null) {
@@ -226,6 +242,8 @@ public class OrderConfirmActivity extends AppCompatActivity {
     }
 
     private void showCouponSelectorDialog() {
+        refreshCoupons();
+        recalculateDiscounts();
         if (availableCoupons.isEmpty()) {
             new AlertDialog.Builder(this)
                     .setTitle("优惠券选择")
@@ -280,6 +298,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
         btnSubmitOrder.setText("模拟支付并创建订单");
         btnSubmitOrder.setOnClickListener(v -> {
             btnSubmitOrder.setEnabled(false);
+            refreshCoupons();
             recalculateDiscounts();
             String name = tvReceiverName.getText().toString();
             String phone = tvReceiverPhone.getText().toString();
@@ -291,7 +310,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
             ShopStore.OrderItem order;
             try {
                 order = store.createOrder(buyItems, name, phone, addr, totalDiscount,
-                        getIntent().getStringExtra(EXTRA_DIRECT_TITLE) == null);
+                        getIntent().getStringExtra(EXTRA_DIRECT_TITLE) == null, note);
             } catch (RuntimeException failure) {
                 btnSubmitOrder.setEnabled(true);
                 Toast.makeText(this, "订单保存失败，请重试", Toast.LENGTH_LONG).show();
