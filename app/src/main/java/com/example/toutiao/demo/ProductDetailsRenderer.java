@@ -40,7 +40,11 @@ final class ProductDetailsRenderer {
         JSONObject data = item.getDetails();
         String rating = data.has("rating") ? String.format(Locale.CHINA, "评分 %.2f / 5", data.optDouble("rating")) : "评分未提供";
         text(activity, R.id.tv_price_main, String.format(Locale.CHINA, "¥%.2f", item.getPrice()));
-        text(activity, R.id.tv_price_origin, data.has("price") ? "原币种价格 USD " + value(data, "price") : "原币种价格未提供");
+        if ("USD".equals(item.getCurrency())) {
+            text(activity, R.id.tv_price_origin, data.has("price") ? "原币种价格 USD " + value(data, "price") : "原币种价格未提供");
+        } else {
+            text(activity, R.id.tv_price_origin, data.has("counterPrice") ? "官网参考价 ¥" + value(data, "counterPrice") : "人民币报价 · " + item.getSource());
+        }
         text(activity, R.id.tv_stock, "库存 " + value(data, "stock") + " · " + value(data, "availabilityStatus"));
         text(activity, R.id.tv_price_sales, rating + " · 展示数据");
         text(activity, R.id.tv_detail_title, item.getTitle());
@@ -53,18 +57,23 @@ final class ProductDetailsRenderer {
 
         JSONArray reviews = data.optJSONArray("reviews");
         int reviewCount = reviews == null ? 0 : reviews.length();
-        text(activity, R.id.tv_review_header, "商品评价 (" + reviewCount + ")");
-        text(activity, R.id.tv_review_rate, rating);
+        text(activity, R.id.tv_review_header, "商品评价 (" + data.optInt("commentCount", reviewCount) + ")");
+        text(activity, R.id.tv_review_rate, data.has("commentGoodRates") ? "好评率 " + data.optString("commentGoodRates") : rating);
         renderReviewBatch(activity, reviews, 0);
+        if (reviewCount == 0 && (data.optBoolean("summaryOnly") || "unavailable".equals(data.optString("reviewsStatus")))) {
+            ((TextView)((LinearLayout)activity.findViewById(R.id.ll_review_rows)).getChildAt(0)).setText("评价暂未获取");
+        }
 
         String brand = value(data, "brand");
         text(activity, R.id.tv_store_avatar, brand.substring(0, 1));
         text(activity, R.id.tv_store_name, "品牌：" + brand);
-        text(activity, R.id.tv_store_score, rating + " · 来源 DummyJSON");
+        text(activity, R.id.tv_store_score, rating + " · 来源 " + item.getSource());
         activity.findViewById(R.id.btn_enter_store).setVisibility(View.GONE);
         text(activity, R.id.tv_desc_body1, "商品介绍\n" + value(data, "description"));
         text(activity, R.id.tv_desc_body2, "商品标签\n" + value(data, "tags"));
-        text(activity, R.id.tv_desc_body3, "DummyJSON 在线展示数据。人民币价格按 1 USD = ¥7.2 换算，仅用于展示。库存、评价及服务说明来自测试接口。");
+        text(activity, R.id.tv_desc_body3, "DummyJSON".equals(item.getSource())
+                ? "DummyJSON 在线展示数据。人民币价格按 1 USD = ¥7.2 换算，仅用于展示。库存、评价及服务说明来自测试接口。"
+                : "商品信息来源：" + item.getSource() + "。图片、介绍及评价使用官网提供的内容，缺失信息显示为未提供。");
         ImageView photo = activity.findViewById(R.id.iv_desc_photo);
         if (!item.getImageUrls().isEmpty()) RemoteImage.load(photo, item.getImageUrls().get(0));
         else { photo.setTag(null); photo.setImageResource(item.getImgRes()); }
@@ -75,8 +84,39 @@ final class ProductDetailsRenderer {
         Iterator<String> keys = data.keys();
         while (keys.hasNext()) {
             String key = keys.next();
-            if (java.util.Arrays.asList("id", "title", "price", "description", "thumbnail", "images", "reviews").contains(key)) continue;
+            if (java.util.Arrays.asList("id", "title", "price", "description", "thumbnail", "images", "reviews", "descriptionImages", "reviewsStatus", "summaryOnly").contains(key)) continue;
             addParameter(activity, params, label(key), value(data, key));
+        }
+        JSONArray detailImages = data.optJSONArray("descriptionImages");
+        if (detailImages != null) for (int i = 0; i < detailImages.length(); i++) {
+            String url = detailImages.optString(i);
+            if (!url.startsWith("https://") && !url.startsWith("http://")) continue;
+            ImageView image = new ImageView(activity);
+            image.setAdjustViewBounds(true);
+            image.setMinimumHeight((int)(100 * activity.getResources().getDisplayMetrics().density));
+            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            image.setContentDescription("商品介绍图片 " + (i + 1));
+            android.view.ViewTreeObserver.OnScrollChangedListener lazy = new android.view.ViewTreeObserver.OnScrollChangedListener() {
+                private boolean loaded;
+                @Override public void onScrollChanged() {
+                    if (!loaded && image.getGlobalVisibleRect(new android.graphics.Rect())) {
+                        loaded = true;
+                        image.getViewTreeObserver().removeOnScrollChangedListener(this);
+                        image.getLayoutParams().height = -2;
+                        RemoteImage.load(image, url);
+                    }
+                }
+            };
+            image.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override public void onViewAttachedToWindow(View v) {
+                    image.getViewTreeObserver().addOnScrollChangedListener(lazy);
+                    image.post(lazy::onScrollChanged);
+                }
+                @Override public void onViewDetachedFromWindow(View v) {
+                    if (image.getViewTreeObserver().isAlive()) image.getViewTreeObserver().removeOnScrollChangedListener(lazy);
+                }
+            });
+            params.addView(image, new LinearLayout.LayoutParams(-1, activity.getResources().getDisplayMetrics().widthPixels));
         }
     }
     private static String label(String key) {
@@ -91,6 +131,10 @@ final class ProductDetailsRenderer {
             case "createdAt": return "创建时间"; case "updatedAt": return "更新时间";
             case "barcode": return "条形码"; case "qrCode": return "二维码地址";
             case "reviewerEmail": return "评价者邮箱";
+            case "attributes": return "商品参数"; case "specifications": return "规格";
+            case "commentCount": return "官网评价总数"; case "commentGoodRates": return "好评率";
+            case "source": return "来源"; case "source_url": return "官网商品链接";
+            case "currency": return "币种"; case "counterPrice": return "官网参考价";
             case "meta": return "商品元数据"; default: return key;
         }
     }

@@ -112,7 +112,7 @@ public class ShopFragment extends PageFragment {
         } catch (java.io.UnsupportedEncodingException e) {
             url = CampusNetworkConfig.getApiBaseUrl() + "/goods?limit=30" + (refresh ? "&refresh=true" : "");
         }
-        ApiClient.get(url, new ApiClient.Callback() {
+        ApiClient.getWithReadTimeout(url, 16000, new ApiClient.Callback() {
             private boolean current() { return isAdded() && getView() != null && request == goodsRequest; }
             @Override public void onSuccess(org.json.JSONObject response) {
                 if (!current()) return;
@@ -125,18 +125,23 @@ public class ShopFragment extends PageFragment {
                         String pid = obj.getString("product_id"), title = obj.getString("title");
                         double price = obj.getDouble("price");
                         if (pid.isEmpty() || title.trim().isEmpty() || !Double.isFinite(price) || price < 0) throw new IllegalArgumentException("商品数据无效");
+                        org.json.JSONObject details = obj.optJSONObject("details");
+                        if (details == null) details = new org.json.JSONObject(obj.toString());
+                        if (obj.has("source")) details.put("source", obj.optString("source"));
+                        if (obj.has("currency")) details.put("currency", obj.optString("currency"));
                         netList.add(new ShopItem(pid, title, price, obj.optInt("sales", 0), R.drawable.ic_shop,
                                 obj.optString("category", "其他"), obj.optString("image_url", ""),
-                                obj.optJSONObject("details") == null ? obj.toString() : obj.getJSONObject("details").toString()));
+                                details.toString()));
                     }
                     allItems = netList; serverCatalog = new ArrayList<>(netList);
                     productList.clear();
                     productList.addAll(netList);
                     shopAdapter.notifyDataSetChanged();
-                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : "🔄 网易严选官网直发 · 实时换一批 (30件/批)");
+                    String source = netList.isEmpty() ? "" : netList.get(0).getSource();
+                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : source + " · 已加载 " + netList.size() + " 件 · 点击换一批");
                     goodsStatus.setClickable(true);
                     if (refresh && isAdded()) {
-                        Toast.makeText(requireContext(), "已为您实时刷新 30 件网易严选好物", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(requireContext(), "已更新 " + netList.size() + " 件商品", Toast.LENGTH_SHORT).show();
                     }
                 } catch (Exception error) { onError("商品数据格式错误"); }
             }

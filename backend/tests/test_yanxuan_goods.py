@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
-from yanxuan_goods import YanxuanGoodsCatalog
+from backend.yanxuan_goods import YanxuanGoodsCatalog
+from backend.dummy_goods import GoodsUnavailable
 
 SAMPLE_YANXUAN_RESPONSE = {
     "code": "200",
@@ -66,8 +67,9 @@ class YanxuanGoodsCatalogTests(unittest.TestCase):
         self.assertEqual('https://yanxuan-item.nosdn.127.net/test.jpg', item['image_url'])
         self.assertEqual('数码', item['category'])
         self.assertEqual('网易严选', item['source'])
-        self.assertGreaterEqual(len(item['details']['reviews']), 5)
-        self.assertEqual(item['details']['reviews'][0]['rating'], 5)
+        self.assertEqual([], item['details'].get('reviews', []))
+        self.assertNotIn('rating', item['details'])
+        self.assertEqual('CNY', item['details']['currency'])
 
     def test_parse_official_category_tree(self):
         catalog = YanxuanGoodsCatalog()
@@ -97,11 +99,11 @@ class YanxuanGoodsCatalogTests(unittest.TestCase):
         self.assertEqual(30, len(batch3))
         self.assertEqual('fake-60', batch3[0]['product_id'])
 
-    def test_fallback_on_network_error(self):
+    def test_network_error_is_reported_without_fake_goods(self):
         catalog = YanxuanGoodsCatalog()
         with patch('requests.get', side_effect=Exception('offline')):
-            items = catalog.list('数码')
-            self.assertGreater(len(items), 0)
+            with self.assertRaises(GoodsUnavailable):
+                catalog.list('数码')
 
 
 if __name__ == '__main__':

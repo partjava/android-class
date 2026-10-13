@@ -110,6 +110,15 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/tv_goods_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:gravity="center"
+                android:text="正在加载商品…"
+                android:textColor="@color/text_secondary" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_shop"
                 android:layout_width="match_parent"

@@ -333,8 +333,29 @@ public final class ShopStore {
                 list.add(0, new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true));
             }
             saveCart(list);
+            syncAddToCartToNetwork(productId, addQty);
             return null;
         });
+    }
+
+    private void syncAddToCartToNetwork(String productId, int count) {
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/cart/add";
+        try {
+            JSONObject body = new JSONObject();
+            body.put("product_id", productId);
+            body.put("count", count);
+            ApiClient.post(url, body.toString(), null);
+        } catch (Exception ignored) { }
+    }
+
+    private void syncUpdateCartToNetwork(String productId, int count) {
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/cart/update";
+        try {
+            JSONObject body = new JSONObject();
+            body.put("product_id", productId);
+            body.put("count", count);
+            ApiClient.post(url, body.toString(), null);
+        } catch (Exception ignored) { }
     }
 
     public void updateQuantity(String key, int newQty) {
@@ -342,11 +363,13 @@ public final class ShopStore {
             List<CartItem> list = getCartItems();
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).key().equals(key)) {
+                    String targetPid = list.get(i).productId;
                     if (newQty <= 0) {
                         list.remove(i);
                     } else {
                         list.get(i).quantity = Math.min(99, newQty);
                     }
+                    syncUpdateCartToNetwork(targetPid, newQty);
                     break;
                 }
             }

@@ -129,6 +129,7 @@ public final class ChannelStore {
     public static void saveAll(Context context, List<Channel> myChannels, List<Channel> moreChannels) {
         saveMyChannels(context, myChannels);
         saveMoreChannels(context, moreChannels);
+        syncChannelsToNetwork(myChannels);
     }
 
     public static void saveMyChannels(Context context, List<Channel> list) {
@@ -139,6 +140,73 @@ public final class ChannelStore {
     public static void saveMoreChannels(Context context, List<Channel> list) {
         SharedPreferences sp = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         sp.edit().putString(KEY_MORE_CHANNELS, toJson(list)).apply();
+    }
+
+    /**
+     * 从后端 API 异步动态拉取频道配置 (GET baseurl/channel)
+     */
+    public static void fetchChannelsFromNetwork(Context context, Runnable onComplete) {
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/channel";
+        ApiClient.get(url, new ApiClient.Callback() {
+            @Override
+            public void onSuccess(JSONObject response) {
+                if (response.optInt("code") == 200) {
+                    JSONObject data = response.optJSONObject("data");
+                    if (data != null) {
+                        JSONArray selArray = data.optJSONArray("selected");
+                        JSONArray candArray = data.optJSONArray("candidate");
+                        List<Channel> my = new ArrayList<>();
+                        List<Channel> more = new ArrayList<>();
+                        if (selArray != null) {
+                            for (int i = 0; i < selArray.length(); i++) {
+                                JSONObject o = selArray.optJSONObject(i);
+                                if (o != null) {
+                                    my.add(new Channel(o.optString("id"), o.optString("name"), o.optBoolean("fixed", false)));
+                                }
+                            }
+                        }
+                        if (candArray != null) {
+                            for (int i = 0; i < candArray.length(); i++) {
+                                JSONObject o = candArray.optJSONObject(i);
+                                if (o != null) {
+                                    more.add(new Channel(o.optString("id"), o.optString("name"), o.optBoolean("fixed", false)));
+                                }
+                            }
+                        }
+                        if (!my.isEmpty()) {
+                            saveMyChannels(context, my);
+                            if (!more.isEmpty()) saveMoreChannels(context, more);
+                            if (onComplete != null) onComplete.run();
+                            return;
+                        }
+                    }
+                }
+                if (onComplete != null) onComplete.run();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (onComplete != null) onComplete.run();
+            }
+        });
+    }
+
+    /**
+     * 将当前用户频道的变动通过 POST 请求同步至后端服务 (POST baseurl/channel)
+     */
+    public static void syncChannelsToNetwork(List<Channel> myChannels) {
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/channel";
+        try {
+            JSONObject body = new JSONObject();
+            JSONArray ids = new JSONArray();
+            if (myChannels != null) {
+                for (Channel c : myChannels) {
+                    ids.put(c.getId());
+                }
+            }
+            body.put("selected_ids", ids);
+            ApiClient.post(url, body.toString(), null);
+        } catch (Exception ignored) { }
     }
 
     private static String toJson(List<Channel> channels) {

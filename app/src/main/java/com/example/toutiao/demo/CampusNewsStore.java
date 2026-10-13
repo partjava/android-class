@@ -28,8 +28,8 @@ import java.util.List;
  */
 public final class CampusNewsStore {
 
-    /** 模拟器默认访问宿主机 Flask 服务的地址 (10.0.2.2 映射到电脑 localhost) */
-    private static String serverBaseUrl = "http://10.0.2.2:5000";
+    /** 模拟器默认访问宿主机服务的地址 (10.0.2.2 映射到电脑 localhost) */
+    private static String serverBaseUrl = "http://10.0.2.2:8000";
     private static final int TIMEOUT_MS = 5000;
 
     /** 最近一次从 Flask 查询拉取成功的校园新闻缓存 */
@@ -157,6 +157,12 @@ public final class CampusNewsStore {
                 JSONArray array = root.optJSONArray("newslist");
                 if (array == null) {
                     array = root.optJSONArray("data");
+                }
+                if (array == null) {
+                    JSONObject dataObj = root.optJSONObject("data");
+                    if (dataObj != null) {
+                        array = dataObj.optJSONArray("items");
+                    }
                 }
 
                 List<News> parsedList = parseArray(array);

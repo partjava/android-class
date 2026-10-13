@@ -6,7 +6,7 @@ import urllib.parse
 from decimal import Decimal, ROUND_HALF_UP
 import requests
 from bs4 import BeautifulSoup
-from dummy_goods import DummyGoodsCatalog
+from .dummy_goods import DummyGoodsCatalog
 
 CATEGORY_KEYWORDS = {
     '推荐': '畅销热卖',

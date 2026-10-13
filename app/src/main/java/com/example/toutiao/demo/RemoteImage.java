@@ -11,8 +11,6 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 极简远程图片加载器。
@@ -25,7 +23,9 @@ import java.util.Map;
  */
 public final class RemoteImage {
 
-    private static final Map<String, Bitmap> CACHE = new HashMap<>();
+    private static final android.util.LruCache<String, Bitmap> CACHE = new android.util.LruCache<String, Bitmap>(24 * 1024 * 1024) {
+        @Override protected int sizeOf(String key, Bitmap bitmap) { return bitmap.getAllocationByteCount(); }
+    };
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private RemoteImage() { }

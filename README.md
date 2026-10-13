@@ -105,7 +105,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\start-campus-news.ps1 -Che
 
 ```shell
 python -m pip install flask requests beautifulsoup4 urllib3
-python -u campus_news_server.py
+python -u -m backend.campus_news_server
 ```
 
 ### 模拟器与真机连接
@@ -146,8 +146,16 @@ Get-ChildItem tests/campus3d/test_*.cjs | ForEach-Object {
 
 - Android 源码：`app/src/main/java`、`app/src/main/res`
 - 离线三维场景：`app/src/main/assets/campus3d`
-- 服务：`campus_news_server.py`
+- 服务：`backend/campus_news_server.py`
 - Windows 启动器：`启动校园新闻服务.bat`、`start-campus-news.ps1`
 - 功能清单：[项目功能说明.txt](项目功能说明.txt)
 
 课程演示项目。购物、聊天回复和部分社交数据为本地演示；建筑外观、尺寸和设施依据截图近似重建，未提供入口或室内导航。
+
+## FastAPI 后端
+
+Python 代码统一位于 `backend/`。默认商城使用网易严选商品，列表加载封面和摘要，详情按固定 ID 获取多张图片及真实评价。
+
+双击 `启动校园新闻服务_FastAPI.bat`，或在项目根目录运行 `python -m backend.campus_news_fastapi`。模拟器服务地址为 `http://10.0.2.2:8000`，电脑接口文档为 `http://localhost:8000/docs`。
+
+依赖安装、测试和目录说明见 [后端使用说明](backend/README.md)，完整设计见 [FastAPI 设计文档](fastapi设计文档.txt)。

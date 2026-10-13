@@ -1,0 +1,180 @@
+晴川校园应用 — FastAPI 后端设计与使用说明
+版本：v1.1    更新日期：2026-10-13
+
+一、目录与启动方式
+
+Python 代码集中放在 backend/，包括：
+  __init__.py                Python 包入口
+  campus_news_fastapi.py      FastAPI 综合服务，8000 端口
+  campus_news_server.py       Flask 新闻服务及官网解析，5000 端口
+  yanxuan_goods.py            默认网易严选商品数据源
+  dummy_goods.py             可选 DummyJSON 数据源
+  dangdang_goods.py           可选当当数据源
+  owned_catalog.py           自有商品 SQLite 管理
+  cart_persistence.py         购物车 JSON 持久化
+  tests/                     Python 后端测试
+  requirements.txt           运行依赖
+  requirements-dev.txt       测试依赖
+  README.md                  后端快速使用说明
+
+在项目根目录使用 Python 3.10 或更新版本：
+  python -m pip install -r backend/requirements.txt
+  python -m backend.campus_news_fastapi
+
+也可双击根目录“启动校园新闻服务_FastAPI.bat”。原有 Flask 双击入口保留，
+手动启动命令改为 python -m backend.campus_news_server。
+两套服务端口不同，可以同时运行。以 Python 包方式启动，不再运行根目录旧脚本。
+
+二、连接地址与响应约定
+
+电脑访问：http://localhost:8000
+模拟器访问：http://10.0.2.2:8000
+真机访问：http://<电脑局域网IP>:8000，手机与电脑需在同一局域网。
+App 的网络配置只填写服务地址，不附加 /api/v1。
+接口基础路径：/api/v1
+交互式文档：http://localhost:8000/docs
+另一个文档页面：http://localhost:8000/redoc
+
+业务成功响应通常为：
+  {"code":200,"msg":"success","data":{...}}
+健康检查采用独立结构。错误使用 HTTP 状态码和 FastAPI 的 detail 字段，
+不能假设所有失败都有 code/msg/data。参数校验失败为 422，商品不存在为 404；
+列表上游不可用通常为 502，详情上游不可用为 503。加载失败提供重试，不回退假商品。
+
+三、当前商品数据源
+
+默认 CAMPUS_GOODS_SOURCE=yanxuan，商品来自网易严选 https://you.163.com 。
+按官网人民币报价展示，不使用 DummyJSON 的美元汇率换算。
+六个分类与官网搜索词：
+  推荐 → 生活
+  数码 → 数码
+  家具 → 家具
+  穿搭 → 服饰
+  水果 → 水果
+  个护 → 护肤品
+旧分类“家居”“美食”分别兼容映射为“家具”“水果”。
+
+商品身份固定为 yanxuan-<官网商品ID>，例如 yanxuan-4064594。
+刷新列表不创建新 ID，详情和购物车使用同一 ID。
+官网没有提供的库存、销量、评分和服务承诺不编造。
+销量字段为 0 也可能表示源数据未提供，不能当作官网确认的零销量。
+
+可选数据源：owned / dummyjson / dangdang。
+仅主动设置 CAMPUS_GOODS_SOURCE 时切换，默认严选失败不会自动切到这些来源。
+owned 用于自行录入商品，不会自动生成示例商品；dummyjson 是在线测试数据。
+当当属于历史可选实现，其自身保底逻辑不代表当前严选行为。
+
+四、商品列表与详情分开加载
+
+1. GET /api/v1/goods?category=推荐&limit=30&refresh=false
+   category：推荐、数码、家具、穿搭、水果、个护；“全部”等同推荐。
+   limit：1–100，默认 30。
+   keyword：可选，在本次返回的商品批次标题中筛选。
+   refresh：缓存有效时换下一批，缓存过期后重新获取官网搜索结果。
+   搜索结果缓存 5 分钟；单个分类先获取最多 100 个搜索结果，再轮换返回。
+   总数 total 是本次返回条数，不是官网商品总数。
+
+   返回 data：
+   {"total":1,"category":"推荐","items":[{
+     "product_id":"yanxuan-4064594",
+     "title":"商品标题", "price":129.0, "price_cents":12900,
+     "sales":0, "category":"推荐", "image_res":"ic_shop",
+     "image_url":"https://.../cover.jpg", "description":"简短介绍",
+     "source":"网易严选", "currency":"CNY",
+     "details":{"source":"网易严选","currency":"CNY",
+                "description":"简短介绍","images":["https://.../cover.jpg"],
+                "summaryOnly":true}
+   }]}
+   以上数值与省略图片地址仅用于说明响应结构。
+   列表只返回一张封面及摘要，不逐个请求商品详情，减少列表传输量。
+
+2. GET /api/v1/goods/{product_id}?refresh=false
+   按官网 ID 独立查询，不要求商品仍在当前列表中。
+   refresh=true 强制重新获取；默认使用 5 分钟详情缓存。
+   data 为商品对象，details 补充官网实际提供的字段：
+     images：去重后的商品轮播图片
+     description：介绍文本
+     descriptionImages：图文介绍里的图片地址
+     attributes：商品参数
+     specifications：可获取的规格
+     sku、counterPrice、source_url：可获取的其他商品信息
+     commentCount：官网详情页评价总数
+     commentGoodRates：官网好评率
+     reviews：本次获取的真实评价
+     reviewsStatus：loaded / unavailable
+
+   评价来自官网 /xhr/comment/listByItemByTag.json，目前获取第一页最多 20 条，
+   每条含 reviewerName、comment、rating、date，日期按北京时间显示。
+   App 每次展示最多 5 条，评价“换一批”在本次获取的评价中轮换，
+   尚未实现所有历史评价的网络分页。官网评价总数与本次加载条数需区分。
+   评价请求失败仍返回可用的商品详情，并标记 unavailable；不冒充零评价。
+
+3. POST /api/v1/goods/filter
+   请求：{"category":"数码","min_price":50,"max_price":300,"sort":"price_asc"}
+   sort 支持 default、price_asc、price_desc、sales_desc。
+   筛选当前来源返回的商品集合，不保证覆盖官网全部商品。
+
+五、Android 展示与图片处理
+
+列表立即显示封面和简介；点击商品后先显示已有摘要，后台按 ID 获取详情。
+加载过程中有状态提示；固定顶部的刷新入口和更多按钮可重新请求详情。
+失败时保留已有内容，可点击重试；页面关闭后忽略迟到的请求结果。
+顶部返回按钮和商品/评价/详情/推荐导航固定，不随正文滚出屏幕。
+
+商品轮播展示官网实际图片，不用复制封面补位。介绍图片滚到可见位置才下载。
+图片通过 URL 下载到 App 内存显示，内存缓存上限 24 MiB，旧图自动淘汰，
+不写入相册，也不把图片保存到 Python 项目目录。商品数据缓存与图片缓存分开。
+App 请求列表读超时 16 秒，详情读超时 30 秒；实际速度受官网响应和网络影响。
+购物、下单及支付为课程展示流程，没有真实支付或购买接口。
+
+六、其他接口
+
+系统：
+  GET /api/health
+  返回 code、service、engine、port、version、timestamp；engine 为 fastapi。
+  GET /api/image_proxy?url=...：官网图片中继。
+  GET /school_page/{page_id}：官网页面中继。
+
+频道：
+  GET /api/v1/channel：data.selected 和 data.candidate。
+  POST /api/v1/channel：提交 selected_ids 或完整 channels。
+  更新返回 selected_count、candidate_count。当前服务端频道状态位于内存。
+
+新闻：
+  GET /api/v1/news?channel=xxyw&page=1&size=15
+  GET /api/v1/news/{news_id}
+  POST /api/v1/news/search：keyword、channel、page、size。
+  复用 Flask 模块的晴川官网新闻解析能力；详细字段及校验规则见 /docs。
+
+购物车：
+  GET /api/v1/cart：items、total_count、total_price。
+  POST /api/v1/cart/add：{"product_id":"yanxuan-4064594","count":1}
+  POST /api/v1/cart/update：product_id、count，count<=0 删除。
+  POST /api/v1/cart/clear：清空购物车。
+  商品应先通过列表加载，使服务端能识别商品；购物车保存商品快照用于重启后展示。
+  当前是本地课程演示的共享购物车，尚未实现账号隔离。
+
+自有商品管理（展示需切到 owned 模式）：
+  POST /api/v1/goods：录入，product_id 可省略。
+  PUT /api/v1/goods/{product_id}：更新。
+  DELETE /api/v1/goods/{product_id}：删除。
+  price 为人民币、最多两位小数；title 必填，其余字段与约束见 /docs。
+  接口实际支持 GET、POST、PUT、DELETE，不再限定只有 GET/POST。
+
+七、持久化位置与测试
+
+已有数据继续使用根目录 data/：
+  data/shop_products.db：自有商品 SQLite，严选在线商品不存入此表。
+  data/cart_storage.json：服务端购物车及商品快照。
+目录迁移不搬动、不清空这些文件。数据文件不提交 Git。
+CAMPUS_GOODS_DB、CAMPUS_CART_PATH 可指定其他位置；推荐填写绝对路径。
+严选商品列表与详情为进程内缓存，重启后按需重新获取。
+Android App 自己的 SQLite 属于设备数据，与这里的 Python SQLite 不同。
+
+在项目根目录运行测试：
+  python -m pip install -r backend/requirements-dev.txt
+  python -m unittest discover -s backend/tests
+
+测试覆盖商品来源、固定 ID、列表摘要、详情图片和评价、缓存刷新、上游失败、
+自有商品、购物车持久化，以及整理后的模块导入和数据路径。
+实际接口字段以 /docs 和 backend/campus_news_fastapi.py 为准。

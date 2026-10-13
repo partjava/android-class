@@ -4,8 +4,8 @@ import unittest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 
-import campus_news_fastapi
-from cart_persistence import CartStorage
+from backend import campus_news_fastapi
+from backend.cart_persistence import CartStorage
 
 SAMPLE_BOOK_HTML = '''
 <ul class="bigimg">
@@ -46,7 +46,7 @@ class FastApiDangdangIntegrationTests(unittest.TestCase):
         campus_news_fastapi.cart_storage.clear()
         campus_news_fastapi.dangdang_catalog._cache.clear()
 
-    @patch('dangdang_goods.requests.get')
+    @patch('backend.dangdang_goods.requests.get')
     def test_dangdang_goods_query_and_cart_lifecycle(self, mock_get):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
@@ -123,7 +123,7 @@ class FastApiDangdangIntegrationTests(unittest.TestCase):
         self.assertEqual([], final_res.json()["data"]["items"])
         self.assertEqual(0, final_res.json()["data"]["total_count"])
 
-    @patch('dangdang_goods.requests.get')
+    @patch('backend.dangdang_goods.requests.get')
     def test_cart_snapshot_persists_across_storage_reload(self, mock_get):
         mock_resp = MagicMock()
         mock_resp.status_code = 200

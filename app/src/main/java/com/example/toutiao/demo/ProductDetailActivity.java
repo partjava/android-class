@@ -112,6 +112,8 @@ public class ProductDetailActivity extends AppCompatActivity {
             R.color.avatar_blue, R.color.avatar_green, R.color.avatar_orange, R.color.avatar_purple};
 
     private ShopItem item;
+    private int detailRequest;
+    private TextView detailStatus;
     private ShopStore store;
     private int catIndex;
     private String[] specs;
@@ -162,20 +164,82 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
         store = new ShopStore(this);
         catIndex = catIndexOf(item.getCategory());
-        specs = SPECS[catIndex];
+        specs = item.hasRemoteDetails() ? new String[]{"默认规格"} : SPECS[catIndex];
 
         bindViews();
         setupGallery();
         setupTabs();
-        renderPriceCard();
-        renderTitleCard();
-        renderServicesCard();
-        renderReviewsCard();
-        renderShopCard();
-        renderDetailSection();
+        if (item.hasRemoteDetails()) {
+            ProductDetailsRenderer.render(this, item);
+            findViewById(R.id.ll_service_spec).setOnClickListener(v -> showSkuSheet(MODE_ADD));
+        } else {
+            renderPriceCard();
+            renderTitleCard();
+            renderServicesCard();
+            renderReviewsCard();
+            renderShopCard();
+            renderDetailSection();
+        }
         setupRecommendations();
         setupBottomBar();
         refreshCartBadge();
+        if (item.getProductId().startsWith("yanxuan-")) {
+            detailStatus = new TextView(this);
+            detailStatus.setTextSize(13);
+            detailStatus.setGravity(Gravity.CENTER);
+            detailStatus.setPadding(8, 8, 8, 8);
+            LinearLayout root = (LinearLayout) findViewById(R.id.detail_toolbar).getParent();
+            root.addView(detailStatus, 1);
+            detailStatus.setOnClickListener(v -> loadRemoteDetail(true));
+            findViewById(R.id.btn_gallery_more).setOnClickListener(v -> loadRemoteDetail(true));
+            loadRemoteDetail(false);
+        }
+    }
+
+    private void loadRemoteDetail(boolean refresh) {
+        final int request = ++detailRequest;
+        final String productId = item.getProductId();
+        detailStatus.setText("正在加载商品详情和评价…");
+        detailStatus.setEnabled(false);
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/goods/" + productId + "?refresh=" + refresh;
+        ApiClient.getWithReadTimeout(url, 30000, new ApiClient.Callback() {
+            private boolean current() { return request == detailRequest && !isFinishing() && !isDestroyed(); }
+            @Override public void onSuccess(org.json.JSONObject response) {
+                if (!current()) return;
+                org.json.JSONObject data = response.optJSONObject("data");
+                if (data == null || !productId.equals(data.optString("product_id")) || data.optJSONObject("details") == null) {
+                    onError("商品详情格式异常");
+                    return;
+                }
+                double price = data.optDouble("price", item.getPrice());
+                if (Double.isNaN(price) || Double.isInfinite(price) || price < 0) {
+                    onError("商品价格异常");
+                    return;
+                }
+                int scrollY = nsv.getScrollY();
+                item = new ShopItem(productId, data.optString("title", item.getTitle()), price,
+                        data.optInt("sales", item.getSales()), item.getImgRes(),
+                        data.optString("category", item.getCategory()), data.optString("image_url", item.getImageUrl()),
+                        data.optJSONObject("details").toString());
+                ProductDetailsRenderer.render(ProductDetailActivity.this, item);
+                vpGallery.setAdapter(new GalleryAdapter());
+                tvGalleryIndex.setText("1/" + galleryCount());
+                nsv.post(() -> { if (current()) nsv.scrollTo(0, scrollY); });
+                detailStatus.setText("unavailable".equals(item.getDetails().optString("reviewsStatus"))
+                        ? "商品详情已更新，评价暂未获取 · 点击重试" : "详情和评价已更新 · 点击刷新");
+                detailStatus.setEnabled(true);
+            }
+            @Override public void onError(String message) {
+                if (!current()) return;
+                detailStatus.setText("详情加载失败，已保留当前内容 · 点击重试");
+                detailStatus.setEnabled(true);
+            }
+        });
+    }
+
+    @Override protected void onDestroy() {
+        detailRequest++;
+        super.onDestroy();
     }
 
     @Override
@@ -231,11 +295,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         vpGallery.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
-                tvGalleryIndex.setText((position + 1) + "/" + GALLERY_PAGE_COUNT);
-                ivGalleryPlay.setVisibility(position == 0 ? View.VISIBLE : View.INVISIBLE);
+                tvGalleryIndex.setText((position + 1) + "/" + galleryCount());
+                ivGalleryPlay.setVisibility(item.hasRemoteDetails() ? View.GONE : position == 0 ? View.VISIBLE : View.INVISIBLE);
             }
         });
-        tvGalleryIndex.setText("1/" + GALLERY_PAGE_COUNT);
+        tvGalleryIndex.setText("1/" + galleryCount());
+        if (item.hasRemoteDetails()) ivGalleryPlay.setVisibility(View.GONE);
 
         findViewById(R.id.btn_gallery_back).setOnClickListener(v -> finish());
         findViewById(R.id.btn_gallery_share).setOnClickListener(v ->
@@ -263,7 +328,16 @@ public class ProductDetailActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             if (holder instanceof PhotoHolder) {
-                ((PhotoHolder) holder).iv.setImageResource(item.getImgRes());
+                ((PhotoHolder)holder).iv.setScaleType(item.hasRemoteDetails() ? ImageView.ScaleType.FIT_CENTER : ImageView.ScaleType.CENTER_CROP);
+                ((PhotoHolder)holder).iv.setContentDescription(item.getTitle() + " · 图片 " + (position + 1));
+                if (item.hasRemoteDetails() && !item.getImageUrls().isEmpty()) {
+                    RemoteImage.load(((PhotoHolder) holder).iv, item.getImageUrls().get(position));
+                } else if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+                    RemoteImage.load(((PhotoHolder) holder).iv, item.getImageUrl());
+                } else {
+                    ((PhotoHolder) holder).iv.setTag(null);
+                    ((PhotoHolder) holder).iv.setImageResource(item.getImgRes());
+                }
             } else {
                 bindPoster((PosterHolder) holder, position);
             }
@@ -271,14 +345,16 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         @Override
         public int getItemViewType(int position) {
-            return position == 0 ? TYPE_PHOTO : TYPE_POSTER;
+            return item.hasRemoteDetails() || position == 0 ? TYPE_PHOTO : TYPE_POSTER;
         }
 
         @Override
         public int getItemCount() {
-            return GALLERY_PAGE_COUNT;
+            return galleryCount();
         }
     }
+
+    private int galleryCount() { return item.hasRemoteDetails() ? Math.max(1, item.getImageUrls().size()) : GALLERY_PAGE_COUNT; }
 
     private static class PhotoHolder extends RecyclerView.ViewHolder {
         final ImageView iv;
@@ -423,7 +499,11 @@ public class ProductDetailActivity extends AppCompatActivity {
 
     private void renderDetailSection() {
         ImageView photo = findViewById(R.id.iv_desc_photo);
-        photo.setImageResource(item.getImgRes());
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            RemoteImage.load(photo, item.getImageUrl());
+        } else {
+            photo.setImageResource(item.getImgRes());
+        }
 
         String[] paragraphs = DESC_PARAGRAPHS[catIndex];
         tvDescBody1.setText(android.text.Html.fromHtml("<h3>" + "商品亮点" + "</h3><p>" + android.text.TextUtils.htmlEncode(paragraphs[0]) + "</p><p><b>品质承诺：</b><font color=\"#E53935\">校园精选，安心选购</font></p>"));
@@ -545,7 +625,11 @@ public class ProductDetailActivity extends AppCompatActivity {
         TextView minus = dialog.findViewById(R.id.btn_sku_minus);
         TextView plus = dialog.findViewById(R.id.btn_sku_plus);
 
-        thumb.setImageResource(item.getImgRes());
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            RemoteImage.load(thumb, item.getImageUrl());
+        } else {
+            thumb.setImageResource(item.getImgRes());
+        }
         price.setText(formatPrice(item.getPrice()));
 
         //规格胶囊：选中态要随点击切换，只能代码建、代码换肤

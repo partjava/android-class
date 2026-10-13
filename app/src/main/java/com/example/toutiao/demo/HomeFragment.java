@@ -141,6 +141,12 @@ public class HomeFragment extends PageFragment {
         buildChannelTabs();
         selectChannelById(restoreChannelId);
 
+        ChannelStore.fetchChannelsFromNetwork(requireContext(), () -> {
+            if (isAdded()) {
+                buildChannelTabs();
+            }
+        });
+
         if (etSearch != null) {
             etSearch.setText(query);
         }

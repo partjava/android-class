@@ -136,6 +136,66 @@ public class CartActivity extends AppCompatActivity {
 
         tvTitle.setText(isEmpty ? "购物车" : "购物车(" + cartList.size() + ")");
         updateBottomBar();
+        syncCartFromNetwork();
+    }
+
+    private void syncCartFromNetwork() {
+        String url = CampusNetworkConfig.getApiBaseUrl() + "/cart";
+        ApiClient.get(url, new ApiClient.Callback() {
+            @Override
+            public void onSuccess(org.json.JSONObject response) {
+                if (isFinishing() || isDestroyed()) return;
+                if (response.optInt("code") == 200) {
+                    org.json.JSONObject data = response.optJSONObject("data");
+                    if (data != null) {
+                        org.json.JSONArray items = data.optJSONArray("items");
+                        if (items != null && items.length() > 0) {
+                            boolean updated = false;
+                            for (int i = 0; i < items.length(); i++) {
+                                org.json.JSONObject obj = items.optJSONObject(i);
+                                if (obj == null) continue;
+                                String pid = obj.optString("product_id");
+                                int count = obj.optInt("count", 1);
+                                String title = obj.optString("title", "商品");
+                                double price = obj.optDouble("price", 0.0);
+                                String category = obj.optString("category", "其他");
+                                String imgResName = obj.optString("image_res", "shop_1");
+                                int resId = getResources().getIdentifier(imgResName, "drawable", getPackageName());
+                                if (resId == 0) resId = R.drawable.shop_1;
+                                boolean exists = false;
+                                for (ShopStore.CartItem it : cartList) {
+                                    if (pid.equals(it.productId)) {
+                                        exists = true;
+                                        break;
+                                    }
+                                }
+                                if (!exists) {
+                                    store.addToCart(pid, "默认规格", title, (long)(price * 100), resId, category, count);
+                                    updated = true;
+                                }
+                            }
+                            if (updated) {
+                                cartList.clear();
+                                cartList.addAll(store.getCartItems());
+                                adapter.notifyDataSetChanged();
+                                updateBottomBar();
+                                boolean empty = cartList.isEmpty();
+                                llEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
+                                rvCart.setVisibility(empty ? View.GONE : View.VISIBLE);
+                                llBottomBar.setVisibility(empty ? View.GONE : View.VISIBLE);
+                                btnManage.setVisibility(empty ? View.GONE : View.VISIBLE);
+                                tvTitle.setText(empty ? "购物车" : "购物车(" + cartList.size() + ")");
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                // 离线状态保持本地已加载数据
+            }
+        });
     }
 
     private List<ShopStore.CartItem> getSelectedItems() {

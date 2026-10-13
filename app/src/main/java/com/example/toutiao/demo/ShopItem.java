@@ -17,12 +17,22 @@ public class ShopItem implements Serializable {
     private final int sales;       // 已售件数
     private final int imgRes;      // 商品图资源 id
     private final String category; // 分类：数码/家居/服饰/食品，商城频道标签按它过滤
+    private final String imageUrl; // 真实网络商品大图 URL
+    private final String detailsJson;
 
     public ShopItem(String title, double price, int sales, int imgRes, String category) {
-        this(legacyProductId(imgRes, title, category), title, price, sales, imgRes, category);
+        this(legacyProductId(imgRes, title, category), title, price, sales, imgRes, category, "");
     }
 
     public ShopItem(String productId, String title, double price, int sales, int imgRes, String category) {
+        this(productId, title, price, sales, imgRes, category, "");
+    }
+
+    public ShopItem(String productId, String title, double price, int sales, int imgRes, String category, String imageUrl) {
+        this(productId, title, price, sales, imgRes, category, imageUrl, "");
+    }
+
+    public ShopItem(String productId, String title, double price, int sales, int imgRes, String category, String imageUrl, String detailsJson) {
         if (productId == null || productId.isEmpty()) throw new IllegalArgumentException("商品ID不能为空");
         this.productId = productId;
         this.title = title;
@@ -30,9 +40,31 @@ public class ShopItem implements Serializable {
         this.sales = sales;
         this.imgRes = imgRes;
         this.category = category;
+        this.imageUrl = imageUrl == null ? "" : imageUrl;
+        this.detailsJson = detailsJson == null ? "" : detailsJson;
     }
 
     public String getProductId() { return productId; }
+    public String getImageUrl() { return imageUrl; }
+    public boolean hasRemoteDetails() { return detailsJson != null && !detailsJson.isEmpty(); }
+    public String getSource() {
+        return getDetails().optString("source", productId.startsWith("dummy-") ? "DummyJSON" : productId.startsWith("yanxuan-") ? "网易严选" : "在线商品");
+    }
+    public String getCurrency() { return getDetails().optString("currency", "DummyJSON".equals(getSource()) ? "USD" : "CNY"); }
+    public org.json.JSONObject getDetails() {
+        try { return new org.json.JSONObject(detailsJson); }
+        catch (Exception ignored) { return new org.json.JSONObject(); }
+    }
+    public java.util.List<String> getImageUrls() {
+        java.util.List<String> images = new java.util.ArrayList<>();
+        org.json.JSONArray array = getDetails().optJSONArray("images");
+        if (array != null) for (int i = 0; i < array.length(); i++) {
+            String url = array.optString(i);
+            if ((url.startsWith("https://") || url.startsWith("http://")) && !images.contains(url)) images.add(url);
+        }
+        if (images.isEmpty() && !imageUrl.isEmpty()) images.add(imageUrl);
+        return images;
+    }
 
     public static String legacyProductId(int image, String title, String category) {
         // Fixed historical labels recover legacy IDs even when drawable integers change between APKs.

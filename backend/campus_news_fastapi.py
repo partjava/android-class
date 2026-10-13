@@ -41,7 +41,7 @@ class GoodsCreate(GoodsWrite):
 
 # 导入现有爬虫核心能力（零破坏复用已调通的官网解析器与网卡适配器）
 try:
-    import campus_news_server as cns
+    from . import campus_news_server as cns
 except ImportError:
     cns = None
 
@@ -125,18 +125,18 @@ current_channel_state = {
 }
 
 # 自有商品持久化；空库不会导入示例商品。
-from owned_catalog import ProductCatalog
-from dummy_goods import DummyGoodsCatalog, GoodsUnavailable
-from dangdang_goods import DangdangGoodsCatalog
-from yanxuan_goods import YanxuanGoodsCatalog
-from cart_persistence import CartStorage
+from .owned_catalog import ProductCatalog
+from .dummy_goods import DummyGoodsCatalog, GoodsUnavailable
+from .dangdang_goods import DangdangGoodsCatalog
+from .yanxuan_goods import YanxuanGoodsCatalog
+from .cart_persistence import CartStorage
 
 remote_catalog = DummyGoodsCatalog()
 dangdang_catalog = DangdangGoodsCatalog()
 yanxuan_catalog = YanxuanGoodsCatalog()
 goods_source = os.environ.get("CAMPUS_GOODS_SOURCE", "yanxuan")
-product_catalog = ProductCatalog(os.environ.get("CAMPUS_GOODS_DB", os.path.join(os.path.dirname(__file__), "data", "shop_products.db")))
-cart_storage = CartStorage(os.environ.get("CAMPUS_CART_PATH", os.path.join(os.path.dirname(__file__), "data", "cart_storage.json")))
+product_catalog = ProductCatalog(os.environ.get("CAMPUS_GOODS_DB", os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "shop_products.db")))
+cart_storage = CartStorage(os.environ.get("CAMPUS_CART_PATH", os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "cart_storage.json")))
 
 def get_active_goods_catalog(category="推荐", limit: Optional[int] = 30, refresh: bool = False):
     if goods_source == "owned":
@@ -189,22 +189,9 @@ def find_active_product(product_id: str):
         except Exception:
             pass
     else:
-        for cat_items in yanxuan_catalog._cache.values():
-            for item in cat_items:
-                if item.get("product_id") == product_id:
-                    return item
-        try:
-            for item in yanxuan_catalog.list("推荐"):
-                if item.get("product_id") == product_id:
-                    return item
-        except Exception:
-            pass
-        try:
-            for item in yanxuan_catalog._fallback.list():
-                if item.get("product_id") == product_id:
-                    return item
-        except Exception:
-            pass
+        item = yanxuan_catalog.find(product_id)
+        if item is not None:
+            return item
 
     with cart_storage._lock:
         if product_id in cart_storage._items:
@@ -407,17 +394,27 @@ async def search_news(request: Request, payload: NewsSearchRequest):
 def get_goods_list(
     category: Optional[str] = Query("全部", description="分类：全部/推荐/数码/家具/穿搭/水果/个护"),
     keyword: Optional[str] = Query(None, description="搜索关键词"),
-    limit: Optional[int] = Query(30, description="单次返回商品数量，默认30条"),
+    limit: Optional[int] = Query(30, ge=1, le=100, description="单次返回商品数量，默认30条"),
     refresh: Optional[bool] = Query(False, description="是否穿透缓存实时换一批")
 ):
     """默认获取网易严选官网在线展示商品；支持每次30件与实时换一批。"""
     target_category = category if (category and category != "全部") else "推荐"
+    if goods_source == "yanxuan":
+        target_category = {"家居": "家具", "美食": "水果"}.get(target_category, target_category)
     result = list(get_active_goods_catalog(target_category, limit=limit, refresh=refresh))
-    if category and category != "全部":
-        result = [g for g in result if g.get("category") == category]
+    if category and category not in ("全部", "推荐"):
+        result = [g for g in result if g.get("category") == target_category]
     if keyword and keyword.strip():
         kw = keyword.strip()
         result = [g for g in result if kw in g.get("title", "")]
+
+    if goods_source == "yanxuan":
+        result = [dict(g, details={
+            'source': g.get('source', '网易严选'), 'currency': g.get('currency', 'CNY'),
+            'description': g.get('description', ''),
+            'images': [g['image_url']] if g.get('image_url') else [],
+            'summaryOnly': True,
+        }) for g in result]
 
     return {
         "code": 200,
@@ -452,9 +449,12 @@ def delete_goods(product_id: str):
     return {"code": 200, "msg": "success", "data": {"product_id": product_id}}
 
 @app.get("/api/v1/goods/{product_id}", summary="获取商品详情 (GET)", tags=["商城模块"])
-def get_goods_detail(product_id: str = Path(..., description="商品ID")):
+def get_goods_detail(product_id: str = Path(..., description="商品ID"), refresh: bool = Query(False)):
     """获取指定商品的详细信息"""
-    item = find_active_product(product_id)
+    try:
+        item = yanxuan_catalog.detail(product_id, refresh=refresh) if goods_source == "yanxuan" else find_active_product(product_id)
+    except GoodsUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
     if item is not None:
         return {"code": 200, "msg": "success", "data": item}
     raise HTTPException(status_code=404, detail="商品未找到")
@@ -463,9 +463,11 @@ def get_goods_detail(product_id: str = Path(..., description="商品ID")):
 def filter_goods(payload: GoodsFilterRequest):
     """通过 POST 方法按价格区间、分类与排序方式筛选商品"""
     cat = payload.category if (payload.category and payload.category != "全部") else "推荐"
+    if goods_source == "yanxuan":
+        cat = {"家居": "家具", "美食": "水果"}.get(cat, cat)
     result = list(get_active_goods_catalog(cat))
-    if payload.category and payload.category != "全部":
-        result = [g for g in result if g.get("category") == payload.category]
+    if payload.category and payload.category not in ("全部", "推荐"):
+        result = [g for g in result if g.get("category") == cat]
     if payload.min_price is not None:
         result = [g for g in result if g.get("price", 0) >= payload.min_price]
     if payload.max_price is not None:
@@ -615,4 +617,4 @@ if __name__ == "__main__":
     print("  ● Android 模拟器访问地址: http://10.0.2.2:8000/api/v1")
     print("  ● 现有 Flask 5000 服务完全保留，两者可并存运行！")
     print("=" * 68)
-    uvicorn.run("campus_news_fastapi:app", host="0.0.0.0", port=8000, reload=False)
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

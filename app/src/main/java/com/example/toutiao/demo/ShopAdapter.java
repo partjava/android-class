@@ -67,11 +67,20 @@ public class ShopAdapter extends RecyclerView.Adapter<ShopAdapter.ShopViewHolder
     @Override
     public void onBindViewHolder(@NonNull ShopViewHolder holder, int position) {
         ShopItem item = itemList.get(position);
-        holder.ivCover.setImageResource(item.getImgRes());
+        if (item.getImageUrl() != null && !item.getImageUrl().isEmpty()) {
+            RemoteImage.load(holder.ivCover, item.getImageUrl());
+        } else {
+            holder.ivCover.setTag(null);
+            holder.ivCover.setImageResource(item.getImgRes());
+        }
         holder.tvTitle.setText(item.getTitle());
         //价格统一格式化成两位小数，19.9 和 128 显示成同一风格
         holder.tvPrice.setText(String.format(Locale.CHINA, "¥%.2f", item.getPrice()));
-        holder.tvSales.setText(formatSales(item.getSales()));
+        if (item.hasRemoteDetails()) {
+            org.json.JSONObject details = item.getDetails();
+            holder.tvSales.setText(details.has("rating") ? String.format(Locale.CHINA, "★ %.2f · %s",
+                    details.optDouble("rating"), details.optString("brand", item.getCategory())) : "在线展示商品");
+        } else holder.tvSales.setText(formatSales(item.getSales()));
     }
 
     //已售件数：过万就换算成"x.x万"，和淘宝的展示习惯一致。

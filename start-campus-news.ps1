@@ -50,13 +50,13 @@ try {
     foreach ($candidate in @($candidates | Select-Object -Unique)) {
         if (!(Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
         Write-Host "检查解释器：$candidate"
-        $probe = @(Invoke-PythonCode $candidate 'import sys; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,8) else "TOO_OLD"); print(sys.executable)')
+        $probe = @(Invoke-PythonCode $candidate 'import sys; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,10) else "TOO_OLD"); print(sys.executable)')
         if ($pythonExit -eq 0 -and $probe -contains 'CAMPUS_PYTHON_OK') { $pythonPath = $candidate; break }
     }
-    if (!$pythonPath) { throw '未找到可用的 Python 3.8+。请安装 Python 并勾选 Add Python to PATH，然后重新双击启动。' }
+    if (!$pythonPath) { throw '未找到可用的 Python 3.10+。请安装 Python 并勾选 Add Python to PATH，然后重新双击启动。' }
     Write-Host "使用解释器：$pythonPath" -ForegroundColor Green
     Step 2 '检查爬虫文件和依赖'
-    if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'campus_news_server.py'))) { throw '项目中缺少 campus_news_server.py，请复制完整项目。' }
+    if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'backend/campus_news_server.py'))) { throw '项目中缺少 campus_news_server.py，请复制完整项目。' }
     $checkCode = 'import importlib.util; mods={"flask":"flask","requests":"requests","bs4":"beautifulsoup4","urllib3":"urllib3"}; print(" ".join(pkg for mod,pkg in mods.items() if importlib.util.find_spec(mod) is None))'
     $missingText = (@(Invoke-PythonCode $pythonPath $checkCode) -join '').Trim()
     if ($pythonExit -ne 0) { throw 'Python 依赖检测失败，请查看上方错误。' }
@@ -90,7 +90,7 @@ try {
     Step 5 '启动校园新闻服务（保持本终端打开，Ctrl+C 停止）'
     Write-Host '模拟器地址：http://10.0.2.2:5000'
     Write-Host '真机地址：电脑的局域网 IP + :5000；在 App 网络配置里填写。'
-    Invoke-PythonCommand $pythonPath @('-B','-u',(Join-Path $PSScriptRoot 'campus_news_server.py'))
+    Invoke-PythonCommand $pythonPath @('-B','-u','-m','backend.campus_news_server')
     if ($pythonExit -ne 0) { throw "服务启动失败或异常退出（退出码 $pythonExit），请查看上方日志。如端口占用，请关闭重复服务后重试。" }
 } catch {
     Write-Host "`n[失败] $($_.Exception.Message)" -ForegroundColor Red

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from dangdang_goods import DangdangGoodsCatalog
+from backend.dangdang_goods import DangdangGoodsCatalog
 
 SAMPLE_DANGDANG_HTML = '''
 <ul class="bigimg">

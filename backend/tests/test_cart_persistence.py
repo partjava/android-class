@@ -3,7 +3,7 @@ import tempfile
 import unittest
 import threading
 from pathlib import Path
-from cart_persistence import CartStorage
+from backend.cart_persistence import CartStorage
 
 
 class CartPersistenceTests(unittest.TestCase):
