@@ -29,8 +29,8 @@ public class ShopFragment extends PageFragment {
         return inflater.inflate(R.layout.fragment_shop, parent, false);
     }
 
-    private static final String[] TAB_LABELS = {"关注", "推荐", "闪购", "国补", "飞猪", "新风潮", "穿搭"};
-    private static final int DEFAULT_TAB = 1;//默认选中"推荐"
+    private static final String[] TAB_LABELS = {"推荐", "图书", "文具", "服饰", "运动", "家居", "食品", "电器"};
+    private static final int DEFAULT_TAB = 0; // 默认选中“推荐”
 
     private HorizontalScrollView hsTabs;
     private LinearLayout llTabs, llDots;
@@ -43,6 +43,9 @@ public class ShopFragment extends PageFragment {
     private List<ShopItem> allItems;    //全部商品
     private List<ShopItem> productList; //当前频道的商品，ShopAdapter 持有它的引用（同 HomeActivity 的 newsList）
     private ShopAdapter shopAdapter;
+    private TextView goodsStatus;
+    private int goodsRequest;
+    private static volatile List<ShopItem> serverCatalog = Collections.emptyList();
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -61,11 +64,13 @@ public class ShopFragment extends PageFragment {
         llDots = findViewById(R.id.ll_dots);
         rvEntries = findViewById(R.id.rv_entries);
         rvShop = findViewById(R.id.rv_shop);
+        goodsStatus = findViewById(R.id.tv_goods_status);
+        goodsStatus.setOnClickListener(v -> loadGoodsFromNetwork());
         nsvShop = findViewById(R.id.nsv_shop);
     }
 
     private void initShopData() {
-        allItems = buildCatalog();
+        allItems = new ArrayList<>();
 
         productList = new ArrayList<>();
         shopAdapter = new ShopAdapter(productList);
@@ -79,46 +84,68 @@ public class ShopFragment extends PageFragment {
                 startActivity(ProductDetailActivity.intent(requireContext(), item)));
     }
 
+    private void loadGoodsFromNetwork() {
+        loadGoodsFromNetwork(TAB_LABELS[currentTab]);
+    }
+
+    private void loadGoodsFromNetwork(String category) {
+        final int request = ++goodsRequest;
+        allItems.clear(); serverCatalog = Collections.emptyList();
+        productList.clear(); shopAdapter.notifyDataSetChanged();
+        goodsStatus.setText("正在加载商品…"); goodsStatus.setVisibility(View.VISIBLE);
+        goodsStatus.setClickable(false);
+        String url;
+        try {
+            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?category=" + java.net.URLEncoder.encode(category, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+            url = CampusNetworkConfig.getApiBaseUrl() + "/goods";
+        }
+        ApiClient.get(url, new ApiClient.Callback() {
+            private boolean current() { return isAdded() && getView() != null && request == goodsRequest; }
+            @Override public void onSuccess(org.json.JSONObject response) {
+                if (!current()) return;
+                try {
+                    if (response.optInt("code") != 200) throw new IllegalArgumentException("服务返回错误");
+                    org.json.JSONArray items = response.getJSONObject("data").getJSONArray("items");
+                    List<ShopItem> netList = new ArrayList<>();
+                    for (int i = 0; i < items.length(); i++) {
+                        org.json.JSONObject obj = items.getJSONObject(i);
+                        String pid = obj.getString("product_id"), title = obj.getString("title");
+                        double price = obj.getDouble("price");
+                        if (pid.isEmpty() || title.trim().isEmpty() || !Double.isFinite(price) || price < 0) throw new IllegalArgumentException("商品数据无效");
+                        netList.add(new ShopItem(pid, title, price, obj.optInt("sales", 0), R.drawable.ic_shop,
+                                obj.optString("category", "其他"), obj.optString("image_url", ""),
+                                obj.optJSONObject("details") == null ? obj.toString() : obj.getJSONObject("details").toString()));
+                    }
+                    allItems = netList; serverCatalog = new ArrayList<>(netList);
+                    productList.clear();
+                    productList.addAll(netList);
+                    shopAdapter.notifyDataSetChanged();
+                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : "DummyJSON 在线展示数据 · 点击刷新");
+                    goodsStatus.setClickable(true);
+                } catch (Exception error) { onError("商品数据格式错误"); }
+            }
+            @Override public void onError(String message) {
+                if (!current()) return;
+                goodsStatus.setText("商品加载失败，请检查后端连接 · 点击重试");
+                goodsStatus.setClickable(true);
+            }
+        });
+    }
+
+    @Override public void onDestroyView() {
+        ++goodsRequest;
+        tabViews.clear();
+        super.onDestroyView();
+    }
+
     /**
      * 全部商品的目录数据。抽成 static 是因为商品详情页的
      * 「你可能还会喜欢」也要拿同一份目录来挑推荐位——
      * 详情页拿到的是目录里的同一个 ShopItem 实例（走 Intent 序列化
      * 会在另一侧还原出内容相等的对象，引用比较在详情页内不做）。
      */
-    static List<ShopItem> buildCatalog() {
-        List<ShopItem> items = new ArrayList<>();
-        items.add(new ShopItem("无线蓝牙耳机 半入耳式 超长续航 通话降噪", 129.00, 8632, R.drawable.shop_1, "数码"));
-        items.add(new ShopItem("316不锈钢保温杯 大容量便携车载水杯", 59.90, 24310, R.drawable.shop_2, "家居"));
-        items.add(new ShopItem("静音机械键盘 87键 背光游戏电竞机械键盘", 219.00, 1531, R.drawable.shop_3, "数码"));
-        items.add(new ShopItem("天然植物精油香薰蜡烛 舒缓安睡玻璃杯香氛", 49.90, 2418, R.drawable.shop_4, "家居"));
-        items.add(new ShopItem("纯棉舒适四件套 亲肤透气全棉双人床上用品", 189.00, 7612, R.drawable.shop_5, "家居"));
-        items.add(new ShopItem("智能运动手表 心率睡眠健康监测 多功能手环", 299.00, 11586, R.drawable.shop_6, "数码"));
-        items.add(new ShopItem("香脆经典原味薯片 休闲膨化零食小吃大礼包", 19.90, 15821, R.drawable.shop_7, "食品"));
-        items.add(new ShopItem("复古护眼台灯 墨绿复古银行灯 桌面床头阅读灯", 89.00, 954, R.drawable.shop_8, "家居"));
-        items.add(new ShopItem("日式精致便当盒 营养健康便当分格餐盒", 29.90, 6534, R.drawable.shop_9, "食品"));
-        items.add(new ShopItem("轻奢商务双肩包 男女同款 大容量通勤电脑背包", 159.00, 2078, R.drawable.shop_10, "服饰"));
-        items.add(new ShopItem("便携手持小风扇 USB充电静音桌面风扇", 39.90, 8296, R.drawable.shop_11, "数码"));
-        items.add(new ShopItem("趣味变色马克杯 创意陶瓷咖啡杯 情侣水杯", 35.00, 1476, R.drawable.shop_12, "家居"));
-        items.add(new ShopItem("10000mAh双向快充移动电源 便携超薄充电宝", 79.00, 18450, R.drawable.shop_13, "数码"));
-        items.add(new ShopItem("人体工学无线鼠标 静音办公笔记本台式鼠标", 49.00, 12690, R.drawable.shop_14, "数码"));
-        items.add(new ShopItem("铝合金桌面手机支架 升降折叠便携平板底座", 29.90, 9380, R.drawable.shop_15, "数码"));
-        items.add(new ShopItem("家用静音空气加湿器 卧室大雾量香薰氛围机", 69.00, 5210, R.drawable.shop_16, "家居"));
-        items.add(new ShopItem("日式复古陶瓷餐具碗碟套组 家用耐热饭碗", 45.00, 3120, R.drawable.shop_17, "家居"));
-        items.add(new ShopItem("超轻全自动晴雨两用伞 防晒防紫外线太阳伞", 39.90, 14500, R.drawable.shop_18, "服饰"));
-        items.add(new ShopItem("慢回弹记忆棉U型枕 差旅午睡透气便携颈枕", 38.00, 7860, R.drawable.shop_19, "家居"));
-        items.add(new ShopItem("植萃滋养修护护手霜 补水保湿清爽不油腻", 25.00, 21900, R.drawable.shop_20, "美妆"));
-        items.add(new ShopItem("深层水润保湿滋养面霜 清爽修护肌底保湿霜", 88.00, 6340, R.drawable.shop_21, "美妆"));
-        items.add(new ShopItem("每日混合坚果大礼包 孕妇健康休闲零食干果", 69.90, 26800, R.drawable.shop_22, "食品"));
-        items.add(new ShopItem("意式烘焙新鲜纯黑咖啡豆 浓郁醇香手冲咖啡", 58.00, 4890, R.drawable.shop_23, "食品"));
-        items.add(new ShopItem("高钙纯牛奶 营养早餐全脂鲜奶 250ml整箱装", 49.90, 38200, R.drawable.shop_24, "食品"));
-        items.add(new ShopItem("220g重磅纯棉纯白短袖T恤 男女百搭打底衫", 49.00, 16700, R.drawable.shop_25, "服饰"));
-        items.add(new ShopItem("超轻透气减震运动跑步鞋 防滑耐磨软底休闲鞋", 199.00, 5840, R.drawable.shop_26, "服饰"));
-        items.add(new ShopItem("户外防晒遮阳渔夫帽 抽绳可折叠大檐太阳帽", 32.00, 8930, R.drawable.shop_27, "服饰"));
-        items.add(new ShopItem("美式复古连帽卫衣 男女同款 加绒保暖宽松外套", 139.00, 4710, R.drawable.shop_28, "服饰"));
-        items.add(new ShopItem("Type-C八合一多功能扩展坞 4K高清高速读卡器", 109.00, 3420, R.drawable.shop_29, "数码"));
-        items.add(new ShopItem("户外便携折叠露营椅 超轻钓鱼写生野营靠背椅", 79.00, 5130, R.drawable.shop_30, "家居"));
-        return items;
-    }
+    static List<ShopItem> buildCatalog() { return new ArrayList<>(serverCatalog); }
 
     private void setupTabs() {
         LayoutInflater inflater = LayoutInflater.from(requireContext());
@@ -149,9 +176,7 @@ public class ShopFragment extends PageFragment {
         hsTabs.post(() -> hsTabs.smoothScrollTo(
                 Math.max(0, (tab.getLeft() + tab.getRight()) / 2 - hsTabs.getWidth() / 2), 0));
 
-        productList.clear();
-        productList.addAll(filterByTab(TAB_LABELS[index]));
-        shopAdapter.notifyDataSetChanged();
+        loadGoodsFromNetwork(TAB_LABELS[index]);
         rvShop.scrollToPosition(0);
         if (nsvShop != null) {
             nsvShop.scrollTo(0, 0);
@@ -160,10 +185,8 @@ public class ShopFragment extends PageFragment {
 
     private List<ShopItem> filterByTab(String tab) {
         List<ShopItem> result = new ArrayList<>();
-        if ("闪购".equals(tab)) {
-            result.addAll(allItems);
-            Collections.reverse(result);
-            return result;
+        if ("推荐".equals(tab) || "全部".equals(tab)) {
+            return new ArrayList<>(allItems);
         }
         for (ShopItem item : allItems) {
             if (matchesTab(tab, item.getCategory())) {
@@ -174,14 +197,10 @@ public class ShopFragment extends PageFragment {
     }
 
     private boolean matchesTab(String tab, String category) {
-        switch (tab) {
-            case "关注": return category.equals("食品") || category.equals("家居");
-            case "国补": return category.equals("数码");
-            case "飞猪": return category.equals("服饰") || category.equals("家居");
-            case "新风潮": return category.equals("数码") || category.equals("美妆");
-            case "穿搭": return category.equals("服饰") || category.equals("美妆");
-            default:     return true; // 推荐 -> 全部
+        if ("推荐".equals(tab) || "全部".equals(tab)) {
+            return true;
         }
+        return tab != null && tab.equals(category);
     }
 
     private static class ShopEntry {

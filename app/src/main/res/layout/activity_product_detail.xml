@@ -16,56 +16,28 @@
     android:orientation="vertical"
     android:background="@color/bg_page">
 
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nsv_detail"
+    <!-- Fixed controls remain outside the product scroll area. -->
+    <FrameLayout
+        android:id="@+id/detail_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/ll_detail_content"
+        android:layout_height="56dp"
+        android:background="@color/bg_surface">
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="@dimen/space_l">
-
-            <!-- ============================================================
-                 画廊：ViewPager2 + 浮层按钮 + 页码角标
-                 ⚠️ vp_gallery 的高度写死 @dimen/detail_gallery_height：
-                    ViewPager2 嵌在 NestedScrollView 里，wrap_content 会量成 0。
-                 ⚠️ nestedScrollingEnabled 必须 false：页面内没有内滚内容，
-                    关掉它竖向滑动才不会被内部 RecyclerView 抢走；横向翻页不受影响。
-                 ============================================================ -->
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <androidx.viewpager2.widget.ViewPager2
-                    android:id="@+id/vp_gallery"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/detail_gallery_height"
-                    android:nestedScrollingEnabled="false"/>
-
-                <!-- 装饰播放键，呼应参照页的「视频封面」。clickable 必须 false，
-                     否则它会拦掉这半屏的横向滑动手势 -->
-                <ImageView
-                    android:id="@+id/iv_gallery_play"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_play_circle"
-                    android:alpha="0.85"
-                    android:clickable="false"
-                    android:importantForAccessibility="no"/>
-
+            android:layout_height="match_parent"
+            android:layout_marginStart="64dp"
+            android:layout_marginEnd="112dp"
+            android:gravity="center"
+            android:text="商品详情"
+            android:textSize="@dimen/text_body"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
                 <!-- 返回：40dp 圆底 + 8dp 内边距 = 24dp 图形，同 NavIcon 的比例 -->
                 <ImageView
                     android:id="@+id/btn_gallery_back"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
-                    android:layout_margin="@dimen/space_m"
+                    android:layout_margin="@dimen/space_s"
                     android:background="@drawable/bg_circle_scrim"
                     android:src="@drawable/ic_back"
                     app:tint="@color/on_brand"
@@ -77,7 +49,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="top|end"
-                    android:layout_margin="@dimen/space_m"
+                    android:layout_margin="@dimen/space_s"
                     android:orientation="horizontal">
 
                     <ImageView
@@ -104,19 +76,7 @@
                         android:contentDescription="更多"/>
                 </LinearLayout>
 
-                <!-- 页码角标，复用视频时长标签的半透明黑小圆角底 -->
-                <TextView
-                    android:id="@+id/tv_gallery_index"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|end"
-                    android:layout_margin="@dimen/space_m"
-                    android:background="@drawable/bg_video_duration"
-                    android:paddingHorizontal="6dp"
-                    android:paddingVertical="2dp"
-                    android:textSize="@dimen/text_caption"
-                    android:textColor="@color/on_brand"/>
-            </FrameLayout>
+    </FrameLayout>
 
             <!-- ============================================================
                  锚点 tab 行：商品 / 评价 / 详情 / 推荐。
@@ -241,6 +201,64 @@
             </LinearLayout>
 
             <View style="@style/Widget.Toutiao.Divider"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nsv_detail"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/ll_detail_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/space_l">
+
+            <!-- ============================================================
+                 画廊：ViewPager2 + 浮层按钮 + 页码角标
+                 ⚠️ vp_gallery 的高度写死 @dimen/detail_gallery_height：
+                    ViewPager2 嵌在 NestedScrollView 里，wrap_content 会量成 0。
+                 ⚠️ nestedScrollingEnabled 必须 false：页面内没有内滚内容，
+                    关掉它竖向滑动才不会被内部 RecyclerView 抢走；横向翻页不受影响。
+                 ============================================================ -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/vp_gallery"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/detail_gallery_height"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- 装饰播放键，呼应参照页的「视频封面」。clickable 必须 false，
+                     否则它会拦掉这半屏的横向滑动手势 -->
+                <ImageView
+                    android:id="@+id/iv_gallery_play"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_play_circle"
+                    android:alpha="0.85"
+                    android:clickable="false"
+                    android:importantForAccessibility="no"/>
+
+                <!-- 页码角标，复用视频时长标签的半透明黑小圆角底 -->
+                <TextView
+                    android:id="@+id/tv_gallery_index"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="@dimen/space_m"
+                    android:background="@drawable/bg_video_duration"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:textSize="@dimen/text_caption"
+                    android:textColor="@color/on_brand"/>
+            </FrameLayout>
 
             <!-- ==================== 卡片 1：价格 ==================== -->
             <LinearLayout
@@ -459,6 +477,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
+
+                <TextView
+                    android:id="@+id/btn_review_refresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:paddingHorizontal="@dimen/space_m"
+                    android:paddingVertical="@dimen/space_xs"
+                    android:background="@drawable/bg_btn_secondary"
+                    android:textColor="@color/brand_blue"
+                    android:textSize="@dimen/text_body_small"
+                    android:text="🔄 换一批评价 (5条/次)"/>
             </LinearLayout>
 
             <!-- ==================== 卡片 5：店铺 ==================== -->
