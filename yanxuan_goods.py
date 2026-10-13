@@ -12,11 +12,11 @@ urllib3.disable_warnings()
 
 CATEGORY_KEYWORDS = {
     '推荐': '热销',
-    '数码': '耳机',
-    '家居': '保温杯',
-    '穿搭': 'T恤',
-    '美食': '咖啡',
-    '个护': '洗护'
+    '数码': '数码',
+    '家居': '居家',
+    '穿搭': '服饰',
+    '美食': '食品',
+    '个护': '个护'
 }
 
 CHINESE_REVIEWS = [
@@ -122,7 +122,7 @@ class YanxuanGoodsCatalog:
             return copy.deepcopy(self._cache[category])
 
         kw = CATEGORY_KEYWORDS.get(category, '热销')
-        url = f'https://you.163.com/xhr/search/search.json?keyword={urllib.parse.quote(kw)}&size=30'
+        url = f'https://you.163.com/xhr/search/search.json?keyword={urllib.parse.quote(kw)}&size=100'
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
