@@ -128,11 +128,13 @@ current_channel_state = {
 from owned_catalog import ProductCatalog
 from dummy_goods import DummyGoodsCatalog, GoodsUnavailable
 from dangdang_goods import DangdangGoodsCatalog
+from yanxuan_goods import YanxuanGoodsCatalog
 from cart_persistence import CartStorage
 
 remote_catalog = DummyGoodsCatalog()
 dangdang_catalog = DangdangGoodsCatalog()
-goods_source = os.environ.get("CAMPUS_GOODS_SOURCE", "dangdang")
+yanxuan_catalog = YanxuanGoodsCatalog()
+goods_source = os.environ.get("CAMPUS_GOODS_SOURCE", "yanxuan")
 product_catalog = ProductCatalog(os.environ.get("CAMPUS_GOODS_DB", os.path.join(os.path.dirname(__file__), "data", "shop_products.db")))
 cart_storage = CartStorage(os.environ.get("CAMPUS_CART_PATH", os.path.join(os.path.dirname(__file__), "data", "cart_storage.json")))
 
@@ -144,8 +146,13 @@ def get_active_goods_catalog(category="推荐"):
             return remote_catalog.list()
         except GoodsUnavailable as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
+    if goods_source == "dangdang":
+        try:
+            return dangdang_catalog.list(category)
+        except Exception as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
     try:
-        return dangdang_catalog.list(category)
+        return yanxuan_catalog.list(category)
     except Exception as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
 
@@ -161,7 +168,7 @@ def find_active_product(product_id: str):
                     return item
         except Exception:
             pass
-    else:
+    elif goods_source == "dangdang":
         for cat_items in dangdang_catalog._cache.values():
             for item in cat_items:
                 if item.get("product_id") == product_id:
@@ -174,6 +181,23 @@ def find_active_product(product_id: str):
             pass
         try:
             for item in dangdang_catalog._fallback.list():
+                if item.get("product_id") == product_id:
+                    return item
+        except Exception:
+            pass
+    else:
+        for cat_items in yanxuan_catalog._cache.values():
+            for item in cat_items:
+                if item.get("product_id") == product_id:
+                    return item
+        try:
+            for item in yanxuan_catalog.list("推荐"):
+                if item.get("product_id") == product_id:
+                    return item
+        except Exception:
+            pass
+        try:
+            for item in yanxuan_catalog._fallback.list():
                 if item.get("product_id") == product_id:
                     return item
         except Exception:

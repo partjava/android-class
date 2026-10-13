@@ -29,7 +29,7 @@ public class ShopFragment extends PageFragment {
         return inflater.inflate(R.layout.fragment_shop, parent, false);
     }
 
-    private static final String[] TAB_LABELS = {"推荐", "图书", "文具", "服饰", "运动", "家居", "食品", "电器"};
+    private static final String[] TAB_LABELS = {"推荐", "数码", "家居", "穿搭", "美食", "个护"};
     private static final int DEFAULT_TAB = 0; // 默认选中“推荐”
 
     private HorizontalScrollView hsTabs;
