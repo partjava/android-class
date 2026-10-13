@@ -19,7 +19,7 @@
 - Create: `dangdang_goods.py`
 - Test: `tests/test_dangdang_goods.py`
 
-- [ ] **Step 1: 编写测试用例 `tests/test_dangdang_goods.py`**
+- [x] **Step 1: 编写测试用例 `tests/test_dangdang_goods.py`**
 
 ```python
 import unittest
@@ -70,12 +70,12 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: 运行测试验证失败**
+- [x] **Step 2: 运行测试验证失败**
 
 Run: `python -m unittest tests/test_dangdang_goods.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'dangdang_goods'`
 
-- [ ] **Step 3: 编写 `dangdang_goods.py`**
+- [x] **Step 3: 编写 `dangdang_goods.py`**
 
 ```python
 """Real-time Dangdang e-commerce crawler with DummyJSON fallback."""
@@ -226,12 +226,12 @@ class DangdangGoodsCatalog:
             return []
 ```
 
-- [ ] **Step 4: 运行测试验证通过**
+- [x] **Step 4: 运行测试验证通过**
 
 Run: `python -m unittest tests/test_dangdang_goods.py`
 Expected: OK
 
-- [ ] **Step 5: 提交代码**
+- [x] **Step 5: 提交代码**
 
 ```bash
 git add dangdang_goods.py tests/test_dangdang_goods.py
@@ -246,7 +246,7 @@ git commit -m "feat: add dangdang real goods crawler with dummyjson fallback"
 - Create: `cart_persistence.py`
 - Test: `tests/test_cart_persistence.py`
 
-- [ ] **Step 1: 编写测试用例 `tests/test_cart_persistence.py`**
+- [x] **Step 1: 编写测试用例 `tests/test_cart_persistence.py`**
 
 ```python
 import os
@@ -293,12 +293,12 @@ class CartPersistenceTests(unittest.TestCase):
         self.assertEqual(0, len(self.storage.get_cart()['items']))
 ```
 
-- [ ] **Step 2: 运行测试验证失败**
+- [x] **Step 2: 运行测试验证失败**
 
 Run: `python -m unittest tests/test_cart_persistence.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'cart_persistence'`
 
-- [ ] **Step 3: 编写 `cart_persistence.py`**
+- [x] **Step 3: 编写 `cart_persistence.py`**
 
 ```python
 """Persistent cart storage with file JSON cache and item metadata snapshot."""
@@ -393,12 +393,12 @@ class CartStorage:
         }
 ```
 
-- [ ] **Step 4: 运行测试验证通过**
+- [x] **Step 4: 运行测试验证通过**
 
 Run: `python -m unittest tests/test_cart_persistence.py`
 Expected: OK
 
-- [ ] **Step 5: 提交代码**
+- [x] **Step 5: 提交代码**
 
 ```bash
 git add cart_persistence.py tests/test_cart_persistence.py
@@ -413,7 +413,7 @@ git commit -m "feat: add persistent cart storage with snapshot and recovery"
 - Modify: `campus_news_fastapi.py`
 - Test: `tests/test_fastapi_dangdang_integration.py`
 
-- [ ] **Step 1: 编写测试用例 `tests/test_fastapi_dangdang_integration.py`**
+- [x] **Step 1: 编写测试用例 `tests/test_fastapi_dangdang_integration.py`**
 
 ```python
 import os
@@ -444,19 +444,19 @@ if __name__ == '__main__':
     unittest.main()
 ```
 
-- [ ] **Step 2: 接入 `campus_news_fastapi.py`**
+- [x] **Step 2: 接入 `campus_news_fastapi.py`**
   - 导入 `DangdangGoodsCatalog` 并创建实例 `dangdang_catalog = DangdangGoodsCatalog()`。
   - 初始化 `cart_storage = CartStorage(os.path.join(os.path.dirname(__file__), "data", "cart_storage.json"))`。
   - 在 `get_active_goods_catalog(category='推荐')` 中优先调用 `dangdang_catalog.list(category)`。
   - 更新 `/api/v1/goods` 接口支持按分类实时抓取并返回。
   - 更新 `/api/v1/cart/add`，自动提取所加商品的快照信息（标题、单价、图片等）写入 `cart_storage`。
 
-- [ ] **Step 3: 运行集成测试验证**
+- [x] **Step 3: 运行集成测试验证**
 
 Run: `python -m unittest tests/test_fastapi_dangdang_integration.py`
 Expected: OK
 
-- [ ] **Step 4: 提交代码**
+- [x] **Step 4: 提交代码**
 
 ```bash
 git add campus_news_fastapi.py tests/test_fastapi_dangdang_integration.py
@@ -470,7 +470,7 @@ git commit -m "feat: integrate dangdang crawler and persistent cart in fastapi"
 **Files:**
 - Modify: `app/src/main/java/com/example/toutiao/demo/ShopFragment.java`
 
-- [ ] **Step 1: 修改 `TAB_LABELS` 与网络加载参数**
+- [x] **Step 1: 修改 `TAB_LABELS` 与网络加载参数**
   - 将 `TAB_LABELS` 改为：
     ```java
     private static final String[] TAB_LABELS = {"推荐", "图书", "文具", "服饰", "运动", "家居", "食品", "电器"};
@@ -481,12 +481,12 @@ git commit -m "feat: integrate dangdang crawler and persistent cart in fastapi"
     ```
   - 当切换 Tab 时触发 `selectTab(int index)`，直接请求对应分类的实时商品列表。
 
-- [ ] **Step 2: 运行编译与测试验证**
+- [x] **Step 2: 运行编译与测试验证**
 
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: BUILD SUCCESSFUL
 
-- [ ] **Step 3: 提交代码**
+- [x] **Step 3: 提交代码**
 
 ```bash
 git add app/src/main/java/com/example/toutiao/demo/ShopFragment.java
@@ -501,7 +501,7 @@ git commit -m "feat: update shop tabs to dangdang full 8 categories with live fe
 - Modify: `app/src/main/res/layout/activity_product_detail.xml`
 - Modify: `app/src/main/java/com/example/toutiao/demo/ProductDetailsRenderer.java`
 
-- [ ] **Step 1: 在 `activity_product_detail.xml` 中增加换一批按钮**
+- [x] **Step 1: 在 `activity_product_detail.xml` 中增加换一批按钮**
   在 `ll_review_rows` 容器下方添加：
   ```xml
   <TextView
@@ -518,17 +518,17 @@ git commit -m "feat: update shop tabs to dangdang full 8 categories with live fe
       android:text="🔄 换一批评价 (5条/次)"/>
   ```
 
-- [ ] **Step 2: 在 `ProductDetailsRenderer.java` 中实现 5 条批次渲染与点击循环刷新**
+- [x] **Step 2: 在 `ProductDetailsRenderer.java` 中实现 5 条批次渲染与点击循环刷新**
   - 维持静态 `int reviewOffset = 0`。
   - 提取 `reviews` 数组，截取 `[offset, offset + 5)` 展示。
   - 为 `btn_review_refresh` 设置点击监听器，每次点击递增偏移量并重新填充 `ll_review_rows`。
 
-- [ ] **Step 3: 运行 Gradle 编译测试**
+- [x] **Step 3: 运行 Gradle 编译测试**
 
 Run: `.\gradlew.bat testDebugUnitTest`
 Expected: BUILD SUCCESSFUL
 
-- [ ] **Step 4: 提交代码**
+- [x] **Step 4: 提交代码**
 
 ```bash
 git add app/src/main/res/layout/activity_product_detail.xml app/src/main/java/com/example/toutiao/demo/ProductDetailsRenderer.java
@@ -539,15 +539,15 @@ git commit -m "feat: support 5 reviews per batch with refresh button in product 
 
 ### Task 6: 双端全量集成测试与验收
 
-- [ ] **Step 1: 运行全量 Python 测试**
+- [x] **Step 1: 运行全量 Python 测试**
   Run: `python -m unittest discover tests`
   Expected: ALL PASSED
 
-- [ ] **Step 2: 运行全量 Android 测试**
+- [x] **Step 2: 运行全量 Android 测试**
   Run: `.\gradlew.bat testDebugUnitTest`
   Expected: ALL PASSED
 
-- [ ] **Step 3: 验证真实服务与接口数据**
+- [x] **Step 3: 验证真实服务与接口数据**
   - 启动 FastAPI 服务，请求 `http://localhost:8000/api/v1/goods?category=图书`，验证返回真实当当网数据。
   - 测试断网/关闭网络时，验证返回 DummyJSON 兜底数据。
   - 测试加购并在重启 FastAPI 后调用 `GET /api/v1/cart` 验证购物车保留。

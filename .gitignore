@@ -17,3 +17,6 @@
 local.properties
 __pycache__/
 *.pyc
+/data/shop_products.db*
+/data/cart_storage.json*
+/data/*.tmp
