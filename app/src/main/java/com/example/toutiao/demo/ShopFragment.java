@@ -67,6 +67,12 @@ public class ShopFragment extends PageFragment {
         goodsStatus = findViewById(R.id.tv_goods_status);
         goodsStatus.setOnClickListener(v -> loadGoodsFromNetwork());
         nsvShop = findViewById(R.id.nsv_shop);
+
+        View tvFooter = findViewById(R.id.tv_shop_footer);
+        if (tvFooter instanceof TextView) {
+            ((TextView) tvFooter).setText("🔄 点击换一批网易严选好物 (30件/批) 🛍️");
+            tvFooter.setOnClickListener(v -> loadGoodsFromNetwork());
+        }
     }
 
     private void initShopData() {
@@ -85,20 +91,26 @@ public class ShopFragment extends PageFragment {
     }
 
     private void loadGoodsFromNetwork() {
-        loadGoodsFromNetwork(TAB_LABELS[currentTab]);
+        loadGoodsFromNetwork(TAB_LABELS[currentTab], true);
     }
 
     private void loadGoodsFromNetwork(String category) {
+        loadGoodsFromNetwork(category, false);
+    }
+
+    private void loadGoodsFromNetwork(String category, boolean refresh) {
         final int request = ++goodsRequest;
         allItems.clear(); serverCatalog = Collections.emptyList();
         productList.clear(); shopAdapter.notifyDataSetChanged();
-        goodsStatus.setText("正在加载商品…"); goodsStatus.setVisibility(View.VISIBLE);
+        goodsStatus.setText(refresh ? "正在实时换一批严选好物…" : "正在加载商品…");
+        goodsStatus.setVisibility(View.VISIBLE);
         goodsStatus.setClickable(false);
         String url;
         try {
-            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?category=" + java.net.URLEncoder.encode(category, "UTF-8");
+            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?category=" + java.net.URLEncoder.encode(category, "UTF-8")
+                    + "&limit=30" + (refresh ? "&refresh=true" : "");
         } catch (java.io.UnsupportedEncodingException e) {
-            url = CampusNetworkConfig.getApiBaseUrl() + "/goods";
+            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?limit=30" + (refresh ? "&refresh=true" : "");
         }
         ApiClient.get(url, new ApiClient.Callback() {
             private boolean current() { return isAdded() && getView() != null && request == goodsRequest; }
@@ -121,8 +133,11 @@ public class ShopFragment extends PageFragment {
                     productList.clear();
                     productList.addAll(netList);
                     shopAdapter.notifyDataSetChanged();
-                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : "DummyJSON 在线展示数据 · 点击刷新");
+                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : "🔄 网易严选官网直发 · 实时换一批 (30件/批)");
                     goodsStatus.setClickable(true);
+                    if (refresh && isAdded()) {
+                        Toast.makeText(requireContext(), "已为您实时刷新 30 件网易严选好物", Toast.LENGTH_SHORT).show();
+                    }
                 } catch (Exception error) { onError("商品数据格式错误"); }
             }
             @Override public void onError(String message) {

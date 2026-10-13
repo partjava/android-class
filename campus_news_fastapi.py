@@ -138,21 +138,24 @@ goods_source = os.environ.get("CAMPUS_GOODS_SOURCE", "yanxuan")
 product_catalog = ProductCatalog(os.environ.get("CAMPUS_GOODS_DB", os.path.join(os.path.dirname(__file__), "data", "shop_products.db")))
 cart_storage = CartStorage(os.environ.get("CAMPUS_CART_PATH", os.path.join(os.path.dirname(__file__), "data", "cart_storage.json")))
 
-def get_active_goods_catalog(category="推荐"):
+def get_active_goods_catalog(category="推荐", limit: Optional[int] = 30, refresh: bool = False):
     if goods_source == "owned":
-        return product_catalog.list()
+        items = product_catalog.list()
+        return items[:limit] if (limit and limit > 0) else items
     if goods_source == "dummyjson":
         try:
-            return remote_catalog.list()
+            items = remote_catalog.list()
+            return items[:limit] if (limit and limit > 0) else items
         except GoodsUnavailable as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
     if goods_source == "dangdang":
         try:
-            return dangdang_catalog.list(category)
+            items = dangdang_catalog.list(category)
+            return items[:limit] if (limit and limit > 0) else items
         except Exception as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
     try:
-        return yanxuan_catalog.list(category)
+        return yanxuan_catalog.list(category, limit=limit, refresh=refresh)
     except Exception as error:
         raise HTTPException(status_code=502, detail=str(error)) from error
 
@@ -402,12 +405,14 @@ async def search_news(request: Request, payload: NewsSearchRequest):
 
 @app.get("/api/v1/goods", summary="获取商品列表 (GET)", tags=["商城模块"])
 def get_goods_list(
-    category: Optional[str] = Query("全部", description="分类：全部/推荐/图书/文具/服饰/运动/家居/食品/电器"),
-    keyword: Optional[str] = Query(None, description="搜索关键词")
+    category: Optional[str] = Query("全部", description="分类：全部/推荐/数码/家居/穿搭/美食/个护"),
+    keyword: Optional[str] = Query(None, description="搜索关键词"),
+    limit: Optional[int] = Query(30, description="单次返回商品数量，默认30条"),
+    refresh: Optional[bool] = Query(False, description="是否穿透缓存实时换一批")
 ):
-    """默认获取当当在线展示商品；自有目录或 DummyJSON 可通过环境变量选择。"""
+    """默认获取网易严选官网在线展示商品；支持每次30件与实时换一批。"""
     target_category = category if (category and category != "全部") else "推荐"
-    result = list(get_active_goods_catalog(target_category))
+    result = list(get_active_goods_catalog(target_category, limit=limit, refresh=refresh))
     if category and category != "全部":
         result = [g for g in result if g.get("category") == category]
     if keyword and keyword.strip():
