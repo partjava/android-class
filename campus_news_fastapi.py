@@ -405,7 +405,7 @@ async def search_news(request: Request, payload: NewsSearchRequest):
 
 @app.get("/api/v1/goods", summary="获取商品列表 (GET)", tags=["商城模块"])
 def get_goods_list(
-    category: Optional[str] = Query("全部", description="分类：全部/推荐/数码/家居/穿搭/美食/个护"),
+    category: Optional[str] = Query("全部", description="分类：全部/推荐/数码/家具/穿搭/水果/个护"),
     keyword: Optional[str] = Query(None, description="搜索关键词"),
     limit: Optional[int] = Query(30, description="单次返回商品数量，默认30条"),
     refresh: Optional[bool] = Query(False, description="是否穿透缓存实时换一批")

@@ -1,4 +1,4 @@
-"""Real-time NetEase Yanxuan e-commerce client with official category tree and fallback."""
+"""Real-time NetEase Yanxuan e-commerce client with user-specified category search keywords and fallback."""
 import re
 import copy
 import time
@@ -11,22 +11,26 @@ from dummy_goods import DummyGoodsCatalog
 
 urllib3.disable_warnings()
 
-# 官方分类 ID（直接对接网易严选官方类目树）
-OFFICIAL_CATEGORY_IDS = {
-    '数码': 1043000,    # 官方数码家电 (吹风机/剃须刀/按摩仪/电动牙刷/数码配件等 300+ 件)
-    '家居': 1005000,    # 官方床品家纺与居家 (乳胶枕/四件套/羽绒被/家居日用等 130+ 件)
-    '穿搭': 1010000,    # 官方男装/服饰 (羽绒服/衬衫/卫衣/裤装/配饰等 150+ 件)
-    '美食': 109342004,  # 官方休闲零食 (坚果/肉脯/纯黑咖啡/冲饮等 110+ 件)
-    '个护': 109342012   # 官方美妆个护 (洁面/水乳/洗发水/身体乳等 260+ 件)
+# 用户指定的网易严选官网搜索关键词映射
+CATEGORY_SEARCH_KEYWORDS = {
+    '推荐': ['生活'],
+    '数码': ['数码'],
+    '家具': ['家具'],
+    '家居': ['家具'],  # 兼容别名
+    '穿搭': ['服饰'],
+    '水果': ['水果'],
+    '美食': ['水果'],  # 兼容别名
+    '个护': ['护肤品', '护肤']
 }
 
-CATEGORY_KEYWORDS = {
-    '推荐': '热销',
-    '数码': '数码',
-    '家居': '居家',
-    '穿搭': '服饰',
-    '美食': '食品',
-    '个护': '个护'
+OFFICIAL_CATEGORY_IDS = {
+    '数码': 1043000,
+    '家具': 1005000,
+    '家居': 1005000,
+    '穿搭': 1010000,
+    '水果': 109342004,
+    '美食': 109342004,
+    '个护': 109342012
 }
 
 CHINESE_REVIEWS = [
@@ -54,7 +58,7 @@ STATIC_FALLBACK_ITEMS = [
         'price': 79.0,
         'price_cents': 7900,
         'sales': 1200,
-        'category': '家居',
+        'category': '家具',
         'image_res': 'ic_shop',
         'image_url': 'https://yanxuan-item.nosdn.127.net/29117f0a594d46e55b41144df4ef8b4a.jpg',
         'description': '316L不锈钢内胆，24小时长效保温保冷。',
@@ -141,32 +145,42 @@ class YanxuanGoodsCatalog:
 
     def _fetch_category_raw(self, category: str):
         headers = {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
-        # 1. 优先请求网易严选官方类目树 (精确匹配官网分类)
+        kws = CATEGORY_SEARCH_KEYWORDS.get(category, [category])
+        items = []
+        seen = set()
+        for kw in kws:
+            try:
+                url = f'https://you.163.com/xhr/search/search.json?keyword={urllib.parse.quote(kw)}&size=100'
+                resp = requests.get(url, headers=headers, verify=False, timeout=(3, 6))
+                if resp.status_code == 200:
+                    parsed = self.parse_api_response(resp.json(), category)
+                    for it in parsed:
+                        if it['product_id'] not in seen:
+                            seen.add(it['product_id'])
+                            items.append(it)
+            except Exception as e:
+                print(f"[Yanxuan Search Warning] keyword '{kw}' for category '{category}' failed: {e}")
+
+        if items:
+            return items
+
+        # 官方类目 ID 兜底
         cid = OFFICIAL_CATEGORY_IDS.get(category)
         if cid:
             try:
+                mobile_headers = {
+                    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
+                }
                 url = f'https://m.you.163.com/item/list.json?categoryId={cid}'
-                resp = requests.get(url, headers=headers, verify=False, timeout=(3, 6))
+                resp = requests.get(url, headers=mobile_headers, verify=False, timeout=(3, 6))
                 if resp.status_code == 200:
-                    items = self.parse_api_response(resp.json(), category)
-                    if items:
-                        return items
+                    parsed = self.parse_api_response(resp.json(), category)
+                    if parsed:
+                        return parsed
             except Exception as e:
-                print(f"[Yanxuan Official Tree Warning] category {category} (cid {cid}) failed: {e}")
-
-        # 2. 搜索接口兜底
-        kw = CATEGORY_KEYWORDS.get(category, category)
-        try:
-            search_url = f'https://you.163.com/xhr/search/search.json?keyword={urllib.parse.quote(kw)}&size=100'
-            resp = requests.get(search_url, headers=headers, verify=False, timeout=(3, 5))
-            if resp.status_code == 200:
-                items = self.parse_api_response(resp.json(), category)
-                if items:
-                    return items
-        except Exception as e:
-            print(f"[Yanxuan Search Warning] category {category} failed: {e}")
+                print(f"[Yanxuan Tree Warning] category {category} failed: {e}")
 
         return []
 
@@ -176,26 +190,26 @@ class YanxuanGoodsCatalog:
             return self._cache[category]
 
         items = []
-        if category == '推荐':
-            # 汇聚各官方大类的头部尖货
-            for sub_cat in ['数码', '家居', '穿搭', '美食', '个护']:
+        try:
+            items = self._fetch_category_raw(category)
+        except Exception as e:
+            print(f"[Yanxuan API Warning] Failed to fetch category '{category}': {e}, fallback.")
+
+        if not items and category == '推荐':
+            # 若推荐接口暂无结果，汇聚各分类头部尖货
+            for sub_cat in ['数码', '家具', '穿搭', '水果', '个护']:
                 sub_items = self._get_or_load_all_items(sub_cat)
                 if sub_items:
-                    items.extend(sub_items[:25])
+                    items.extend(sub_items[:20])
             if items:
                 random.seed(42)
                 random.shuffle(items)
-        else:
-            try:
-                items = self._fetch_category_raw(category)
-            except Exception as e:
-                print(f"[Yanxuan API Warning] Failed to fetch category '{category}': {e}, fallback.")
 
         if not items:
             # Fallback to DummyJSON
             try:
                 dummy_items = self._fallback.list()
-                cat_map = {'数码': '数码', '家居': '家居', '穿搭': '服饰', '美食': '食品', '个护': '美妆'}
+                cat_map = {'数码': '数码', '家具': '家居', '家居': '家居', '穿搭': '服饰', '水果': '食品', '美食': '食品', '个护': '美妆'}
                 target = cat_map.get(category)
                 mapped = [it for it in dummy_items if it.get('category') == target or category == '推荐']
                 items = mapped if mapped else dummy_items
