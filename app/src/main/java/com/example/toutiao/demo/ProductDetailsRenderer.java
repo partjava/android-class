@@ -132,6 +132,7 @@ final class ProductDetailsRenderer {
             case "barcode": return "条形码"; case "qrCode": return "二维码地址";
             case "reviewerEmail": return "评价者邮箱";
             case "attributes": return "商品参数"; case "specifications": return "规格";
+            case "skuOptions": return "可选规格"; case "skuOptionPrices": return "规格价格";
             case "commentCount": return "官网评价总数"; case "commentGoodRates": return "好评率";
             case "source": return "来源"; case "source_url": return "官网商品链接";
             case "currency": return "币种"; case "counterPrice": return "官网参考价";

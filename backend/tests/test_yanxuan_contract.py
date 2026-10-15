@@ -58,5 +58,5 @@ class YanxuanContractTests(unittest.TestCase):
     def test_recommendation_does_not_filter_out_other_categories(self):
         from backend import campus_news_fastapi as backend
         from fastapi.testclient import TestClient
-        with patch.object(backend, 'get_active_goods_catalog', return_value=[{'category': '数码', 'product_id': 'test', 'title': '推荐商品', 'price': 1}]):
+        with patch.object(backend, 'goods_source', 'yanxuan'), patch.object(backend.yanxuan_catalog, 'list_page', return_value={'items': [{'category': '数码', 'product_id': 'test', 'title': '推荐商品', 'price': 1}], 'has_more': False}):
             self.assertEqual(1, TestClient(backend.app).get('/api/v1/goods?category=推荐').json()['data']['total'])

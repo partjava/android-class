@@ -54,7 +54,7 @@ class DetailTests(unittest.TestCase):
         from fastapi.testclient import TestClient
         item = {'product_id': 'yanxuan-10', 'title': '商品', 'price': 1,
                 'image_url': 'https://example.com/a.jpg', 'details': {'reviews': [{'comment': '评价'}]}}
-        with patch.object(backend, 'goods_source', 'yanxuan'), patch.object(backend, 'get_active_goods_catalog', return_value=[item]), patch.object(backend.yanxuan_catalog, 'detail') as detail:
+        with patch.object(backend, 'goods_source', 'yanxuan'), patch.object(backend.yanxuan_catalog, 'list_page', return_value={'items': [item], 'has_more': False}), patch.object(backend.yanxuan_catalog, 'detail') as detail:
             row = TestClient(backend.app).get('/api/v1/goods').json()['data']['items'][0]
             self.assertTrue(row['details']['summaryOnly'])
             self.assertEqual(1, len(row['details']['images']))

@@ -55,6 +55,29 @@ class YanxuanGoodsCatalog:
         self._locks = {}
         self._guard = threading.Lock()
         self._detail_cache = {}
+        self._page_cache = {}
+
+    def list_page(self, category='推荐', page=1, limit=30, refresh=False):
+        category = ALIASES.get(category, category)
+        if category not in CATEGORY_SEARCH_KEYWORDS or page < 1 or not 1 <= limit <= 100:
+            raise ValueError('商品分页参数无效')
+        key = (category, page, limit)
+        with self._guard:
+            lock = self._locks.setdefault(category, threading.Lock())
+        with lock:
+            if refresh:
+                self._page_cache = {k: v for k, v in self._page_cache.items() if k[0] != category}
+            cached = self._page_cache.get(key)
+            if cached and time.monotonic() < cached[0]:
+                return copy.deepcopy(cached[1])
+            data = self._fetch_category_raw(category, page=page, size=limit, paginated=True)
+            items = data['items']
+            self._page_cache[key] = (time.monotonic() + 300, data)
+            with self._guard:
+                known = {item['product_id']: item for item in self._cache.get(category, [])}
+                known.update({item['product_id']: item for item in items})
+                self._cache[category] = list(known.values())
+            return copy.deepcopy(data)
 
     def detail(self, product_id, refresh=False):
         if not re.fullmatch(r'yanxuan-[0-9]{1,15}', product_id):
@@ -129,7 +152,8 @@ class YanxuanGoodsCatalog:
             self._detail_cache[product_id] = (time.monotonic() + 300, item)
             return copy.deepcopy(item)
 
-    def parse_api_response(self, data, category):
+    @staticmethod
+    def _raw_search_items(data):
         d = data.get('data') if isinstance(data.get('data'), dict) else data
         if 'categoryItemList' in d:
             raw_items = [item for group in d.get('categoryItemList', []) for item in group.get('itemList', [])]
@@ -137,6 +161,10 @@ class YanxuanGoodsCatalog:
             raw_items = ((d.get('directly') or {}).get('searcherResult') or {}).get('result') or []
         else:
             raw_items = d.get('result') or []
+        return raw_items
+
+    def parse_api_response(self, data, category):
+        raw_items = self._raw_search_items(data)
         result, seen = [], set()
         category = ALIASES.get(category, category)
         for raw in raw_items:
@@ -178,14 +206,33 @@ class YanxuanGoodsCatalog:
             if raw.get('counterPrice') is not None:
                 details['counterPrice'] = raw['counterPrice']
             specs = []
+            options = []
+            option_prices = {}
             for sku in raw.get('skuList') or []:
+                parts = []
                 for spec in sku.get('itemSkuSpecValueList') or []:
                     label = (spec.get('skuSpec') or {}).get('name')
                     value = (spec.get('skuSpecValue') or {}).get('value')
                     if label and value and f'{label}：{value}' not in specs:
                         specs.append(f'{label}：{value}')
+                    if label and value:
+                        parts.append(f'{label}：{value}')
+                option = ' · '.join(parts)
+                if option and option not in options:
+                    options.append(option)
+                if option and sku.get('retailPrice') is not None:
+                    try:
+                        sku_price = Decimal(str(sku['retailPrice']))
+                        if sku_price.is_finite() and sku_price >= 0:
+                            option_prices[option] = float(sku_price.quantize(Decimal('.01'), rounding=ROUND_HALF_UP))
+                    except Exception:
+                        pass
             if specs:
                 details['specifications'] = specs
+            if options:
+                details['skuOptions'] = options
+            if option_prices:
+                details['skuOptionPrices'] = option_prices
             sold = raw.get('sellVolume')
             sales = sold if isinstance(sold, int) and not isinstance(sold, bool) and sold >= 0 else 0
             result.append({
@@ -197,11 +244,11 @@ class YanxuanGoodsCatalog:
             })
         return result
 
-    def _fetch_category_raw(self, category):
+    def _fetch_category_raw(self, category, page=1, size=100, paginated=False):
         keyword = CATEGORY_SEARCH_KEYWORDS[category][0]
         try:
             future = _FETCHERS.submit(_request_search, 'https://you.163.com/xhr/search/search.json',
-                params={'keyword': keyword, 'size': 100, 'page': 1, 'sortType': 0, 'descSorted': 'true', 'categoryId': 0, 'matchType': 0},
+                params={'keyword': keyword, 'size': size, 'page': page, 'sortType': 0, 'descSorted': 'true', 'categoryId': 0, 'matchType': 0},
                 headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://you.163.com/search?keyword=' + urllib.parse.quote(keyword)},
                 timeout=(2, 4))
             response = future.result(timeout=12)
@@ -209,7 +256,10 @@ class YanxuanGoodsCatalog:
             payload = response.json()
             if payload.get('code') is not None and str(payload['code']) != '200':
                 raise ValueError('upstream search failed')
-            return self.parse_api_response(payload, category)
+            items = self.parse_api_response(payload, category)
+            if paginated:
+                return {'items': items, 'has_more': len(self._raw_search_items(payload)) >= size}
+            return items
         except Exception as error:
             raise GoodsUnavailable(f'网易严选“{keyword}”搜索暂时无法连接，请重试') from error
 

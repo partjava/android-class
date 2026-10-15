@@ -139,6 +139,16 @@ public class CartActivity extends AppCompatActivity {
         syncCartFromNetwork();
     }
 
+    private void openCartProduct(ShopStore.CartItem entry, boolean options) {
+        ShopItem product = new ShopItem(entry.productId, entry.title, entry.getPrice(), 0,
+                entry.imgRes == 0 ? R.drawable.ic_shop : entry.imgRes, entry.category, entry.imageUrl,
+                entry.productId.startsWith("yanxuan-") ? "{\"source\":\"网易严选\",\"currency\":\"CNY\"}" : "");
+        Intent intent = ProductDetailActivity.intent(this, product);
+        intent.putExtra(ProductDetailActivity.EXTRA_CART_KEY, entry.key());
+        intent.putExtra(ProductDetailActivity.EXTRA_OPEN_OPTIONS, options);
+        startActivity(intent);
+    }
+
     private void syncCartFromNetwork() {
         String url = CampusNetworkConfig.getApiBaseUrl() + "/cart";
         ApiClient.get(url, new ApiClient.Callback() {
@@ -160,19 +170,14 @@ public class CartActivity extends AppCompatActivity {
                                 double price = obj.optDouble("price", 0.0);
                                 String category = obj.optString("category", "其他");
                                 String imgResName = obj.optString("image_res", "shop_1");
+                                if (pid.isEmpty() || title.trim().isEmpty() || count < 1
+                                        || !Double.isFinite(price) || price < 0 || price * 100 > Long.MAX_VALUE / 99) continue;
                                 int resId = getResources().getIdentifier(imgResName, "drawable", getPackageName());
-                                if (resId == 0) resId = R.drawable.shop_1;
-                                boolean exists = false;
-                                for (ShopStore.CartItem it : cartList) {
-                                    if (pid.equals(it.productId)) {
-                                        exists = true;
-                                        break;
-                                    }
-                                }
-                                if (!exists) {
-                                    store.addToCart(pid, "默认规格", title, (long)(price * 100), resId, category, count);
-                                    updated = true;
-                                }
+                                if (resId == 0) resId = R.drawable.ic_shop;
+                                ShopStore.CartItem incoming = new ShopStore.CartItem(pid, "默认规格", title,
+                                        Math.round(price * 100), count, resId, category, true);
+                                incoming.imageUrl = obj.optString("image_url", "");
+                                updated |= store.restoreCartSnapshot(incoming);
                             }
                             if (updated) {
                                 cartList.clear();
@@ -272,11 +277,20 @@ public class CartActivity extends AppCompatActivity {
             holder.tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", item.getPrice()));
             holder.tvQuantity.setText(String.valueOf(item.quantity));
             holder.cbSelect.setChecked(item.selected);
+            holder.itemView.setOnClickListener(v -> openCartProduct(item, false));
+            holder.ivThumb.setOnClickListener(v -> openCartProduct(item, false));
+            holder.tvTitle.setOnClickListener(v -> openCartProduct(item, false));
+            holder.tvCategory.setText(item.category + " · " + item.sku + " ▾");
+            holder.tvCategory.setOnClickListener(v -> openCartProduct(item, true));
 
-            if (item.imgRes != 0) {
+            if (!item.imageUrl.isEmpty()) {
+                RemoteImage.load(holder.ivThumb, item.imageUrl);
+            } else if (item.imgRes != 0) {
+                holder.ivThumb.setTag(null);
                 holder.ivThumb.setImageResource(item.imgRes);
             } else {
-                holder.ivThumb.setImageResource(R.drawable.shop_1);
+                holder.ivThumb.setTag(null);
+                holder.ivThumb.setImageResource(R.drawable.ic_shop);
             }
 
             holder.cbSelect.setOnClickListener(v -> {

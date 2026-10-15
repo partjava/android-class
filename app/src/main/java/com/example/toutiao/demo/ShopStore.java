@@ -120,6 +120,8 @@ public final class ShopStore {
         public int imgRes;
         public String category;
         public boolean selected;
+        public String imageUrl = "";
+        public boolean skuPriceSelected;
 
         public CartItem(String title, long priceCents, int quantity, int imgRes, String category, boolean selected) {
             this(ShopItem.legacyProductId(imgRes, title, category), "默认规格", title, priceCents, quantity, imgRes, category, selected);
@@ -163,6 +165,8 @@ public final class ShopStore {
                 obj.put("imgRes", imgRes);
                 obj.put("category", category);
                 obj.put("selected", selected);
+                obj.put("imageUrl", imageUrl);
+                obj.put("skuPriceSelected", skuPriceSelected);
             } catch (Exception ignored) {
             }
             return obj;
@@ -170,7 +174,7 @@ public final class ShopStore {
 
         public static CartItem fromJson(JSONObject obj) {
             if (obj == null) return null;
-            return new CartItem(
+            CartItem item = new CartItem(
                     obj.optString("productId", ShopItem.legacyProductId(obj.optInt("imgRes", 0), obj.optString("title"), obj.optString("category"))),
                     obj.optString("sku", "默认规格"),
                     obj.optString("title", ""),
@@ -180,6 +184,9 @@ public final class ShopStore {
                     obj.optString("category", ""),
                     obj.optBoolean("selected", true)
             );
+            item.imageUrl = obj.optString("imageUrl", "");
+            item.skuPriceSelected = obj.optBoolean("skuPriceSelected", false);
+            return item;
         }
     }
 
@@ -316,25 +323,77 @@ public final class ShopStore {
     }
 
     public void addToCart(String productId, String sku, String title, long priceCents, int imgRes, String category, int addQty) {
+        addToCart(productId, sku, title, priceCents, imgRes, category, addQty, "");
+    }
+
+    public void addToCart(String productId, String sku, String title, long priceCents, int imgRes, String category, int addQty, String imageUrl) {
         database.transaction(() -> {
             if (addQty <= 0 || priceCents < 0 || priceCents > Long.MAX_VALUE / 99) throw new IllegalArgumentException("商品金额或数量无效");
             List<CartItem> list = getCartItems();
             String key = new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true).key();
             boolean found = false;
+            int actualAdded = Math.min(99, addQty);
             for (CartItem it : list) {
                 if (it.key().equals(key)) {
+                    int oldQty = it.quantity;
                     it.quantity = (int) Math.min(99L, (long) it.quantity + addQty);
+                    actualAdded = it.quantity - oldQty;
                     it.selected = true;
+                    it.title = title;
+                    it.priceCents = priceCents;
+                    it.imgRes = imgRes;
+                    it.category = category;
+                    it.skuPriceSelected = !it.sku.equals("默认规格");
+                    if (imageUrl != null && !imageUrl.isEmpty()) it.imageUrl = imageUrl;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                list.add(0, new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true));
+                CartItem added = new CartItem(productId, sku, title, priceCents, addQty, imgRes, category, true);
+                added.imageUrl = imageUrl == null ? "" : imageUrl;
+                added.skuPriceSelected = !added.sku.equals("默认规格");
+                list.add(0, added);
             }
             saveCart(list);
-            syncAddToCartToNetwork(productId, addQty);
+            prefs.edit().remove("cart_removed_" + productId).apply();
+            if (actualAdded > 0) syncAddToCartToNetwork(productId, actualAdded);
+            syncRemainingCount(productId, list);
             return null;
+        });
+    }
+
+    /** Restore a server snapshot locally; this must never send another add request. */
+    public boolean restoreCartSnapshot(CartItem incoming) {
+        return database.transaction(() -> {
+            if (prefs.getBoolean("cart_removed_" + incoming.productId, false)) {
+                syncUpdateCartToNetwork(incoming.productId, 0);
+                return false;
+            }
+            List<CartItem> list = getCartItems();
+            boolean found = false, changed = false;
+            for (CartItem existing : list) {
+                if (existing.productId.equals(incoming.productId)) {
+                    found = true;
+                    String image = incoming.imageUrl.isEmpty() ? existing.imageUrl : incoming.imageUrl;
+                    long price = existing.skuPriceSelected ? existing.priceCents : incoming.priceCents;
+                    changed |= !existing.title.equals(incoming.title) || existing.priceCents != price
+                            || !existing.category.equals(incoming.category) || !existing.imageUrl.equals(image)
+                            || existing.imgRes != incoming.imgRes;
+                    existing.title = incoming.title;
+                    existing.priceCents = price;
+                    existing.category = incoming.category;
+                    existing.imgRes = incoming.imgRes;
+                    existing.imageUrl = image;
+                }
+            }
+            if (found) {
+                if (changed) saveCart(list);
+                return changed;
+            }
+            list.add(0, incoming);
+            saveCart(list);
+            return true;
         });
     }
 
@@ -344,7 +403,7 @@ public final class ShopStore {
             JSONObject body = new JSONObject();
             body.put("product_id", productId);
             body.put("count", count);
-            ApiClient.post(url, body.toString(), null);
+            ApiClient.postCart(url, body.toString());
         } catch (Exception ignored) { }
     }
 
@@ -354,7 +413,7 @@ public final class ShopStore {
             JSONObject body = new JSONObject();
             body.put("product_id", productId);
             body.put("count", count);
-            ApiClient.post(url, body.toString(), null);
+            ApiClient.postCart(url, body.toString());
         } catch (Exception ignored) { }
     }
 
@@ -369,7 +428,8 @@ public final class ShopStore {
                     } else {
                         list.get(i).quantity = Math.min(99, newQty);
                     }
-                    syncUpdateCartToNetwork(targetPid, newQty);
+                    saveCart(list);
+                    syncRemainingCount(targetPid, list);
                     break;
                 }
             }
@@ -408,7 +468,10 @@ public final class ShopStore {
             List<CartItem> list = getCartItems();
             for (int i = 0; i < list.size(); i++) {
                 if (list.get(i).key().equals(key)) {
+                    String productId = list.get(i).productId;
                     list.remove(i);
+                    saveCart(list);
+                    syncRemainingCount(productId, list);
                     break;
                 }
             }
@@ -421,18 +484,61 @@ public final class ShopStore {
         database.transaction(() -> {
             List<CartItem> list = getCartItems();
             List<CartItem> remaining = new ArrayList<>();
+            java.util.Set<String> removed = new java.util.HashSet<>();
             for (CartItem it : list) {
                 if (!it.selected) {
                     remaining.add(it);
-                }
+                } else removed.add(it.productId);
             }
             saveCart(remaining);
+            for (String productId : removed) syncRemainingCount(productId, remaining);
             return null;
         });
     }
 
     public void clearCart() {
-        database.replace("cart", new JSONArray());
+        database.transaction(() -> {
+            List<CartItem> previous = getCartItems();
+            database.replace("cart", new JSONArray());
+            for (CartItem item : previous) syncRemainingCount(item.productId, java.util.Collections.emptyList());
+            return null;
+        });
+    }
+
+    private void syncRemainingCount(String productId, List<CartItem> remaining) {
+        int count = 0;
+        for (CartItem item : remaining) if (productId.equals(item.productId)) count += item.quantity;
+        if (count == 0) prefs.edit().putBoolean("cart_removed_" + productId, true).apply();
+        else prefs.edit().remove("cart_removed_" + productId).apply();
+        syncUpdateCartToNetwork(productId, count);
+    }
+
+    public boolean updateCartOptions(String oldKey, String sku, int quantity, ShopItem product) {
+        if (quantity < 1 || quantity > 99 || sku == null || sku.isEmpty() || !Double.isFinite(product.getPrice())
+                || product.getPrice() < 0 || product.getPrice() * 100 > Long.MAX_VALUE / 99) throw new IllegalArgumentException("规格、数量或价格无效");
+        return database.transaction(() -> {
+            List<CartItem> list = getCartItems();
+            CartItem editing = null;
+            for (CartItem entry : list) if (entry.key().equals(oldKey) && entry.productId.equals(product.getProductId())) editing = entry;
+            if (editing == null) return false;
+            editing.sku = sku;
+            editing.quantity = quantity;
+            editing.title = product.getTitle();
+            editing.priceCents = Math.round(product.getPrice() * 100);
+            editing.skuPriceSelected = !sku.equals("默认规格");
+            editing.imageUrl = product.getImageUrl();
+            editing.imgRes = product.getImgRes();
+            for (CartItem entry : new ArrayList<>(list)) {
+                if (entry != editing && entry.key().equals(editing.key())) {
+                    editing.quantity = Math.min(99, editing.quantity + entry.quantity);
+                    editing.selected |= entry.selected;
+                    list.remove(entry);
+                }
+            }
+            saveCart(list);
+            syncRemainingCount(editing.productId, list);
+            return true;
+        });
     }
 
     public int getCartCount() {
@@ -519,6 +625,11 @@ public final class ShopStore {
                 }
             }
             saveCart(cart);
+            if (removePurchasedFromCart) {
+                java.util.Set<String> purchasedIds = new java.util.HashSet<>();
+                for (CartItem bought : buyItems) purchasedIds.add(bought.productId);
+                for (String productId : purchasedIds) syncRemainingCount(productId, cart);
+            }
 
             return order;
         });

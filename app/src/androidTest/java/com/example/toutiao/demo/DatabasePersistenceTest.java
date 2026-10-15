@@ -32,6 +32,93 @@ public class DatabasePersistenceTest {
         store.put("saved",a);assertTrue(new ContentStore(isolated).contains("saved","news-a"));
         store.remove("saved","news-a");assertFalse(store.contains("saved","news-a"));
     }
+    @Test public void cartImageSurvivesJsonSnapshot() throws Exception {
+        JSONObject json = new JSONObject().put("productId", "yanxuan-image")
+                .put("sku", "默认规格").put("title", "官网商品").put("priceCents", 1999)
+                .put("imageUrl", "https://example.com/product.jpg");
+        ShopStore.CartItem item = ShopStore.CartItem.fromJson(json);
+        assertEquals("https://example.com/product.jpg", item.toJson().optString("imageUrl"));
+    }
+    @Test public void readdingSameProductUpdatesMetadataWithoutDuplicating() {
+        ShopStore store = new ShopStore(isolated);
+        store.addToCart("yanxuan-metadata", "默认规格", "旧名称", 1999, 0, "其他", 1);
+        store.addToCart("yanxuan-metadata", "默认规格", "新名称", 1499, 0, "家具", 1);
+        assertEquals(1, store.getCartItems().size());
+        ShopStore.CartItem item = store.getCartItems().get(0);
+        assertEquals("新名称", item.title);
+        assertEquals(1499, item.priceCents);
+        assertEquals(2, item.quantity);
+    }
+    @Test public void cartRemoteImagePersistsAndRestoreDoesNotIncreaseQuantity() {
+        ShopStore store = new ShopStore(isolated);
+        store.addToCart("yanxuan-image-save", "默认规格", "官网商品", 1999, 0, "家具", 2,
+                "https://example.com/product.jpg");
+        ShopStore.CartItem saved = new ShopStore(isolated).getCartItems().get(0);
+        assertEquals("https://example.com/product.jpg", saved.imageUrl);
+        ShopStore.CartItem incoming = ShopStore.CartItem.fromJson(saved.toJson());
+        incoming.quantity = 9;
+        assertFalse(store.restoreCartSnapshot(incoming));
+        assertEquals(2, store.getCartItems().get(0).quantity);
+        store.saveCart(java.util.Collections.emptyList());
+        assertTrue(store.restoreCartSnapshot(incoming));
+        assertEquals(9, store.getCartItems().get(0).quantity);
+        assertFalse(store.restoreCartSnapshot(incoming));
+        assertEquals(1, store.getCartItems().size());
+    }
+    @Test public void restoreCorrectsOldMetadataButPreservesLocalChoices() {
+        ShopStore store = new ShopStore(isolated);
+        ShopStore.CartItem old = new ShopStore.CartItem("cart-old", "已选规格", "错误名称", 28, 2, 0, "其他", false);
+        store.saveCart(java.util.Collections.singletonList(old));
+        ShopStore.CartItem incoming = new ShopStore.CartItem("cart-old", "默认规格", "官网名称", 29, 9, 0, "家具", true);
+        incoming.imageUrl = "https://example.com/correct.jpg";
+        assertTrue(store.restoreCartSnapshot(incoming));
+        ShopStore.CartItem item = store.getCartItems().get(0);
+        assertEquals("官网名称", item.title);
+        assertEquals(29, item.priceCents);
+        assertEquals("https://example.com/correct.jpg", item.imageUrl);
+        assertEquals(2, item.quantity);
+        assertEquals("已选规格", item.sku);
+        assertFalse(item.selected);
+    }
+    @Test public void deletedItemCannotBeResurrectedByStaleServerResponse() {
+        ShopStore store = new ShopStore(isolated);
+        ShopStore.CartItem item = new ShopStore.CartItem("cart-deleted", "默认规格", "商品", 100, 1, 0, "其他", true);
+        store.saveCart(java.util.Collections.singletonList(item));
+        store.removeFromCart(item.key());
+        assertFalse(new ShopStore(isolated).restoreCartSnapshot(item));
+        assertTrue(store.getCartItems().isEmpty());
+        store.addToCart(item.productId, item.sku, item.title, item.priceCents, 0, "其他", 1);
+        assertEquals(1, store.getCartItems().size());
+    }
+    @Test public void batchDeletionDoesNotRestoreSelectedItems() {
+        ShopStore store = new ShopStore(isolated);
+        ShopStore.CartItem selected = new ShopStore.CartItem("cart-selected", "默认规格", "选中", 100, 1, 0, "其他", true);
+        ShopStore.CartItem kept = new ShopStore.CartItem("cart-kept", "默认规格", "保留", 200, 1, 0, "其他", false);
+        store.saveCart(java.util.Arrays.asList(selected, kept));
+        store.removeSelectedFromCart();
+        assertFalse(store.restoreCartSnapshot(selected));
+        assertEquals("cart-kept", store.getCartItems().get(0).productId);
+    }
+    @Test public void skuEditMergesSameSkuWithoutDuplicateRows() {
+        ShopStore store = new ShopStore(isolated);
+        ShopStore.CartItem a = new ShopStore.CartItem("cart-edit", "白色", "商品", 100, 2, 0, "其他", true);
+        ShopStore.CartItem b = new ShopStore.CartItem("cart-edit", "黑色", "商品", 100, 3, 0, "其他", false);
+        store.saveCart(java.util.Arrays.asList(a, b));
+        ShopItem product = new ShopItem("cart-edit", "商品", 1, 0, 0, "其他");
+        assertTrue(store.updateCartOptions(a.key(), "黑色", 4, product));
+        assertEquals(1, store.getCartItems().size());
+        assertEquals(7, store.getCartItems().get(0).quantity);
+        assertEquals("黑色", store.getCartItems().get(0).sku);
+    }
+    @Test public void selectedSkuPriceSurvivesBasePriceRestore() {
+        ShopStore store = new ShopStore(isolated);
+        ShopStore.CartItem original = new ShopStore.CartItem("cart-sku-price", "白色", "商品", 1000, 1, 0, "其他", true);
+        store.saveCart(java.util.Collections.singletonList(original));
+        ShopItem priced = new ShopItem("cart-sku-price", "商品", 12.34, 0, 0, "其他");
+        assertTrue(store.updateCartOptions(original.key(), "黑色", 2, priced));
+        store.restoreCartSnapshot(original);
+        assertEquals(1234, new ShopStore(isolated).getCartItems().get(0).priceCents);
+    }
     @Test public void legacyMigrationKeepsSourceAndIsIdempotent() throws Exception {
         String source = new JSONArray().put(ContentStore.article("旧新闻","旧来源","正文",0,1)).toString();
         isolated.getSharedPreferences("content",0).edit().putString("history",source).commit();

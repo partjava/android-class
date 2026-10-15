@@ -45,6 +45,10 @@ public class ShopFragment extends PageFragment {
     private ShopAdapter shopAdapter;
     private TextView goodsStatus;
     private int goodsRequest;
+    private int nextPage = 1;
+    private boolean hasMore = true, goodsLoading, failedAppend;
+    private PullRefreshLayout pullShop;
+    private TextView goodsFooter;
     private static volatile List<ShopItem> serverCatalog = Collections.emptyList();
 
     @Override
@@ -65,14 +69,14 @@ public class ShopFragment extends PageFragment {
         rvEntries = findViewById(R.id.rv_entries);
         rvShop = findViewById(R.id.rv_shop);
         goodsStatus = findViewById(R.id.tv_goods_status);
-        goodsStatus.setOnClickListener(v -> loadGoodsFromNetwork());
+        goodsStatus.setOnClickListener(v -> { if (failedAppend) loadMoreGoods(); else loadGoodsFromNetwork(); });
         nsvShop = findViewById(R.id.nsv_shop);
 
-        View tvFooter = findViewById(R.id.tv_shop_footer);
-        if (tvFooter instanceof TextView) {
-            ((TextView) tvFooter).setText("🔄 点击换一批网易严选好物 (30件/批) 🛍️");
-            tvFooter.setOnClickListener(v -> loadGoodsFromNetwork());
-        }
+        pullShop = findViewById(R.id.pull_shop);
+        pullShop.setOnRefreshListener(this::loadGoodsFromNetwork);
+        goodsFooter = findViewById(R.id.tv_shop_footer);
+        goodsFooter.setText("点击加载更多商品");
+        goodsFooter.setOnClickListener(v -> loadMoreGoods());
     }
 
     private void initShopData() {
@@ -91,26 +95,50 @@ public class ShopFragment extends PageFragment {
     }
 
     private void loadGoodsFromNetwork() {
-        loadGoodsFromNetwork(TAB_LABELS[currentTab], true);
+        if (!goodsLoading) loadGoodsFromNetwork(TAB_LABELS[currentTab], true);
     }
 
     private void loadGoodsFromNetwork(String category) {
         loadGoodsFromNetwork(category, false);
     }
 
+    private void loadMoreGoods() {
+        if (!goodsLoading && hasMore) loadGoodsPage(TAB_LABELS[currentTab], nextPage, false, true);
+    }
+
     private void loadGoodsFromNetwork(String category, boolean refresh) {
+        loadGoodsPage(category, 1, refresh, false);
+    }
+
+    private void finishGoodsLoading() {
+        goodsLoading = false;
+        pullShop.setRefreshing(false);
+        pullShop.setEnabled(true);
+        goodsFooter.setEnabled(hasMore);
+    }
+
+    private void loadGoodsPage(String category, int page, boolean refresh, boolean append) {
+        goodsLoading = true;
+        failedAppend = append;
+        pullShop.setEnabled(false);
+        if (refresh) pullShop.setRefreshing(true);
+        goodsFooter.setText(append ? "正在加载更多…" : "正在加载商品…");
+        goodsFooter.setEnabled(false);
         final int request = ++goodsRequest;
-        allItems.clear(); serverCatalog = Collections.emptyList();
-        productList.clear(); shopAdapter.notifyDataSetChanged();
-        goodsStatus.setText(refresh ? "正在实时换一批严选好物…" : "正在加载商品…");
+        if (!refresh && !append) {
+            nextPage = 1; hasMore = true;
+            allItems.clear(); serverCatalog = Collections.emptyList();
+            productList.clear(); shopAdapter.notifyDataSetChanged();
+        }
+        goodsStatus.setText(append ? "正在加载更多商品…" : refresh ? "正在刷新商品…" : "正在加载商品…");
         goodsStatus.setVisibility(View.VISIBLE);
         goodsStatus.setClickable(false);
         String url;
         try {
             url = CampusNetworkConfig.getApiBaseUrl() + "/goods?category=" + java.net.URLEncoder.encode(category, "UTF-8")
-                    + "&limit=30" + (refresh ? "&refresh=true" : "");
+                    + "&limit=30&page=" + page + (refresh ? "&refresh=true" : "");
         } catch (java.io.UnsupportedEncodingException e) {
-            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?limit=30" + (refresh ? "&refresh=true" : "");
+            url = CampusNetworkConfig.getApiBaseUrl() + "/goods?limit=30&page=" + page + (refresh ? "&refresh=true" : "");
         }
         ApiClient.getWithReadTimeout(url, 16000, new ApiClient.Callback() {
             private boolean current() { return isAdded() && getView() != null && request == goodsRequest; }
@@ -133,21 +161,31 @@ public class ShopFragment extends PageFragment {
                                 obj.optString("category", "其他"), obj.optString("image_url", ""),
                                 details.toString()));
                     }
-                    allItems = netList; serverCatalog = new ArrayList<>(netList);
-                    productList.clear();
-                    productList.addAll(netList);
-                    shopAdapter.notifyDataSetChanged();
-                    String source = netList.isEmpty() ? "" : netList.get(0).getSource();
-                    goodsStatus.setText(netList.isEmpty() ? "暂无商品 · 点击刷新" : source + " · 已加载 " + netList.size() + " 件 · 点击换一批");
+                    int oldCount = productList.size();
+                    if (!append) productList.clear();
+                    java.util.Set<String> known = new java.util.HashSet<>();
+                    for (ShopItem existing : productList) known.add(existing.getProductId());
+                    for (ShopItem incoming : netList) if (known.add(incoming.getProductId())) productList.add(incoming);
+                    allItems = new ArrayList<>(productList);
+                    serverCatalog = new ArrayList<>(productList);
+                    if (append) shopAdapter.notifyItemRangeInserted(oldCount, productList.size() - oldCount);
+                    else shopAdapter.notifyDataSetChanged();
+                    nextPage = page + 1;
+                    hasMore = response.getJSONObject("data").optBoolean("has_more", netList.size() == 30);
+                    failedAppend = false;
+                    finishGoodsLoading();
+                    goodsFooter.setText(hasMore ? "点击加载更多商品" : "已经没有更多商品了");
+                    String source = productList.isEmpty() ? "" : productList.get(0).getSource();
+                    goodsStatus.setText(productList.isEmpty() ? "暂无商品 · 下拉刷新" : source + " · 已加载 " + productList.size() + " 件 · 下拉刷新");
                     goodsStatus.setClickable(true);
-                    if (refresh && isAdded()) {
-                        Toast.makeText(requireContext(), "已更新 " + netList.size() + " 件商品", Toast.LENGTH_SHORT).show();
-                    }
+                    if (refresh) nsvShop.scrollTo(0, 0);
                 } catch (Exception error) { onError("商品数据格式错误"); }
             }
             @Override public void onError(String message) {
                 if (!current()) return;
-                goodsStatus.setText("商品加载失败，请检查后端连接 · 点击重试");
+                finishGoodsLoading();
+                goodsFooter.setText(append ? "加载更多失败 · 点击重试" : "点击加载更多商品");
+                goodsStatus.setText(append ? "加载更多失败，已有商品已保留 · 点击重试" : "商品加载失败，请检查后端连接 · 点击重试");
                 goodsStatus.setClickable(true);
             }
         });
@@ -444,12 +482,6 @@ public class ShopFragment extends PageFragment {
         View btnCart = findViewById(R.id.btn_cart);
         if (btnCart != null) {
             btnCart.setOnClickListener(v -> ShoppingDialogs.showCart(requireContext()));
-        }
-
-        View tvShopFooter = findViewById(R.id.tv_shop_footer);
-        if (tvShopFooter != null) {
-            tvShopFooter.setOnClickListener(v ->
-                    WebActivity.open(requireContext(), "领券中心", "file:///android_asset/web/coupons.html"));
         }
 
         TextView tvSearchHint = findViewById(R.id.tv_search_hint);

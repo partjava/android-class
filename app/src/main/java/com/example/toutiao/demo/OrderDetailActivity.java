@@ -131,7 +131,8 @@ public class OrderDetailActivity extends AppCompatActivity {
             TextView tvPrice = pView.findViewById(R.id.tv_price);
             TextView tvQty = pView.findViewById(R.id.tv_quantity);
 
-            if (ci.imgRes != 0) iv.setImageResource(ci.imgRes);
+            if (!ci.imageUrl.isEmpty()) RemoteImage.load(iv, ci.imageUrl);
+            else { iv.setTag(null); iv.setImageResource(ci.imgRes != 0 ? ci.imgRes : R.drawable.ic_shop); }
             tvTitle.setText(ci.title);
             tvCat.setText(ci.category + " · " + ci.sku);
             tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", ci.getPrice()));

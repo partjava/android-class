@@ -26,6 +26,7 @@ public final class ApiClient {
     private static final int TIMEOUT_MS = 6000;
     private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
     private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(4);
+    private static final ExecutorService CART_EXECUTOR = Executors.newSingleThreadExecutor();
 
     public interface Callback {
         void onSuccess(JSONObject response);
@@ -55,6 +56,10 @@ public final class ApiClient {
      */
     public static void post(final String urlString, final String jsonBody, final Callback callback) {
         EXECUTOR.execute(() -> executeRequest("POST", urlString, jsonBody, callback));
+    }
+
+    public static void postCart(final String urlString, final String jsonBody) {
+        CART_EXECUTOR.execute(() -> executeRequest("POST", urlString, jsonBody, null));
     }
 
     private static void executeRequest(String method, String urlString, String jsonBody, Callback callback) {

@@ -26,6 +26,7 @@ public class OrderConfirmActivity extends AppCompatActivity {
     public static final String EXTRA_DIRECT_PRICE_CENTS = "extra_direct_price_cents";
     public static final String EXTRA_DIRECT_PRICE = "extra_direct_price";
     public static final String EXTRA_DIRECT_IMG = "extra_direct_img";
+    public static final String EXTRA_DIRECT_IMAGE_URL = "extra_direct_image_url";
     public static final String EXTRA_DIRECT_CAT = "extra_direct_cat";
     //直接购买时的数量，商品详情页的 SKU 面板带过来；默认 1 兼容旧调用方
     public static final String EXTRA_DIRECT_QTY = "extra_direct_qty";
@@ -137,7 +138,10 @@ public class OrderConfirmActivity extends AppCompatActivity {
             String productId = getIntent().getStringExtra(EXTRA_DIRECT_ID);
             String sku = getIntent().getStringExtra(EXTRA_DIRECT_SKU);
             if (productId == null) productId = ShopItem.legacyProductId(img, directTitle, cat);
-            buyItems.add(new ShopStore.CartItem(productId, sku, directTitle, priceCents, qty, img, cat != null ? cat : "精选", true));
+            ShopStore.CartItem direct = new ShopStore.CartItem(productId, sku, directTitle, priceCents, qty, img, cat != null ? cat : "精选", true);
+            String imageUrl = getIntent().getStringExtra(EXTRA_DIRECT_IMAGE_URL);
+            direct.imageUrl = imageUrl == null ? "" : imageUrl;
+            buyItems.add(direct);
         } else {
             for (ShopStore.CartItem ci : store.getCartItems()) {
                 if (ci.selected) {
@@ -186,7 +190,8 @@ public class OrderConfirmActivity extends AppCompatActivity {
             TextView tvPrice = row.findViewById(R.id.tv_price);
             TextView tvQty = row.findViewById(R.id.tv_quantity);
 
-            if (it.imgRes != 0) iv.setImageResource(it.imgRes);
+            if (!it.imageUrl.isEmpty()) RemoteImage.load(iv, it.imageUrl);
+            else { iv.setTag(null); iv.setImageResource(it.imgRes != 0 ? it.imgRes : R.drawable.ic_shop); }
             tvTitle.setText(it.title);
             tvCat.setText(it.category + " · " + it.sku);
             tvPrice.setText("¥" + String.format(Locale.CHINA, "%.2f", it.getPrice()));

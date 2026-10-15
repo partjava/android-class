@@ -29,17 +29,37 @@ public class ShopDataSourceTest {
         String old = CampusNewsStore.getServerUrl();
         android.content.SharedPreferences prefs = context.getSharedPreferences("campus_network", 0);
         String oldUrl = prefs.getString("server_url", null), oldEngine = prefs.getString("engine_type", null);
+        AtomicInteger requests = new AtomicInteger();
+        AtomicReference<String> serverError = new AtomicReference<>();
         try (ServerSocket server = new ServerSocket(0)) {
             server.setSoTimeout(120000);
             Thread fixture = new Thread(() -> {
-                try (Socket socket = server.accept()) {
+                try {
+                  for (int request = 0; request < (count == 1 ? 3 : 1); request++) try (Socket socket = server.accept()) {
                     socket.setSoTimeout(5000);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+                    String first = reader.readLine();
+                    if (request == 1 && (!first.contains("page=2") || first.contains("refresh=true"))) throw new AssertionError(first);
+                    if (request == 2 && (!first.contains("page=1") || !first.contains("refresh=true"))) throw new AssertionError(first);
+                    requests.incrementAndGet();
                     String line; while ((line = reader.readLine()) != null && !line.isEmpty()) { }
-                    byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+                    String responseBody = body;
+                    if (count == 1) {
+                        org.json.JSONObject json = new org.json.JSONObject(body);
+                        org.json.JSONObject data = json.getJSONObject("data");
+                        data.put("has_more", request != 1);
+                        if (request == 1) {
+                            org.json.JSONObject extra = new org.json.JSONObject(data.getJSONArray("items").getJSONObject(0).toString());
+                            extra.put("product_id", "test-extra"); extra.put("title", "下一页商品");
+                            data.getJSONArray("items").put(extra);
+                        }
+                        responseBody = json.toString();
+                    }
+                    byte[] bytes = responseBody.getBytes(StandardCharsets.UTF_8);
                     socket.getOutputStream().write(("HTTP/1.1 " + status + "\r\nContent-Type: application/json\r\nContent-Length: " + bytes.length + "\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.UTF_8));
                     socket.getOutputStream().write(bytes); socket.getOutputStream().flush();
-                } catch (Exception ignored) { }
+                  }
+                } catch (Throwable failure) { serverError.set(failure.toString()); }
             });
             fixture.start();
             CampusNetworkConfig.save(context, "http://127.0.0.1:" + server.getLocalPort(), CampusNetworkConfig.ENGINE_FASTAPI);
@@ -56,6 +76,41 @@ public class ShopDataSourceTest {
                 }
                 assertTrue(text.get(), text.get().contains(expected));
                 assertEquals(count, rows.get());
+                if (count == 1) {
+                    android.app.Instrumentation instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation();
+                    android.app.Instrumentation.ActivityMonitor monitor = instrumentation.addMonitor(WebActivity.class.getName(), null, false);
+                    try {
+                        scenario.onActivity(activity -> activity.findViewById(R.id.tv_shop_footer).performClick());
+                        assertNull("Footer must refresh goods instead of opening coupon page", instrumentation.waitForMonitorWithTimeout(monitor, 1000));
+                        for (int i = 0; i < 70 && requests.get() < 2; i++) Thread.sleep(100);
+                        assertNull(serverError.get());
+                        assertEquals("Footer must request next page", 2, requests.get());
+                        for (int i = 0; i < 70; i++) {
+                            scenario.onActivity(a -> rows.set(((RecyclerView)a.findViewById(R.id.rv_shop)).getAdapter().getItemCount()));
+                            if (rows.get() == 2) break;
+                            Thread.sleep(100);
+                        }
+                        assertEquals("Append must keep first item and deduplicate repeated IDs", 2, rows.get());
+                        scenario.onActivity(a -> {
+                            assertFalse(a.findViewById(R.id.tv_shop_footer).isEnabled());
+                            ((androidx.core.widget.NestedScrollView)a.findViewById(R.id.nsv_shop)).scrollTo(0, 0);
+                            android.view.View pull = a.findViewById(R.id.pull_shop);
+                            long t = android.os.SystemClock.uptimeMillis();
+                            for (int action : new int[]{0, 2, 2, 1}) {
+                                android.view.MotionEvent event = android.view.MotionEvent.obtain(t, t + 100, action, 80, action == 0 ? 100 : 600, 0);
+                                pull.dispatchTouchEvent(event); event.recycle();
+                            }
+                        });
+                        for (int i = 0; i < 70; i++) {
+                            scenario.onActivity(a -> rows.set(((RecyclerView)a.findViewById(R.id.rv_shop)).getAdapter().getItemCount()));
+                            if (requests.get() == 3 && rows.get() == 1) break;
+                            Thread.sleep(100);
+                        }
+                        assertNull(serverError.get());
+                        assertEquals("Pull refresh must reload first page", 3, requests.get());
+                        assertEquals("Refresh must replace appended pages", 1, rows.get());
+                    } finally { instrumentation.removeMonitor(monitor); }
+                }
             }
             fixture.join(1000);
         } finally {

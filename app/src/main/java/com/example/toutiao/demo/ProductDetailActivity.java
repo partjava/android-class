@@ -44,10 +44,15 @@ import java.util.Locale;
 public class ProductDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_ITEM = "extra_shop_item";
+    public static final String EXTRA_CART_KEY = "extra_cart_key";
+    public static final String EXTRA_OPEN_OPTIONS = "extra_open_options";
 
     //SKU 弹窗的两种模式：确认键的文案和颜色随它切换
     private static final int MODE_ADD = 0;
     private static final int MODE_BUY = 1;
+    private static final int MODE_EDIT = 2;
+    private String cartEditKey, cartSelectedSku;
+    private boolean openOptionsPending;
 
     //画廊固定 3 页：1 页实拍图 + 2 页营销海报（每商品只有一张实拍图，
     //海报页用纯色底 + 卖点文案补位，避免拿别家商品的照片冒充）
@@ -163,15 +168,21 @@ public class ProductDetailActivity extends AppCompatActivity {
             return;
         }
         store = new ShopStore(this);
+        cartEditKey = getIntent().getStringExtra(EXTRA_CART_KEY);
+        openOptionsPending = getIntent().getBooleanExtra(EXTRA_OPEN_OPTIONS, false);
+        if (cartEditKey != null) for (ShopStore.CartItem entry : store.getCartItems()) {
+            if (entry.key().equals(cartEditKey)) { cartSelectedSku = entry.sku; skuQty = entry.quantity; break; }
+        }
         catIndex = catIndexOf(item.getCategory());
         specs = item.hasRemoteDetails() ? new String[]{"默认规格"} : SPECS[catIndex];
+        applyRemoteSpecs();
 
         bindViews();
         setupGallery();
         setupTabs();
         if (item.hasRemoteDetails()) {
             ProductDetailsRenderer.render(this, item);
-            findViewById(R.id.ll_service_spec).setOnClickListener(v -> showSkuSheet(MODE_ADD));
+            findViewById(R.id.ll_service_spec).setOnClickListener(v -> showSkuSheet(cartEditKey == null ? MODE_ADD : MODE_EDIT));
         } else {
             renderPriceCard();
             renderTitleCard();
@@ -193,6 +204,26 @@ public class ProductDetailActivity extends AppCompatActivity {
             detailStatus.setOnClickListener(v -> loadRemoteDetail(true));
             findViewById(R.id.btn_gallery_more).setOnClickListener(v -> loadRemoteDetail(true));
             loadRemoteDetail(false);
+        } else openPendingOptions();
+    }
+
+    private void applyRemoteSpecs() {
+        if (!item.hasRemoteDetails()) return;
+        org.json.JSONArray options = item.getDetails().optJSONArray("skuOptions");
+        List<String> values = new ArrayList<>();
+        if (options != null) for (int i = 0; i < options.length(); i++) {
+            String value = options.optString(i);
+            if (!value.isEmpty() && !values.contains(value)) values.add(value);
+        }
+        if (values.isEmpty()) values.add(cartSelectedSku == null ? "默认规格" : cartSelectedSku);
+        specs = values.toArray(new String[0]);
+        specIndex = cartSelectedSku == null ? 0 : Math.max(0, values.indexOf(cartSelectedSku));
+    }
+
+    private void openPendingOptions() {
+        if (openOptionsPending) {
+            openOptionsPending = false;
+            showSkuSheet(cartEditKey == null ? MODE_ADD : MODE_EDIT);
         }
     }
 
@@ -222,6 +253,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                         data.optString("category", item.getCategory()), data.optString("image_url", item.getImageUrl()),
                         data.optJSONObject("details").toString());
                 ProductDetailsRenderer.render(ProductDetailActivity.this, item);
+                applyRemoteSpecs();
+                openPendingOptions();
                 vpGallery.setAdapter(new GalleryAdapter());
                 tvGalleryIndex.setText("1/" + galleryCount());
                 nsv.post(() -> { if (current()) nsv.scrollTo(0, scrollY); });
@@ -233,6 +266,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                 if (!current()) return;
                 detailStatus.setText("详情加载失败，已保留当前内容 · 点击重试");
                 detailStatus.setEnabled(true);
+                openPendingOptions();
             }
         });
     }
@@ -454,7 +488,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvServiceDelivery.setText("预计" + day + "送达 · " + ORIGINS[catIndex] + "发货 · " + freight);
 
         tvServiceSpec.setText("规格：" + specs[0] + "，共" + specs.length + "种可选");
-        findViewById(R.id.ll_service_spec).setOnClickListener(v -> showSkuSheet(MODE_ADD));
+        findViewById(R.id.ll_service_spec).setOnClickListener(v -> showSkuSheet(cartEditKey == null ? MODE_ADD : MODE_EDIT));
     }
 
     //===== 评价卡 =====
@@ -630,29 +664,29 @@ public class ProductDetailActivity extends AppCompatActivity {
         } else {
             thumb.setImageResource(item.getImgRes());
         }
-        price.setText(formatPrice(item.getPrice()));
+        price.setText(formatPrice(selectedPrice()));
 
         //规格胶囊：选中态要随点击切换，只能代码建、代码换肤
         List<TextView> pills = new ArrayList<>();
         for (int i = 0; i < specs.length; i++) {
             TextView pill = new TextView(this);
             pill.setText(specs[i]);
-            pill.setGravity(Gravity.CENTER);
+            pill.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
             pill.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
                     getResources().getDimension(R.dimen.text_body_small));
             int padH = getResources().getDimensionPixelSize(R.dimen.space_l);
-            pill.setPadding(padH, 0, padH, 0);
-            pill.setMinimumHeight(getResources().getDimensionPixelSize(R.dimen.space_2xl));
-            if (i > 0) {
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.leftMargin = getResources().getDimensionPixelSize(R.dimen.space_s);
-                pill.setLayoutParams(lp);
-            }
+            int padV = getResources().getDimensionPixelSize(R.dimen.space_s);
+            pill.setPadding(padH, padV, padH, padV);
+            pill.setMinimumHeight(getResources().getDimensionPixelSize(R.dimen.touch_target));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            if (i > 0) lp.topMargin = padV;
+            pill.setLayoutParams(lp);
             final int index = i;
             pill.setOnClickListener(v -> {
                 specIndex = index;
                 restyleSpecPills(pills, spec);
+                price.setText(formatPrice(selectedPrice()));
             });
             llSpecs.addView(pill);
             pills.add(pill);
@@ -681,12 +715,19 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         //确认键：加购橙 / 购买红，同一个胶囊底按模式染色
         boolean isAdd = mode == MODE_ADD;
-        confirm.setText(isAdd ? "加入购物车" : "立即购买");
+        confirm.setText(mode == MODE_EDIT ? "确认修改" : isAdd ? "加入购物车" : "立即购买");
         confirm.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this,
                 isAdd ? R.color.brand_orange : R.color.brand_red)));
         confirm.setOnClickListener(v -> {
             dialog.dismiss();
-            if (isAdd) {
+            if (mode == MODE_EDIT) {
+                ShopItem selected = new ShopItem(item.getProductId(), item.getTitle(), selectedPrice(), item.getSales(),
+                        item.getImgRes(), item.getCategory(), item.getImageUrl(), item.getDetails().toString());
+                if (store.updateCartOptions(cartEditKey, specs[specIndex], skuQty, selected)) {
+                    toast("已更新购物车");
+                    finish();
+                } else toast("商品已不在购物车中");
+            } else if (isAdd) {
                 onAddToCart();
             } else {
                 onBuyNow();
@@ -694,6 +735,13 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
 
         dialog.show();
+        llSpecs.post(() -> {
+            View scrolling = dialog.findViewById(R.id.sv_sku_options);
+            int maximum = (int)(getResources().getDisplayMetrics().heightPixels * .35f);
+            ViewGroup.LayoutParams params = scrolling.getLayoutParams();
+            params.height = Math.min(llSpecs.getMeasuredHeight(), maximum);
+            scrolling.setLayoutParams(params);
+        });
     }
 
     private void restyleSpecPills(List<TextView> pills, TextView specText) {
@@ -709,8 +757,8 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     private void onAddToCart() {
-        store.addToCart(item.getProductId(), specs[specIndex], item.getTitle(), Math.round(item.getPrice() * 100),
-                item.getImgRes(), item.getCategory(), skuQty);
+        store.addToCart(item.getProductId(), specs[specIndex], item.getTitle(), Math.round(selectedPrice() * 100),
+                item.getImgRes(), item.getCategory(), skuQty, item.getImageUrl());
         toast("已加入购物车");
         refreshCartBadge(); //不跳页就没有 onResume，得手动刷
     }
@@ -720,8 +768,9 @@ public class ProductDetailActivity extends AppCompatActivity {
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_ID, item.getProductId());
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_SKU, specs[specIndex]);
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_TITLE, item.getTitle());
-        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_PRICE_CENTS, Math.round(item.getPrice() * 100));
+        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_PRICE_CENTS, Math.round(selectedPrice() * 100));
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_IMG, item.getImgRes());
+        intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_IMAGE_URL, item.getImageUrl());
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_CAT, item.getCategory());
         intent.putExtra(OrderConfirmActivity.EXTRA_DIRECT_QTY, skuQty);
         //不 finish：付完返回还能停在这件商品上，符合电商页习惯
@@ -729,6 +778,12 @@ public class ProductDetailActivity extends AppCompatActivity {
     }
 
     //===== 小工具 =====
+
+    private double selectedPrice() {
+        org.json.JSONObject prices = item.getDetails().optJSONObject("skuOptionPrices");
+        double price = prices == null ? item.getPrice() : prices.optDouble(specs[specIndex], item.getPrice());
+        return Double.isFinite(price) && price >= 0 ? price : item.getPrice();
+    }
 
     /** 标题 hash 取正（& 0x7fffffff 而不是 Math.abs，躲开 MIN_VALUE 取反溢出），
      *  用来做「同一商品每次进来展示内容一致」的确定性伪随机 */

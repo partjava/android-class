@@ -395,13 +395,24 @@ def get_goods_list(
     category: Optional[str] = Query("全部", description="分类：全部/推荐/数码/家具/穿搭/水果/个护"),
     keyword: Optional[str] = Query(None, description="搜索关键词"),
     limit: Optional[int] = Query(30, ge=1, le=100, description="单次返回商品数量，默认30条"),
-    refresh: Optional[bool] = Query(False, description="是否穿透缓存实时换一批")
+    page: int = Query(1, ge=1, description="页码；加载更多请求下一页"),
+    refresh: Optional[bool] = Query(False, description="是否强制重新获取并清除分类分页缓存")
 ):
-    """默认获取网易严选官网在线展示商品；支持每次30件与实时换一批。"""
+    """默认获取网易严选官网商品；按页加载，每页默认30件。"""
     target_category = category if (category and category != "全部") else "推荐"
     if goods_source == "yanxuan":
         target_category = {"家居": "家具", "美食": "水果"}.get(target_category, target_category)
-    result = list(get_active_goods_catalog(target_category, limit=limit, refresh=refresh))
+    if goods_source == "yanxuan":
+        try:
+            page_data = yanxuan_catalog.list_page(target_category, page=page, limit=limit, refresh=refresh)
+        except GoodsUnavailable as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+        result, has_more = page_data['items'], page_data['has_more']
+    else:
+        available = list(get_active_goods_catalog(target_category, limit=None, refresh=refresh))
+        start = (page - 1) * limit
+        result = available[start:start + limit]
+        has_more = start + limit < len(available)
     if category and category not in ("全部", "推荐"):
         result = [g for g in result if g.get("category") == target_category]
     if keyword and keyword.strip():
@@ -421,6 +432,8 @@ def get_goods_list(
         "msg": "success",
         "data": {
             "total": len(result),
+            "page": page,
+            "has_more": has_more,
             "category": category,
             "items": result
         }
