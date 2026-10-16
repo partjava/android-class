@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 播放页黑底上的卡片底色：微亮的深灰圆角，和操作轨 0x99000000 同族 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#1A1A1A"/>
+    <corners android:radius="8dp"/>
+</shape>

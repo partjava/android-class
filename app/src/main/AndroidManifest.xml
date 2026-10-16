@@ -42,6 +42,8 @@
         <activity android:name=".ProductDetailActivity"/>
         <activity android:name=".VideoActivity"/>
         <activity android:name=".VideoDetailActivity"/>
+        <activity android:name=".AlbumActivity"/>
+        <activity android:name=".WeatherActivity" android:hardwareAccelerated="true"/>
         <activity android:name=".EditProfileActivity" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".SettingsActivity"/>
         <activity android:name=".MsgActivity"/>

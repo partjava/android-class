@@ -35,12 +35,19 @@ public class VideoDetailActivity extends AppCompatActivity {
 
     private OfflinePlayer player;
     private VideoItem currentItem;
+    private VideoAlbum album;
+    private VideoStore videoStore;
     private View rlCover;
     private FrameLayout flProgress;
     private View vProgress;
-    private ImageView ivCover, ivPlay;
-    private TextView tvDuration, tvTitle, tvMeta, tvDesc;
-    private LinearLayout llRelated;
+    private ImageView ivCover, ivPlay, ivLike, ivCollect;
+    private TextView tvDuration, tvTitle, tvMeta, tvDesc, tvLikeCount, tvCollect;
+    private LinearLayout llRelated, llDetailAlbum;
+    private View llDetailLike, llDetailCollect;
+
+    /** 收藏态读取走单线程 executor，onCreate/bindData 异步刷新按钮图标。 */
+    private final java.util.concurrent.ExecutorService stateExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private int progress = 0;
@@ -132,6 +139,14 @@ public class VideoDetailActivity extends AppCompatActivity {
         tvMeta = findViewById(R.id.tv_detail_meta);
         tvDesc = findViewById(R.id.tv_detail_desc);
         llRelated = findViewById(R.id.ll_related);
+        videoStore = new VideoStore(this);
+        ivLike = findViewById(R.id.iv_detail_like);
+        ivCollect = findViewById(R.id.iv_detail_collect);
+        tvLikeCount = findViewById(R.id.tv_detail_like_count);
+        tvCollect = findViewById(R.id.tv_detail_collect);
+        llDetailLike = findViewById(R.id.ll_detail_like);
+        llDetailCollect = findViewById(R.id.ll_detail_collect);
+        llDetailAlbum = findViewById(R.id.ll_detail_album);
     }
 
     
@@ -185,30 +200,110 @@ public class VideoDetailActivity extends AppCompatActivity {
         tvTitle.setText(title == null || title.isEmpty() ? "视频" : title);
 
         if(cover==0) cover=R.drawable.image7;
-        currentItem=new VideoItem(title==null?"光影练习":title,"离线影像课堂","00:08","本地样片",desc==null?"离线播放器课程演示":desc,cover,0,0);
+        // 优先命中目录里的完整 mock 数据（时长/播放量/点赞数），未收录的视频（如新闻流视频）走 intent 兜底
+        VideoItem catalogItem = VideoCatalog.get(this).byTitle(title);
+        currentItem = catalogItem != null ? catalogItem
+                : new VideoItem(title==null?"光影练习":title,"离线影像课堂","00:08","本地样片",desc==null?"离线播放器课程演示":desc,cover,0,0);
         tvTitle.setText(currentItem.getTitle());
+        album = VideoCatalog.get(this).albumOf(currentItem);
         org.json.JSONObject snapshot = NewsContract.snapshot(intent);
-        try { snapshot.put("detail_type",NewsContract.VIDEO); snapshot.put("content",desc); snapshot.put("info",source); snapshot.put("img",cover); } catch(Exception ignored) {}
+        try {
+            snapshot.put("detail_type",NewsContract.VIDEO); snapshot.put("content",desc); snapshot.put("info",source); snapshot.put("img",cover);
+            // 覆盖 LegacyIds 默认 id：视频快照与 feed 收藏共用 video- 前缀的稳定 id
+            snapshot.put("news_id", NewsContract.videoNewsId(currentItem.getTitle()));
+            snapshot.put("duration", currentItem.getDuration());
+            snapshot.put("play_count", currentItem.getPlayCount());
+            snapshot.put("album_id", album == null ? "" : album.getId());
+        } catch(Exception ignored) {}
         ContentStore store = new ContentStore(this);
         store.put("history",snapshot);
-        android.widget.Button save = new android.widget.Button(this);
-        String newsId=snapshot.optString("news_id");
-        save.setText(store.contains("saved",newsId)?"取消收藏":"收藏视频");
-        save.setOnClickListener(v->{if(store.contains("saved",newsId))store.remove("saved",newsId);else store.put("saved",snapshot);save.setText(store.contains("saved",newsId)?"取消收藏":"收藏视频");});
-        LinearLayout descriptionParent=(LinearLayout)tvDesc.getParent();
-        View oldSave=descriptionParent.findViewWithTag("news_save");
-        if(oldSave!=null)descriptionParent.removeView(oldSave);
-        save.setTag("news_save");descriptionParent.addView(save);
         ivCover.setImageResource(cover);
         player.setResource(currentItem.getVideoRes());
         tvDuration.setVisibility(View.VISIBLE);
-        tvDuration.setText("课程样片 · 00:08");
-        tvMeta.setText("离线影像课堂 · 无声动画样片");
+        tvDuration.setText("课程样片 · " + currentItem.getDuration());
+        // 副标题：来源 · 简介，独立视频与专辑视频共用同一版式
+        tvMeta.setText(currentItem.getSource() + " · " + (album != null ? album.getSubtitle() : "无声动画样片"));
         tvMeta.setVisibility(View.VISIBLE);
         tvDesc.setText(currentItem.getDesc());
+        renderAlbumCard();
+        renderActionsAsync();
+        bindActionClicks(store);
         play();
 
         fillRelated();
+    }
+
+    /** 点赞/收藏操作行：收藏写 SQLite（与 feed、我的页同源），点赞写 VideoStore。 */
+    private void bindActionClicks(final ContentStore store) {
+        llDetailLike.setOnClickListener(v -> {
+            boolean liked = !videoStore.isLiked(currentItem.getId());
+            videoStore.setLiked(currentItem.getId(), liked);
+            renderLikeState(liked);
+        });
+        llDetailCollect.setOnClickListener(v -> {
+            String key = NewsContract.videoNewsId(currentItem.getTitle());
+            boolean saved;
+            if (store.contains("saved", key)) {
+                store.remove("saved", key);
+                saved = false;
+            } else {
+                store.put("saved", NewsContract.videoSnapshot(currentItem, album == null ? "" : album.getId()));
+                saved = true;
+            }
+            renderCollectState(saved);
+        });
+    }
+
+    /** onCreate/bindData 异步读取持久化收藏态，动态更新按钮图标。 */
+    private void renderActionsAsync() {
+        final String key = NewsContract.videoNewsId(currentItem.getTitle());
+        final boolean liked = videoStore.isLiked(currentItem.getId());
+        stateExecutor.execute(() -> {
+            boolean collected = new ContentStore(VideoDetailActivity.this).contains("saved", key);
+            if (isDestroyed() || isFinishing()) return;
+            runOnUiThread(() -> {
+                if (isDestroyed() || isFinishing()) return;
+                renderLikeState(liked);
+                renderCollectState(collected);
+            });
+        });
+    }
+
+    private void renderLikeState(boolean liked) {
+        ivLike.setColorFilter(androidx.core.content.ContextCompat.getColor(this,
+                liked ? R.color.brand_red : R.color.text_on_dark));
+        tvLikeCount.setText(formatLikeCount(currentItem.getLikeCount() + (liked ? 1 : 0)));
+        llDetailLike.setContentDescription(liked ? "取消点赞" : "点赞");
+    }
+
+    private void renderCollectState(boolean saved) {
+        ivCollect.setColorFilter(androidx.core.content.ContextCompat.getColor(this,
+                saved ? R.color.collect_gold : R.color.text_on_dark));
+        tvCollect.setText(saved ? "已收藏" : "收藏");
+        llDetailCollect.setContentDescription(saved ? "取消收藏" : "收藏");
+    }
+
+    private String formatLikeCount(int count) {
+        return count >= 10000
+                ? String.format(java.util.Locale.CHINA, "%.1f万", count / 10000.0)
+                : String.valueOf(count);
+    }
+
+    /** 专辑归属卡：视频属于某专辑时展示，点击进入专辑页。幂等，onNewIntent 复用安全。 */
+    private void renderAlbumCard() {
+        llDetailAlbum.removeAllViews();
+        if (album == null) {
+            llDetailAlbum.setVisibility(View.GONE);
+            return;
+        }
+        llDetailAlbum.setVisibility(View.VISIBLE);
+        View card = LayoutInflater.from(this).inflate(R.layout.item_detail_album_card, llDetailAlbum, false);
+        ((ImageView) card.findViewById(R.id.iv_album_cover)).setImageResource(album.getCoverRes());
+        ((TextView) card.findViewById(R.id.tv_album_card_title)).setText(album.getTitle());
+        ((TextView) card.findViewById(R.id.tv_album_card_subtitle))
+                .setText("专辑 · 共" + album.getCount() + "集 · " + album.getUpdateInfo());
+        card.setOnClickListener(v -> AlbumActivity.start(this, album.getId()));
+        llDetailAlbum.addView(card);
     }
 
     private void togglePlay() {
@@ -263,6 +358,12 @@ public class VideoDetailActivity extends AppCompatActivity {
     
     private List<VideoItem> buildRelated() {
         List<VideoItem> list = new ArrayList<>();
+        // 专辑视频：相关推荐换成本专辑的其余各集；独立视频维持原有推荐
+        if (album != null) {
+            for (VideoItem episode : VideoCatalog.get(this).albumVideos(album.getId()))
+                if (!episode.getTitle().equals(currentItem.getTitle())) list.add(episode);
+            if (!list.isEmpty()) return list;
+        }
         list.add(new VideoItem("延时摄影记录城市从黎明到黄昏", "影像志", "04:12", "56万次播放",
                 "摄影师在城市最高处架设机位，连续拍摄十二个小时。整座城市的一天被压缩进短短几分钟。",
                 R.drawable.image7, 3200, 168));
@@ -319,9 +420,15 @@ public class VideoDetailActivity extends AppCompatActivity {
 
         handler.removeCallbacksAndMessages(null);
         player.release();
+        stateExecutor.shutdownNow();
     }
 
     private void showDoubleTapLikeHeart(float x, float y) {
+        // 双击即点赞：与操作行按钮写同一份 VideoStore 状态
+        if (currentItem != null) {
+            videoStore.setLiked(currentItem.getId(), true);
+            renderLikeState(true);
+        }
         ImageView heart = new ImageView(this);
         heart.setImageResource(R.drawable.ic_like);
         heart.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.brand_red));

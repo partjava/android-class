@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!-- ECharts 天气曲线页：由 WeatherActivity 通过 loadUrl(file:///android_asset/...) 加载，
+     Java 端在 onPageFinished 后调用 window.renderWeather(data) 注入数据。
+     WebView 关闭了网络加载（setBlockNetworkLoads），echarts.min.js 必须本地打包。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>天气曲线</title>
+<script src="echarts.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #101418; }
+  #chart { width: 100%; height: 62%; }
+  #meta { color: #8a97a3; font: 12px/1.6 sans-serif; text-align: center; padding: 4px 12px 0; }
+  #meta b { color: #e8eef4; font-size: 14px; }
+  #fallback { color: #cfd8e0; font: 14px/1.8 sans-serif; padding: 16px; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="chart"></div>
+<div id="meta"></div>
+<div id="fallback" style="display:none"></div>
+<script>
+window.renderWeather = function (data) {
+  data = data || {};
+  var days = data.days || [];
+  var meta = document.getElementById('meta');
+  meta.innerHTML = '<b>' + (data.city || '武汉') + '</b> · 未来 7 天气温曲线 · 更新于 ' + (data.updated || '--');
+
+  // echarts 缺失或数据为空时退回文字列表，页面不至于空白
+  if (typeof echarts === 'undefined' || !days.length) {
+    var box = document.getElementById('fallback');
+    var lines = days.map(function (d) {
+      return d.date + ' ' + d.week + '  ' + d.cond + '  ' + d.low + '℃ ~ ' + d.high + '℃';
+    });
+    box.textContent = lines.join('\n') || '暂无天气数据';
+    box.style.display = 'block';
+    document.getElementById('chart').style.display = 'none';
+    return;
+  }
+
+  var chart = echarts.init(document.getElementById('chart'));
+  var dates = days.map(function (d) { return d.date + '\n' + d.week + ' ' + d.cond; });
+
+  function series(name, key, colorTop, colorBottom) {
+    return {
+      name: name, type: 'line', smooth: true, symbol: 'circle', symbolSize: 7,
+      data: days.map(function (d) { return d[key]; }),
+      label: { show: true, color: colorTop, fontSize: 11, formatter: '{c}°' },
+      lineStyle: { width: 2.5, color: colorTop },
+      itemStyle: { color: colorTop, borderColor: '#101418', borderWidth: 2 },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: colorTop },
+          { offset: 1, color: colorBottom }
+        ]),
+        opacity: 0.18
+      },
+      markPoint: {
+        symbolSize: 40,
+        label: { color: '#fff', fontSize: 10 },
+        data: [
+          { type: 'max', name: '最高' },
+          { type: 'min', name: '最低' }
+        ]
+      }
+    };
+  }
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(28,34,40,0.95)',
+      borderColor: '#2c3540',
+      textStyle: { color: '#e8eef4', fontSize: 12 },
+      formatter: function (items) {
+        var d = days[items[0].dataIndex] || {};
+        return d.date + ' ' + d.week + '<br/>' + d.cond +
+               '<br/>最高 ' + d.high + '℃ · 最低 ' + d.low + '℃';
+      }
+    },
+    legend: {
+      data: ['最高气温', '最低气温'],
+      textStyle: { color: '#aebac6' },
+      top: 4
+    },
+    grid: { left: 40, right: 24, top: 44, bottom: 46 },
+    xAxis: {
+      type: 'category', boundaryGap: false, data: dates,
+      axisLine: { lineStyle: { color: '#2c3540' } },
+      axisLabel: { color: '#8a97a3', fontSize: 10, lineHeight: 16, interval: 0 },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value', min: function (v) { return Math.floor(v.min - 2); },
+      axisLabel: { color: '#8a97a3', formatter: '{value}°' },
+      splitLine: { lineStyle: { color: 'rgba(80,92,104,0.25)' } }
+    },
+    series: [
+      series('最高气温', 'high', '#ff8f5e', 'rgba(255,143,94,0)'),
+      series('最低气温', 'low', '#5aa9ff', 'rgba(90,169,255,0)')
+    ]
+  });
+
+  window.addEventListener('resize', function () { chart.resize(); });
+};
+</script>
+</body>
+</html>

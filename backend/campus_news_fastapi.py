@@ -9,6 +9,7 @@
 import os
 import re
 import time
+import datetime
 import socket
 import urllib.parse
 import requests
@@ -578,6 +579,122 @@ async def clear_cart():
         "msg": "购物车已清空",
         "data": cart_data
     }
+
+# ==============================================================================
+# 视频模块：视频 / 专辑 / 天气（演示数据，与 App 内 VideoCatalog mock 一致）
+# ==============================================================================
+
+class VideoOut(BaseModel):
+    id: str = Field(..., description="视频稳定ID")
+    title: str = Field(..., description="标题")
+    source: str = Field("", description="来源（副标题用）")
+    duration: str = Field("00:08", description="时长")
+    play_count: str = Field("本地样片", description="播放量文案")
+    desc: str = Field("", description="简介")
+    cover: str = Field("image2", description="封面 drawable 名")
+    channel: str = Field("recommend", description="所属频道 recommend/small/movie/music")
+    album_id: str = Field("", description="所属专辑ID，空为独立视频")
+    like_count: int = Field(0, description="点赞数")
+    comment_count: int = Field(0, description="评论数")
+
+class AlbumOut(BaseModel):
+    id: str = Field(..., description="专辑稳定ID")
+    title: str = Field(..., description="专辑标题")
+    subtitle: str = Field("", description="副标题")
+    update_info: str = Field("", description="更新信息")
+    cover: str = Field("image2", description="封面 drawable 名")
+    video_ids: List[str] = Field(default_factory=list, description="按集顺序的视频ID列表")
+
+class WeatherDay(BaseModel):
+    date: str = Field(..., description="日期 MM-DD")
+    week: str = Field(..., description="星期")
+    high: int = Field(..., description="最高气温℃")
+    low: int = Field(..., description="最低气温℃")
+    cond: str = Field("晴", description="天气现象")
+
+# 演示数据：20 条视频 = App VideoCatalog.seedMock() 的同源数据；
+# cover 用 drawable 名，App 端经 getIdentifier 映射本机资源。
+MOCK_VIDEOS = [
+    {"id": "v01", "title": "纪录片：大国重器是怎样炼成的", "source": "央视新闻", "duration": "12:36", "play_count": "128万次播放", "desc": "镜头走进重型装备制造车间，记录一台大型设备从零件加工到整机装配的全过程。工人师傅们在微米级的精度要求下，一遍遍测量、打磨。", "cover": "image2", "channel": "recommend", "album_id": "album-daguo", "like_count": 8600, "comment_count": 326},
+    {"id": "v02", "title": "延时摄影记录城市从黎明到黄昏", "source": "影像志", "duration": "04:12", "play_count": "56万次播放", "desc": "摄影师在城市最高处架设机位，连续拍摄十二个小时。整座城市的一天被压缩进短短几分钟。", "cover": "image7", "channel": "recommend", "album_id": "album-city", "like_count": 3200, "comment_count": 168},
+    {"id": "v03", "title": "航拍中国：从空中俯瞰大好河山", "source": "航拍视角", "duration": "08:45", "play_count": "92万次播放", "desc": "镜头掠过奔腾的江河、金黄的麦田和错落的村落，山川河流呈现出与地面完全不同的壮阔面貌。", "cover": "image5", "channel": "recommend", "album_id": "album-daguo", "like_count": 5400, "comment_count": 271},
+    {"id": "v04", "title": "实拍：消防员火场逆行救人全过程", "source": "现场实录", "duration": "06:03", "play_count": "213万次播放", "desc": "浓烟从窗口不断涌出。消防员沿着楼道逐层搜救，在五楼卧室内找到一名被困老人，背起老人沿原路撤离，整个过程不到六分钟。", "cover": "img4", "channel": "recommend", "album_id": "album-daguo", "like_count": 9600, "comment_count": 412},
+    {"id": "v05", "title": "街头采访：你理想中的生活是什么样的", "source": "城市观察", "duration": "09:28", "play_count": "34万次播放", "desc": "记者在街头随机采访了二十位路人。答案各不相同，但大多朴素而具体。", "cover": "image8", "channel": "recommend", "album_id": "album-city", "like_count": 2100, "comment_count": 486},
+    {"id": "v06", "title": "萌宠日常：猫咪第一次见到雪的反应", "source": "萌宠日记", "duration": "00:15", "play_count": "320万次播放", "desc": "第一次见到雪的猫咪先是愣在原地，随后小心翼翼地伸出一只爪子试探，最后还是忍不住扑了进去。", "cover": "image5", "channel": "small", "album_id": "", "like_count": 9800, "comment_count": 356},
+    {"id": "v07", "title": "一分钟学会三道家常菜，新手零失败", "source": "厨房小窍门", "duration": "00:58", "play_count": "88万次播放", "desc": "西红柿炒蛋、蒜蓉青菜、可乐鸡翅，三步一步不落，照着做就行。", "cover": "img4", "channel": "small", "album_id": "", "like_count": 4200, "comment_count": 512},
+    {"id": "v08", "title": "手艺人用木头做出会走的小机器人", "source": "手工达人", "duration": "00:42", "play_count": "156万次播放", "desc": "全程不用一颗钉子、一滴胶水，所有零件靠榫卯咬合。上紧发条后，机器人能稳稳走上好几米。", "cover": "image7", "channel": "small", "album_id": "", "like_count": 7300, "comment_count": 289},
+    {"id": "v09", "title": "街头钢琴：路人即兴弹奏惊艳全场", "source": "街头艺术", "duration": "00:33", "play_count": "271万次播放", "desc": "琴键摆在广场中央，谁都可以坐下来弹一段。这位路人坐下后，围观的人群渐渐安静了。", "cover": "image8", "channel": "small", "album_id": "album-city", "like_count": 8900, "comment_count": 401},
+    {"id": "v10", "title": "慢镜头：雨天窗外的十分钟", "source": "慢镜头", "duration": "00:21", "play_count": "19万次播放", "desc": "雨滴砸在玻璃上，慢慢汇成一道道水痕。没有旁白，只有雨声。", "cover": "image2", "channel": "small", "album_id": "", "like_count": 1200, "comment_count": 87},
+    {"id": "v11", "title": "话剧《茶馆》复排上演 幕后纪录", "source": "戏剧观察", "duration": "15:20", "play_count": "45万次播放", "desc": "本轮复排保留了经典版本的结构，同时在舞台呈现上做了新的尝试。镜头跟拍排练厅里的两个月。", "cover": "image6", "channel": "movie", "album_id": "", "like_count": 2600, "comment_count": 143},
+    {"id": "v12", "title": "电影幕后：一场雨戏是怎么拍出来的", "source": "影视工业", "duration": "11:08", "play_count": "67万次播放", "desc": "洒水车、灯光组、摄影机轨道，一场看起来只有两分钟的雨戏，背后是四十多人的配合。", "cover": "image2", "channel": "movie", "album_id": "", "like_count": 3400, "comment_count": 197},
+    {"id": "v13", "title": "老片修复：让经典重新清晰起来", "source": "电影资料馆", "duration": "18:33", "play_count": "28万次播放", "desc": "修复师逐帧处理划痕和噪点，一部两小时的老电影往往需要几个月才能完成。", "cover": "image8", "channel": "movie", "album_id": "", "like_count": 1800, "comment_count": 96},
+    {"id": "v14", "title": "配音演员现场：一个人配出整部剧", "source": "声音工坊", "duration": "07:56", "play_count": "103万次播放", "desc": "同一个人的声音在不同角色之间来回切换，录音棚外的观众听得目瞪口呆。", "cover": "img4", "channel": "movie", "album_id": "", "like_count": 6700, "comment_count": 318},
+    {"id": "v15", "title": "经典配乐赏析：旋律如何讲故事", "source": "电影音乐", "duration": "13:14", "play_count": "39万次播放", "desc": "从主题动机到配器选择，拆解几段耳熟能详的旋律是怎么把情绪推上去的。", "cover": "image5", "channel": "movie", "album_id": "", "like_count": 2300, "comment_count": 152},
+    {"id": "v16", "title": "国风音乐盛典：传统乐器演绎流行金曲", "source": "音乐现场", "duration": "22:41", "play_count": "74万次播放", "desc": "古筝、琵琶、笛箫与现代编曲结合，重新演绎了多首流行歌曲。熟悉的旋律换一种方式演奏，别有一番味道。", "cover": "image7", "channel": "music", "album_id": "", "like_count": 4800, "comment_count": 236},
+    {"id": "v17", "title": "民谣现场：一把吉他唱完整个夏天", "source": "livehouse", "duration": "05:37", "play_count": "51万次播放", "desc": "小小的场地里挤满了人，唱到副歌时全场跟着一起哼。", "cover": "image5", "channel": "music", "album_id": "", "like_count": 2900, "comment_count": 174},
+    {"id": "v18", "title": "交响乐团排练直击：指挥到底在说什么", "source": "古典频道", "duration": "09:02", "play_count": "22万次播放", "desc": "排练时指挥不断叫停，一遍遍调整某个声部的力度和进入时机。", "cover": "image6", "channel": "music", "album_id": "", "like_count": 1500, "comment_count": 118},
+    {"id": "v19", "title": "草原上的长调：一个人的合唱", "source": "民歌采集", "duration": "06:48", "play_count": "18万次播放", "desc": "老人在空旷的草原上唱起长调，声音传得很远。录音师说，这种唱法已经很少有人会了。", "cover": "image2", "channel": "music", "album_id": "", "like_count": 940, "comment_count": 63},
+    {"id": "v20", "title": "深夜电台：城市入睡之后的声音", "source": "声音志", "duration": "28:15", "play_count": "63万次播放", "desc": "凌晨两点的便利店、收摊的夜市、最后一班公交，把这些声音拼在一起，就是一座城市的深夜。", "cover": "image8", "channel": "music", "album_id": "", "like_count": 3600, "comment_count": 208},
+]
+
+MOCK_ALBUMS = [
+    {"id": "album-daguo", "title": "大国重器系列", "subtitle": "硬核制造现场实录", "update_info": "每周五更新", "cover": "image2", "video_ids": ["v01", "v03", "v04"]},
+    {"id": "album-city", "title": "城市影像志", "subtitle": "用镜头记录城市的一天", "update_info": "已完结", "cover": "image7", "video_ids": ["v02", "v05", "v09"]},
+]
+
+
+def _video_out(row: dict) -> dict:
+    return {key: row.get(key, "") for key in
+            ("id", "title", "source", "duration", "play_count", "desc", "cover", "channel", "album_id", "like_count", "comment_count")}
+
+
+@app.get("/api/v1/videos", summary="获取视频列表 (GET)", tags=["视频模块"])
+async def get_videos(
+    channel: Optional[str] = Query(None, description="频道筛选 recommend/small/movie/music，缺省返回全部")
+):
+    """返回视频列表（演示数据），App 拉取失败时回落本地 mock"""
+    rows = [v for v in MOCK_VIDEOS if channel in (None, "", v["channel"])]
+    return ApiResponse(code=200, msg="success", data={"videos": [_video_out(v) for v in rows]})
+
+
+@app.get("/api/v1/albums", summary="获取专辑列表 (GET)", tags=["视频模块"])
+async def get_albums():
+    """返回全部视频专辑（专题），含按集顺序的视频ID"""
+    return ApiResponse(code=200, msg="success", data={"albums": MOCK_ALBUMS})
+
+
+@app.get("/api/v1/albums/{album_id}", summary="获取专辑详情（含全集视频）", tags=["视频模块"])
+async def get_album_detail(album_id: str = Path(..., description="专辑ID，如 album-daguo")):
+    album = next((a for a in MOCK_ALBUMS if a["id"] == album_id), None)
+    if album is None:
+        return ApiResponse(code=404, msg="专辑不存在", data=None)
+    episodes = [_video_out(v) for v in MOCK_VIDEOS if v["id"] in album["video_ids"]]
+    episodes.sort(key=lambda v: album["video_ids"].index(v["id"]))
+    return ApiResponse(code=200, msg="success", data={"album": album, "videos": episodes})
+
+
+def _weather_mock(city: str) -> dict:
+    """7 日演示天气：从今天起算，晴/多云/阴/小雨轮换"""
+    conditions = ["晴", "多云", "阴", "小雨"]
+    weeks = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+    today = datetime.date.today()
+    days = []
+    for i in range(7):
+        day = today + datetime.timedelta(days=i)
+        days.append({
+            "date": day.strftime("%m-%d"),
+            "week": "今天" if i == 0 else weeks[day.weekday()],
+            "high": 22 + (i * 3) % 4,
+            "low": 9 + (i * 2) % 8,
+            "cond": conditions[i % len(conditions)],
+        })
+    return {"city": city, "updated": today.strftime("%m-%d %H:%M"), "days": days}
+
+
+@app.get("/api/v1/weather", summary="7日天气曲线数据（演示数据）", tags=["天气模块"])
+async def get_weather(city: str = Query("武汉", description="城市名，演示数据不区分城市")):
+    """ECharts 天气曲线数据源；App 端拉取失败时使用内置 mock"""
+    return ApiResponse(code=200, msg="success", data=_weather_mock(city))
 
 # ==============================================================================
 # 兼容接口：图片中继与官网页面

@@ -104,10 +104,15 @@ public class VideoFragment extends PageFragment {
     }
 
     private void initVideoData() {
-        channelData.add(buildRecommend());
-        channelData.add(buildSmall());
-        channelData.add(buildMovie());
-        channelData.add(buildMusic());
+        // 频道数据统一来自 VideoCatalog（mock 种子或上次接口缓存）。
+        // 目录列表构造后引用稳定：接口刷新只写缓存、下次启动生效，
+        // 这里不做会话内重建（ViewPager2 分页与 feed 适配器持有同一实例）。
+        VideoCatalog catalog = VideoCatalog.get(requireContext());
+        channelData.add(catalog.recommend());
+        channelData.add(catalog.small());
+        channelData.add(catalog.movie());
+        channelData.add(catalog.music());
+        catalog.refreshAsync(requireContext(), null);
 
         VideoAdapter.OnItemClickListener openDetail = item -> {
             Intent intent = new Intent(requireContext(), VideoDetailActivity.class);
@@ -139,86 +144,6 @@ public class VideoFragment extends PageFragment {
                 applyChrome(Math.max(0f, Math.min(1f, t)));
             }
         });
-    }
-
-    private List<VideoItem> buildRecommend() {
-        List<VideoItem> list = new ArrayList<>();
-        list.add(new VideoItem("纪录片：大国重器是怎样炼成的", "央视新闻", "12:36", "128万次播放",
-                "镜头走进重型装备制造车间，记录一台大型设备从零件加工到整机装配的全过程。工人师傅们在微米级的精度要求下，一遍遍测量、打磨。",
-                R.drawable.image2, 8600, 326));
-        list.add(new VideoItem("延时摄影记录城市从黎明到黄昏", "影像志", "04:12", "56万次播放",
-                "摄影师在城市最高处架设机位，连续拍摄十二个小时。整座城市的一天被压缩进短短几分钟。",
-                R.drawable.image7, 3200, 168));
-        list.add(new VideoItem("航拍中国：从空中俯瞰大好河山", "航拍视角", "08:45", "92万次播放",
-                "镜头掠过奔腾的江河、金黄的麦田和错落的村落，山川河流呈现出与地面完全不同的壮阔面貌。",
-                R.drawable.image5, 5400, 271));
-        list.add(new VideoItem("实拍：消防员火场逆行救人全过程", "现场实录", "06:03", "213万次播放",
-                "浓烟从窗口不断涌出。消防员沿着楼道逐层搜救，在五楼卧室内找到一名被困老人，背起老人沿原路撤离，整个过程不到六分钟。",
-                R.drawable.img4, 9600, 412));
-        list.add(new VideoItem("街头采访：你理想中的生活是什么样的", "城市观察", "09:28", "34万次播放",
-                "记者在街头随机采访了二十位路人。答案各不相同，但大多朴素而具体。",
-                R.drawable.image8, 2100, 486));
-        return list;
-    }
-
-    private List<VideoItem> buildSmall() {
-        List<VideoItem> list = new ArrayList<>();
-        list.add(new VideoItem("萌宠日常：猫咪第一次见到雪的反应", "萌宠日记", "00:15", "320万次播放",
-                "第一次见到雪的猫咪先是愣在原地，随后小心翼翼地伸出一只爪子试探，最后还是忍不住扑了进去。",
-                R.drawable.image5, 9800, 356));
-        list.add(new VideoItem("一分钟学会三道家常菜，新手零失败", "厨房小窍门", "00:58", "88万次播放",
-                "西红柿炒蛋、蒜蓉青菜、可乐鸡翅，三步一步不落，照着做就行。",
-                R.drawable.img4, 4200, 512));
-        list.add(new VideoItem("手艺人用木头做出会走的小机器人", "手工达人", "00:42", "156万次播放",
-                "全程不用一颗钉子、一滴胶水，所有零件靠榫卯咬合。上紧发条后，机器人能稳稳走上好几米。",
-                R.drawable.image7, 7300, 289));
-        list.add(new VideoItem("街头钢琴：路人即兴弹奏惊艳全场", "街头艺术", "00:33", "271万次播放",
-                "琴键摆在广场中央，谁都可以坐下来弹一段。这位路人坐下后，围观的人群渐渐安静了。",
-                R.drawable.image8, 8900, 401));
-        list.add(new VideoItem("慢镜头：雨天窗外的十分钟", "慢镜头", "00:21", "19万次播放",
-                "雨滴砸在玻璃上，慢慢汇成一道道水痕。没有旁白，只有雨声。",
-                R.drawable.image2, 1200, 87));
-        return list;
-    }
-
-    private List<VideoItem> buildMovie() {
-        List<VideoItem> list = new ArrayList<>();
-        list.add(new VideoItem("话剧《茶馆》复排上演 幕后纪录", "戏剧观察", "15:20", "45万次播放",
-                "本轮复排保留了经典版本的结构，同时在舞台呈现上做了新的尝试。镜头跟拍排练厅里的两个月。",
-                R.drawable.image6, 2600, 143));
-        list.add(new VideoItem("电影幕后：一场雨戏是怎么拍出来的", "影视工业", "11:08", "67万次播放",
-                "洒水车、灯光组、摄影机轨道，一场看起来只有两分钟的雨戏，背后是四十多人的配合。",
-                R.drawable.image2, 3400, 197));
-        list.add(new VideoItem("老片修复：让经典重新清晰起来", "电影资料馆", "18:33", "28万次播放",
-                "修复师逐帧处理划痕和噪点，一部两小时的老电影往往需要几个月才能完成。",
-                R.drawable.image8, 1800, 96));
-        list.add(new VideoItem("配音演员现场：一个人配出整部剧", "声音工坊", "07:56", "103万次播放",
-                "同一个人的声音在不同角色之间来回切换，录音棚外的观众听得目瞪口呆。",
-                R.drawable.img4, 6700, 318));
-        list.add(new VideoItem("经典配乐赏析：旋律如何讲故事", "电影音乐", "13:14", "39万次播放",
-                "从主题动机到配器选择，拆解几段耳熟能详的旋律是怎么把情绪推上去的。",
-                R.drawable.image5, 2300, 152));
-        return list;
-    }
-
-    private List<VideoItem> buildMusic() {
-        List<VideoItem> list = new ArrayList<>();
-        list.add(new VideoItem("国风音乐盛典：传统乐器演绎流行金曲", "音乐现场", "22:41", "74万次播放",
-                "古筝、琵琶、笛箫与现代编曲结合，重新演绎了多首流行歌曲。熟悉的旋律换一种方式演奏，别有一番味道。",
-                R.drawable.image7, 4800, 236));
-        list.add(new VideoItem("民谣现场：一把吉他唱完整个夏天", "livehouse", "05:37", "51万次播放",
-                "小小的场地里挤满了人，唱到副歌时全场跟着一起哼。",
-                R.drawable.image5, 2900, 174));
-        list.add(new VideoItem("交响乐团排练直击：指挥到底在说什么", "古典频道", "09:02", "22万次播放",
-                "排练时指挥不断叫停，一遍遍调整某个声部的力度和进入时机。",
-                R.drawable.image6, 1500, 118));
-        list.add(new VideoItem("草原上的长调：一个人的合唱", "民歌采集", "06:48", "18万次播放",
-                "老人在空旷的草原上唱起长调，声音传得很远。录音师说，这种唱法已经很少有人会了。",
-                R.drawable.image2, 940, 63));
-        list.add(new VideoItem("深夜电台：城市入睡之后的声音", "声音志", "28:15", "63万次播放",
-                "凌晨两点的便利店、收摊的夜市、最后一班公交，把这些声音拼在一起，就是一座城市的深夜。",
-                R.drawable.image8, 3600, 208));
-        return list;
     }
 
     private void setupTabs() {

@@ -134,6 +134,7 @@ public class HomeFragment extends PageFragment {
         });
         findViewById(R.id.qc_quick_guide).setOnClickListener(v -> CampusGuideActivity.start(requireContext()));
         findViewById(R.id.qc_quick_scene).setOnClickListener(v -> startActivity(new android.content.Intent(requireContext(), CampusSceneActivity.class)));
+        findViewById(R.id.qc_quick_weather).setOnClickListener(v -> startActivity(new android.content.Intent(requireContext(), WeatherActivity.class)));
 
         String restoreChannelId = savedInstanceState == null ? selectedChannelId : savedInstanceState.getString("channel_id", selectedChannelId);
         String query = savedInstanceState == null ? savedQuery : savedInstanceState.getString("query", "");

@@ -35,6 +35,7 @@
     <color name="bg_player">#000000</color>
     <color name="text_on_dark">#FFFFFF</color>
     <color name="text_on_dark_secondary">#CCCCCC</color>
+    <color name="collect_gold">#FFCC55</color>
     <color name="divider_on_dark">#1FFFFFFF</color>
     <color name="press_on_dark">#1FFFFFFF</color>
     <color name="progress_track">#99000000</color>

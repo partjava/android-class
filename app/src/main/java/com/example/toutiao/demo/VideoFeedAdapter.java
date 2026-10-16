@@ -1,6 +1,7 @@
 package com.example.toutiao.demo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.Handler;
 import android.os.Looper;
@@ -46,8 +47,9 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
 
     private boolean active;
 
-    
+
     private VideoStore store;
+    private ContentStore contentStore;
     private boolean hostResumed = true;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -123,6 +125,7 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
         if (attachedRv == rv) return;   //同一个 RV，不重装（见类注释）
         attachedRv = rv;
         store = new VideoStore(rv.getContext());
+        contentStore = new ContentStore(rv.getContext());
 
         rv.setLayoutManager(new LinearLayoutManager(rv.getContext(),
                 RecyclerView.VERTICAL, false));
@@ -275,6 +278,7 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
         final ImageView ivCollect;
         final ImageView ivShare;
         final ImageView ivLikeBurst;
+        final View llInfo;
 
         FeedHolder(@NonNull View itemView) {
             super(itemView);
@@ -287,6 +291,7 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
             tvPlay = itemView.findViewById(R.id.tv_full_play);
             flProgress = itemView.findViewById(R.id.fl_full_progress);
             vProgress = itemView.findViewById(R.id.v_full_progress);
+            llInfo = itemView.findViewById(R.id.ll_full_info);
 
             tvAvatar = itemView.findViewById(R.id.tv_full_avatar);
             ivFollow = itemView.findViewById(R.id.iv_full_follow);
@@ -344,6 +349,21 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
     private void bindRail(FeedHolder holder) {
         final Context context = holder.itemView.getContext();
 
+        // 标题信息区点击 → 视频详情页（播放页外可查看专辑信息/点赞收藏状态）
+        holder.llInfo.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos == RecyclerView.NO_POSITION) return;
+            VideoItem item = data.get(pos);
+            Intent intent = new Intent(context, VideoDetailActivity.class);
+            intent.putExtra(VideoDetailActivity.EXTRA_TITLE, item.getTitle());
+            intent.putExtra(VideoDetailActivity.EXTRA_SOURCE, item.getSource());
+            intent.putExtra(VideoDetailActivity.EXTRA_DURATION, item.getDuration());
+            intent.putExtra(VideoDetailActivity.EXTRA_PLAY_COUNT, item.getPlayCount());
+            intent.putExtra(VideoDetailActivity.EXTRA_DESC, item.getDesc());
+            intent.putExtra(VideoDetailActivity.EXTRA_COVER, item.getCoverRes());
+            context.startActivity(intent);
+        });
+
         holder.ivLike.setOnClickListener(v -> {
             int pos = holder.getAdapterPosition();
             if (pos == RecyclerView.NO_POSITION) return;
@@ -356,7 +376,12 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
         });
         holder.ivCollect.setOnClickListener(v -> {
             int pos=holder.getAdapterPosition(); if(pos==RecyclerView.NO_POSITION)return;
-            String id=data.get(pos).getId();store.setCollected(id,!store.isCollected(id));renderCollection(holder,pos);
+            VideoItem item=data.get(pos);
+            // 收藏统一写 SQLite（saved 表），与详情页/我的页共用同一份记录
+            if(contentStore.contains("saved",collectKey(item)))
+                contentStore.remove("saved",collectKey(item));
+            else contentStore.put("saved",NewsContract.videoSnapshot(item,VideoCatalog.get(context).albumIdOf(item)));
+            renderCollection(holder,holder.getAdapterPosition());
         });
         holder.ivShare.setOnClickListener(v -> {int pos=holder.getAdapterPosition();if(pos!=RecyclerView.NO_POSITION)VideoActions.share(context,data.get(pos));});
         holder.ivFollow.setOnClickListener(v -> {
@@ -428,8 +453,13 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
         h.ivFollow.setAlpha(store.isFollowing()?0.55f:1f);
         h.ivFollow.setContentDescription(store.isFollowing()?"取消关注":"关注离线影像课堂");
     }
+    /** 收藏钥匙与快照 news_id 同源，feed/详情/我的页读到同一份 SQLite 记录。 */
+    private String collectKey(VideoItem item) {
+        return NewsContract.videoNewsId(item.getTitle());
+    }
+
     private void renderCollection(FeedHolder h,int pos) {
-        boolean saved=store.isCollected(data.get(pos).getId());
+        boolean saved=contentStore!=null && contentStore.contains("saved",collectKey(data.get(pos)));
         h.ivCollect.setImageTintList(ColorStateList.valueOf(saved?0xffffcc55:android.graphics.Color.WHITE));
         h.ivCollect.setContentDescription(saved?"取消收藏":"收藏");
     }

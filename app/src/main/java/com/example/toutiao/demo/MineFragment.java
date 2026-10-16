@@ -283,6 +283,11 @@ public class MineFragment extends PageFragment {
             if (interactionVideos.isCollected(video.getId())) savedCount++;
             if (interactionVideos.isLiked(video.getId())) likedCount++;
         }
+        // feed/详情页点赞的视频也计入"赞过"（与 renderLikesList 同口径）
+        VideoCatalog likedCatalog = VideoCatalog.get(c);
+        for (List<VideoItem> channel : new List[]{likedCatalog.recommend(), likedCatalog.small(), likedCatalog.movie(), likedCatalog.music()})
+            for (VideoItem video : channel)
+                if (interactionVideos.isLiked(video.getId())) likedCount++;
         tvCollectTab.setText("收藏（" + savedCount + "）");
         tvLikeTab.setText("赞过（" + likedCount + "）");
 
@@ -379,33 +384,48 @@ public class MineFragment extends PageFragment {
 
     private void renderCollectionsList() {
         ContentStore store = new ContentStore(requireContext());
-        JSONArray savedArticles = store.list("saved");
+        JSONArray saved = store.list("saved");
+
+        // saved 表里文章/视频/专辑共存，按 detail_type 分组展示
+        List<JSONObject> videoRows = new ArrayList<>();
+        List<JSONObject> albumRows = new ArrayList<>();
+        List<JSONObject> articleRows = new ArrayList<>();
+        for (int i = 0; i < saved.length(); i++) {
+            JSONObject row = saved.optJSONObject(i);
+            if (row == null) continue;
+            String detail = row.optString("detail_type");
+            if (NewsContract.VIDEO.equals(detail)) videoRows.add(row);
+            else if (NewsContract.ALBUM.equals(detail)) albumRows.add(row);
+            else articleRows.add(row);
+        }
 
         VideoStore videoStore = new VideoStore(requireContext());
-        List<VideoItem> savedVideos = new ArrayList<>();
+        List<VideoItem> savedSelfVideos = new ArrayList<>();
         for (VideoItem v : userVideos) {
             if (videoStore.isCollected(v.getId())) {
-                savedVideos.add(v);
+                savedSelfVideos.add(v);
             }
         }
 
-        int totalCount = savedArticles.length() + savedVideos.size();
+        int totalCount = videoRows.size() + albumRows.size() + articleRows.size() + savedSelfVideos.size();
         tvWorksCount.setText(totalCount + "个收藏");
 
         if (totalCount == 0) {
-            addEmptyView(llWorksContainer, "暂无收藏内容，去首页收藏精彩资讯吧～");
+            addEmptyView(llWorksContainer, "暂无收藏内容，去首页收藏精彩资讯和视频吧～");
             return;
         }
 
-        for (VideoItem v : savedVideos) {
+        for (VideoItem v : savedSelfVideos) {
             llWorksContainer.addView(createVideoCard(v));
         }
-
-        for (int i = 0; i < savedArticles.length(); i++) {
-            JSONObject art = savedArticles.optJSONObject(i);
-            if (art != null) {
-                llWorksContainer.addView(createArticleCard(art));
-            }
+        for (JSONObject row : albumRows) {
+            llWorksContainer.addView(createAlbumCard(row));
+        }
+        for (JSONObject row : videoRows) {
+            llWorksContainer.addView(createSnapshotVideoCard(row));
+        }
+        for (JSONObject art : articleRows) {
+            llWorksContainer.addView(createArticleCard(art));
         }
     }
 
@@ -417,14 +437,22 @@ public class MineFragment extends PageFragment {
                 likedVideos.add(v);
             }
         }
+        // feed/详情页点赞也存在 VideoStore（按视频 id），遍历目录补全
+        VideoCatalog catalog = VideoCatalog.get(requireContext());
+        List<VideoItem> likedFeedVideos = new ArrayList<>();
+        for (List<VideoItem> channel : new List[]{catalog.recommend(), catalog.small(), catalog.movie(), catalog.music()})
+            for (VideoItem v : channel)
+                if (videoStore.isLiked(v.getId())) likedFeedVideos.add(v);
+
         JSONArray likedArticles = new ContentStore(requireContext()).likedArticles();
-        int total = likedVideos.size() + likedArticles.length();
+        int total = likedVideos.size() + likedFeedVideos.size() + likedArticles.length();
         tvWorksCount.setText(total + "个赞过内容");
         if (total == 0) {
             addEmptyView(llWorksContainer, "暂无赞过的内容，去首页为校园资讯点赞吧～");
             return;
         }
         for (VideoItem v : likedVideos) llWorksContainer.addView(createVideoCard(v));
+        for (VideoItem v : likedFeedVideos) llWorksContainer.addView(createSnapshotVideoCard(NewsContract.videoSnapshot(v, catalog.albumIdOf(v)), "赞过视频"));
         for (int i = 0; i < likedArticles.length(); i++) {
             JSONObject article = likedArticles.optJSONObject(i);
             if (article != null) llWorksContainer.addView(createArticleCard(article));
@@ -432,6 +460,45 @@ public class MineFragment extends PageFragment {
     }
 
     private View createVideoCard(VideoItem item) {
+        // 点击直接播放此视频，不跳走导航
+        return createVideoCard(item.getTitle(), "自制视频", item.getDuration(), item.getPlayCount(),
+                item.getCoverRes(), v -> {
+                    Intent intent = new Intent(requireContext(), VideoDetailActivity.class);
+                    intent.putExtra(VideoDetailActivity.EXTRA_TITLE, item.getTitle());
+                    intent.putExtra(VideoDetailActivity.EXTRA_SOURCE, item.getSource());
+                    intent.putExtra(VideoDetailActivity.EXTRA_DURATION, item.getDuration());
+                    intent.putExtra(VideoDetailActivity.EXTRA_PLAY_COUNT, item.getPlayCount());
+                    intent.putExtra(VideoDetailActivity.EXTRA_DESC, item.getDesc());
+                    intent.putExtra(VideoDetailActivity.EXTRA_COVER, item.getCoverRes());
+                    startActivity(intent);
+                });
+    }
+
+    /** 收藏列表里的视频快照卡：直接用 saved 表的 JSON 行回看详情。 */
+    private View createSnapshotVideoCard(JSONObject row) {
+        return createSnapshotVideoCard(row, "收藏视频");
+    }
+
+    /** 赞过等场景可自定义来源行标签。 */
+    private View createSnapshotVideoCard(JSONObject row, String label) {
+        return createVideoCard(row.optString("title"), label, row.optString("duration", "00:08"),
+                row.optString("play_count", "本地样片"), row.optInt("img", 0),
+                v -> startActivity(NewsContract.intent(requireContext(), row)));
+    }
+
+    /** 收藏列表里的专辑卡：来源行标注"专辑"，点击进入专辑页回看。 */
+    private View createAlbumCard(JSONObject row) {
+        return createVideoCard(row.optString("title"),
+                "专辑 · " + row.optString("info", "视频专辑"),
+                "共" + row.optInt("album_count", 0) + "集",
+                row.optString("update_info", ""),
+                row.optInt("img", 0),
+                v -> startActivity(NewsContract.intent(requireContext(), row)));
+    }
+
+    /** 视频卡通用骨架：封面+时长标签 | 标题+来源行。作品/收藏/赞过三处共用。 */
+    private View createVideoCard(String titleText, String statsText, String durationText,
+                                 String badgeText, int coverRes, View.OnClickListener onClick) {
         Context c = requireContext();
         LinearLayout row = new LinearLayout(c);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -455,7 +522,7 @@ public class MineFragment extends PageFragment {
         cover.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        cover.setImageResource(item.getCoverRes());
+        if (coverRes != 0) cover.setImageResource(coverRes);
         thumbBox.addView(cover);
 
         ImageView playIcon = new ImageView(c);
@@ -473,7 +540,7 @@ public class MineFragment extends PageFragment {
         durLp.rightMargin = dp(4);
         durLp.bottomMargin = dp(4);
         duration.setLayoutParams(durLp);
-        duration.setText(item.getDuration());
+        duration.setText(durationText);
         duration.setTextColor(Color.WHITE);
         duration.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         duration.setPadding(dp(4), dp(1), dp(4), dp(1));
@@ -490,7 +557,7 @@ public class MineFragment extends PageFragment {
         infoBox.setLayoutParams(infoLp);
 
         TextView title = new TextView(c);
-        title.setText(item.getTitle());
+        title.setText(titleText);
         title.setTextColor(ContextCompat.getColor(c, R.color.text_primary));
         title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         title.setTypeface(null, Typeface.BOLD);
@@ -499,7 +566,7 @@ public class MineFragment extends PageFragment {
         infoBox.addView(title);
 
         TextView stats = new TextView(c);
-        stats.setText("自制视频 · " + item.getPlayCount());
+        stats.setText(statsText + (badgeText == null || badgeText.isEmpty() ? "" : " · " + badgeText));
         stats.setTextColor(ContextCompat.getColor(c, R.color.text_tertiary));
         stats.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         LinearLayout.LayoutParams statsLp = new LinearLayout.LayoutParams(
@@ -510,17 +577,7 @@ public class MineFragment extends PageFragment {
 
         row.addView(infoBox);
 
-        // 点击直接播放此视频，不跳走导航
-        row.setOnClickListener(v -> {
-            Intent intent = new Intent(requireContext(), VideoDetailActivity.class);
-            intent.putExtra(VideoDetailActivity.EXTRA_TITLE, item.getTitle());
-            intent.putExtra(VideoDetailActivity.EXTRA_SOURCE, item.getSource());
-            intent.putExtra(VideoDetailActivity.EXTRA_DURATION, item.getDuration());
-            intent.putExtra(VideoDetailActivity.EXTRA_PLAY_COUNT, item.getPlayCount());
-            intent.putExtra(VideoDetailActivity.EXTRA_DESC, item.getDesc());
-            intent.putExtra(VideoDetailActivity.EXTRA_COVER, item.getCoverRes());
-            startActivity(intent);
-        });
+        row.setOnClickListener(onClick);
 
         return row;
     }

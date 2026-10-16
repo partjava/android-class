@@ -109,6 +109,72 @@
                     style="@style/Widget.Toutiao.Divider.OnDark"
                     android:layout_marginTop="@dimen/space_l"/>
 
+                <LinearLayout
+                    android:id="@+id/ll_detail_actions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_s"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:id="@+id/ll_detail_like"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:paddingVertical="@dimen/space_s"
+                        android:background="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/iv_detail_like"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_like"
+                            android:contentDescription="点赞"/>
+
+                        <TextView
+                            android:id="@+id/tv_detail_like_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_xs"
+                            android:textColor="@color/text_on_dark"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/ll_detail_collect"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:paddingVertical="@dimen/space_s"
+                        android:background="?attr/selectableItemBackgroundBorderless">
+
+                        <ImageView
+                            android:id="@+id/iv_detail_collect"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:src="@drawable/ic_collect"
+                            android:contentDescription="收藏"/>
+
+                        <TextView
+                            android:id="@+id/tv_detail_collect"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_xs"
+                            android:text="收藏"
+                            android:textColor="@color/text_on_dark"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    style="@style/Widget.Toutiao.Divider.OnDark"
+                    android:layout_marginTop="@dimen/space_s"/>
+
                 <TextView
                     android:id="@+id/tv_detail_desc"
                     android:layout_width="match_parent"
@@ -121,6 +187,14 @@
                 <View
                     style="@style/Widget.Toutiao.Divider.OnDark"
                     android:layout_marginTop="@dimen/space_l"/>
+
+                <LinearLayout
+                    android:id="@+id/ll_detail_album"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_l"
+                    android:orientation="vertical"
+                    android:visibility="gone"/>
 
                 <TextView
                     style="@style/Widget.Toutiao.SectionTitle.OnDark"

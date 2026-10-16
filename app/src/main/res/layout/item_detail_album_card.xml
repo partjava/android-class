@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 播放页内的专辑（专题）卡片：封面 + 标题 + 副标题/集数，点击进入专辑页 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="@dimen/space_m"
+    android:background="@drawable/bg_video_dark_card">
+
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="48dp">
+
+        <ImageView
+            android:id="@+id/iv_album_cover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="专辑封面"/>
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_topic"
+            android:contentDescription="专辑标记"/>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="@dimen/space_m"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_album_card_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/text_on_dark"
+            android:textStyle="bold"
+            android:textSize="@dimen/text_body"/>
+
+        <TextView
+            android:id="@+id/tv_album_card_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/text_tertiary"
+            android:textSize="@dimen/text_caption"/>
+    </LinearLayout>
+
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_back"
+        android:rotation="180"
+        android:contentDescription="进入专辑"/>
+</LinearLayout>

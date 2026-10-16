@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 专辑（专题）页：头图 + 标题/副标题 + 收藏 + 本专辑全部视频 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_album"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_player">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp">
+
+                    <ImageView
+                        android:id="@+id/iv_album_header"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:contentDescription="专辑封面"/>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="@dimen/page_padding"
+                    android:paddingTop="@dimen/space_l"
+                    android:paddingBottom="@dimen/space_xl">
+
+                    <TextView
+                        android:id="@+id/tv_album_title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_headline"
+                        android:textColor="@color/text_on_dark"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tv_album_subtitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_s"
+                        android:textSize="@dimen/text_body_small"
+                        android:textColor="@color/text_tertiary"/>
+
+                    <LinearLayout
+                        android:id="@+id/ll_album_collect"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginTop="@dimen/space_m"
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:background="@drawable/bg_video_dark_card"
+                        android:backgroundTint="#2A2A2A">
+
+                        <ImageView
+                            android:id="@+id/iv_album_collect"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:src="@drawable/ic_collect"
+                            android:contentDescription="收藏专辑"/>
+
+                        <TextView
+                            android:id="@+id/tv_album_collect"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/space_xs"
+                            android:text="收藏专辑"
+                            android:textColor="@color/text_on_dark"
+                            android:textSize="@dimen/text_body_small"/>
+                    </LinearLayout>
+
+                    <View
+                        style="@style/Widget.Toutiao.Divider.OnDark"
+                        android:layout_marginTop="@dimen/space_l"/>
+
+                    <TextView
+                        style="@style/Widget.Toutiao.SectionTitle.OnDark"
+                        android:layout_marginTop="@dimen/space_l"
+                        android:text="专辑视频"/>
+
+                    <LinearLayout
+                        android:id="@+id/ll_album_episodes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_m"
+                        android:orientation="vertical"/>
+                </LinearLayout>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="@dimen/space_xs"
+        android:layout_marginTop="@dimen/space_xs">
+
+        <ImageView
+            android:id="@+id/iv_album_back"
+            style="@style/Widget.Toutiao.NavIcon"
+            android:background="@drawable/bg_circle_scrim"
+            android:src="@drawable/ic_back"
+            android:contentDescription="返回"/>
+    </FrameLayout>
+</FrameLayout>
