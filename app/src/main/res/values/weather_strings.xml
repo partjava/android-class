@@ -1,0 +1,8 @@
+<resources>
+    <string name="weather_app_name">晴序天气</string>
+    <string name="weather_default_city">武汉  ▾</string>
+    <string name="weather_choose_city">选择城市</string>
+    <string name="weather_refresh">刷新</string>
+    <string name="weather_refresh_description">刷新天气</string>
+    <string name="weather_city_format">%1$s  ▾</string>
+</resources>

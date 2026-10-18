@@ -25,6 +25,7 @@ public class AlbumActivity extends AppCompatActivity {
 
     private VideoAlbum album;
     private ContentStore store;
+    private int reactionRequest;
 
     private ImageView ivHeader, ivCollect;
     private TextView tvTitle, tvSubtitle, tvCollect;
@@ -130,17 +131,19 @@ public class AlbumActivity extends AppCompatActivity {
     }
 
     private void loadCollectStateAsync() {
+        final int request = ++reactionRequest;
         stateExecutor.execute(() -> {
             boolean saved = store.contains("saved", collectKey());
             if (isDestroyed() || isFinishing()) return;
             runOnUiThread(() -> {
-                if (isDestroyed() || isFinishing()) return;
+                if (isDestroyed() || isFinishing() || request != reactionRequest) return;
                 renderCollect(saved);
             });
         });
     }
 
     private void toggleCollect() {
+        reactionRequest++;
         boolean saved;
         if (store.contains("saved", collectKey())) {
             store.remove("saved", collectKey());
@@ -157,6 +160,12 @@ public class AlbumActivity extends AppCompatActivity {
                 saved ? R.color.collect_gold : R.color.text_on_dark));
         tvCollect.setText(saved ? "已收藏专辑" : "收藏专辑");
         findViewById(R.id.ll_album_collect).setContentDescription(saved ? "取消收藏专辑" : "收藏专辑");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (album != null && store != null) loadCollectStateAsync();
     }
 
     @Override

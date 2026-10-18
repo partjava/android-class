@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VideoDetailActivity extends AppCompatActivity {
+    private int reactionRequest;
 
     public static final String EXTRA_TITLE = "title";
     public static final String EXTRA_SOURCE = "source";
@@ -239,6 +240,7 @@ public class VideoDetailActivity extends AppCompatActivity {
             boolean liked = !videoStore.isLiked(currentItem.getId());
             videoStore.setLiked(currentItem.getId(), liked);
             renderLikeState(liked);
+            renderActionsAsync();
         });
         llDetailCollect.setOnClickListener(v -> {
             String key = NewsContract.videoNewsId(currentItem.getTitle());
@@ -251,18 +253,20 @@ public class VideoDetailActivity extends AppCompatActivity {
                 saved = true;
             }
             renderCollectState(saved);
+            renderActionsAsync();
         });
     }
 
     /** onCreate/bindData 异步读取持久化收藏态，动态更新按钮图标。 */
     private void renderActionsAsync() {
+        final int request = ++reactionRequest;
         final String key = NewsContract.videoNewsId(currentItem.getTitle());
         final boolean liked = videoStore.isLiked(currentItem.getId());
         stateExecutor.execute(() -> {
             boolean collected = new ContentStore(VideoDetailActivity.this).contains("saved", key);
             if (isDestroyed() || isFinishing()) return;
             runOnUiThread(() -> {
-                if (isDestroyed() || isFinishing()) return;
+                if (isDestroyed() || isFinishing() || request != reactionRequest) return;
                 renderLikeState(liked);
                 renderCollectState(collected);
             });
@@ -413,7 +417,7 @@ public class VideoDetailActivity extends AppCompatActivity {
     }
 
     @Override protected void onPause(){pause();player.release();super.onPause();}
-    @Override protected void onResume(){super.onResume();if(player!=null&&currentItem!=null)play();}
+    @Override protected void onResume(){super.onResume();if(player!=null&&currentItem!=null){play();renderActionsAsync();}}
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -428,6 +432,7 @@ public class VideoDetailActivity extends AppCompatActivity {
         if (currentItem != null) {
             videoStore.setLiked(currentItem.getId(), true);
             renderLikeState(true);
+            renderActionsAsync();
         }
         ImageView heart = new ImageView(this);
         heart.setImageResource(R.drawable.ic_like);

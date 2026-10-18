@@ -110,6 +110,17 @@ public class VideoFeedAdapter extends RecyclerView.Adapter<VideoFeedAdapter.Feed
 
     public void onHostResume() {
         hostResumed = true;
+        if (attachedRv != null) {
+            for (int i = 0; i < attachedRv.getChildCount(); i++) {
+                RecyclerView.ViewHolder holder = attachedRv.getChildViewHolder(attachedRv.getChildAt(i));
+                int position = holder.getAdapterPosition();
+                if (holder instanceof FeedHolder && position >= 0 && position < data.size()) {
+                    renderLike((FeedHolder)holder, position);
+                    renderCollection((FeedHolder)holder, position);
+                    renderFollow((FeedHolder)holder);
+                }
+            }
+        }
         if (active && !playing) play();
     }
 

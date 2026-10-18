@@ -40,8 +40,33 @@ public final class VideoCatalog {
     private VideoCatalog(Context context) {
         this.context = context;
         seedMock();
+        rebuildIndex();
+        migrateLegacyCollections();
         loadCache();
         rebuildIndex();
+        migrateLegacyCollections();
+    }
+
+    private void migrateLegacyCollections() {
+        VideoStore legacy = new VideoStore(context);
+        ContentStore content = new ContentStore(context);
+        SharedPreferences markers = context.getSharedPreferences("video_collection_migration_v1", Context.MODE_PRIVATE);
+        for (List<VideoItem> channel : new List[]{recommend, small, movie, music}) {
+            for (VideoItem item : channel) {
+                String id = item.getId();
+                if (!legacy.isCollected(id) || markers.getBoolean(id, false)) continue;
+                try {
+                    String key = NewsContract.videoNewsId(item.getTitle());
+                    if (!content.contains("saved", key)) content.put("saved", NewsContract.videoSnapshot(item, albumIdOf(item)));
+                    // Persist before a user can cancel the migrated collection.
+                    if (!markers.edit().putBoolean(id, true).commit()) {
+                        android.util.Log.w("VideoCatalog", "收藏迁移标记未保存，将在下次启动重试");
+                    }
+                } catch (RuntimeException error) {
+                    android.util.Log.w("VideoCatalog", "旧收藏迁移失败，保留原记录供下次重试", error);
+                }
+            }
+        }
     }
 
     public List<VideoItem> recommend() { return recommend; }
