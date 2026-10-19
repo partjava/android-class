@@ -5,6 +5,20 @@ from backend.dummy_goods import GoodsUnavailable
 
 
 class YanxuanContractTests(unittest.TestCase):
+    def test_search_timeout_reports_upstream_reason(self):
+        import requests
+        with patch('backend.yanxuan_goods.requests.get', side_effect=requests.ReadTimeout('upstream stalled')):
+            with self.assertLogs('backend.yanxuan_goods', level='WARNING') as logs:
+                with self.assertRaisesRegex(GoodsUnavailable, '超时'):
+                    YanxuanGoodsCatalog().list_page('推荐')
+        self.assertIn('ReadTimeout', '\n'.join(logs.output))
+
+    def test_search_allows_slow_official_response(self):
+        with patch('backend.yanxuan_goods.requests.get') as get:
+            get.return_value.json.return_value = {'data': {'result': []}}
+            YanxuanGoodsCatalog().list_page('推荐')
+            self.assertGreaterEqual(get.call_args.kwargs['timeout'][1], 30)
+
     def test_transient_connection_reset_is_retried_once(self):
         import requests
         from unittest.mock import Mock

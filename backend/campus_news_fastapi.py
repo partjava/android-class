@@ -308,6 +308,7 @@ async def get_news_list(
             items, total_pages, cat_info = cns.crawl_qcu_page(target_cat, target_page, host)
         except Exception as e:
             print(f"[FastAPI 抓取警告] 实时爬虫异常: {e}")
+            raise HTTPException(status_code=502, detail="学校官网暂时无法访问，请稍后重试。") from e
 
     # 给每条新闻赋予稳定的 ID，并写入缓存供详情接口使用
     for idx, it in enumerate(items):

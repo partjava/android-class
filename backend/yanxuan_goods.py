@@ -1,5 +1,6 @@
 """The six user-selected Yanxuan searches, with no fabricated product data."""
 import copy
+import logging
 import json
 import re
 from datetime import datetime, timezone, timedelta
@@ -18,6 +19,7 @@ CATEGORY_SEARCH_KEYWORDS = {
 }
 ALIASES = {'家居': '家具', '美食': '水果', '全部': '推荐'}
 _FETCHERS = ThreadPoolExecutor(max_workers=6)
+_LOG = logging.getLogger(__name__)
 
 
 class _DescriptionParser(HTMLParser):
@@ -250,8 +252,8 @@ class YanxuanGoodsCatalog:
             future = _FETCHERS.submit(_request_search, 'https://you.163.com/xhr/search/search.json',
                 params={'keyword': keyword, 'size': size, 'page': page, 'sortType': 0, 'descSorted': 'true', 'categoryId': 0, 'matchType': 0},
                 headers={'User-Agent': 'Mozilla/5.0', 'Referer': 'https://you.163.com/search?keyword=' + urllib.parse.quote(keyword)},
-                timeout=(2, 4))
-            response = future.result(timeout=12)
+                timeout=(3, 40))
+            response = future.result(timeout=50)
             response.raise_for_status()
             payload = response.json()
             if payload.get('code') is not None and str(payload['code']) != '200':
@@ -261,6 +263,10 @@ class YanxuanGoodsCatalog:
                 return {'items': items, 'has_more': len(self._raw_search_items(payload)) >= size}
             return items
         except Exception as error:
+            _LOG.warning('Yanxuan search failed category=%s page=%s reason=%s: %s',
+                         category, page, type(error).__name__, error)
+            if isinstance(error, (requests.Timeout, TimeoutError)):
+                raise GoodsUnavailable(f'网易严选“{keyword}”搜索接口响应超时，请稍后重试') from error
             raise GoodsUnavailable(f'网易严选“{keyword}”搜索暂时无法连接，请重试') from error
 
     def list(self, category='推荐', limit=30, refresh=False):

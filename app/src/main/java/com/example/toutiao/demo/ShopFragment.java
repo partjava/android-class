@@ -140,7 +140,7 @@ public class ShopFragment extends PageFragment {
         } catch (java.io.UnsupportedEncodingException e) {
             url = CampusNetworkConfig.getApiBaseUrl() + "/goods?limit=30&page=" + page + (refresh ? "&refresh=true" : "");
         }
-        ApiClient.getWithReadTimeout(url, 16000, new ApiClient.Callback() {
+        ApiClient.getWithReadTimeout(url, 60000, new ApiClient.Callback() {
             private boolean current() { return isAdded() && getView() != null && request == goodsRequest; }
             @Override public void onSuccess(org.json.JSONObject response) {
                 if (!current()) return;

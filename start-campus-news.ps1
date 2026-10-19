@@ -50,8 +50,9 @@ try {
     foreach ($candidate in @($candidates | Select-Object -Unique)) {
         if (!(Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
         Write-Host "检查解释器：$candidate"
-        $probe = @(Invoke-PythonCode $candidate 'import sys; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,10) else "TOO_OLD"); print(sys.executable)')
+        $probe = @(Invoke-PythonCode $candidate 'import sys, sysconfig, importlib.util; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,10) and sysconfig.get_platform().startswith("win") and (importlib.util.find_spec("pip") or importlib.util.find_spec("ensurepip")) else "UNSUPPORTED_PYTHON"); print(sys.executable)')
         if ($pythonExit -eq 0 -and $probe -contains 'CAMPUS_PYTHON_OK') { $pythonPath = $candidate; break }
+        Write-Host '跳过：需要 Windows 原生 Python 3.10+，并具备 pip 或 ensurepip（不使用 MSYS/MinGW Python）。' -ForegroundColor Yellow
     }
     if (!$pythonPath) { throw '未找到可用的 Python 3.10+。请安装 Python 并勾选 Add Python to PATH，然后重新双击启动。' }
     Write-Host "使用解释器：$pythonPath" -ForegroundColor Green

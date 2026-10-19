@@ -5,7 +5,7 @@
 
 特性：
 1. 100% 纯实时动态爬取，彻底杜绝任何本地死代码硬编码！
-2. 自动检测物理网卡 (WLAN/局域网IP) 绑定 Socket 源地址，彻底解决 Clash Verge TUN 代理拦截导致的 SSL 握手断开问题。
+2. 使用系统默认路由访问官网，避免错误绑定 VMware 等虚拟网卡。
 3. 严格按照官网分页规则实时爬取：
    - 第 1 页：https://www.qcuwh.cn/jjqc/xxyw.htm
    - 第 N 页：https://www.qcuwh.cn/jjqc/xxyw/{total_pages - N + 1}.htm
@@ -17,13 +17,11 @@
 
 import os
 import re
-import socket
 import datetime
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, jsonify, request, Response
 import requests
-from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 import urllib3
 
@@ -35,39 +33,9 @@ SCHOOL_NAME = "武汉晴川学院"
 OFFICIAL_BASE_URL = "https://www.qcuwh.cn"
 OFFICIAL_NEWS_URL = "https://www.qcuwh.cn/jjqc/xxyw.htm"
 
-# 自动检测本机物理网卡 IP (避开 Clash Verge TUN 198.18.x.x 虚拟代理网卡)
-def get_physical_lan_ip():
-    try:
-        hostname = socket.gethostname()
-        _, _, ips = socket.gethostbyname_ex(hostname)
-        candidates = [ip for ip in ips if not ip.startswith('198.18.') and not ip.startswith('127.')]
-        for ip in candidates:
-            if ip.startswith('10.') or ip.startswith('192.168.'):
-                return ip
-        if candidates:
-            return candidates[0]
-    except Exception as e:
-        print(f"[网络适配] 检测本地网卡异常: {e}")
-    return "0.0.0.0"
-
-class SourceAddressAdapter(HTTPAdapter):
-    def __init__(self, source_address, **kwargs):
-        self.source_address = source_address
-        super().__init__(**kwargs)
-
-    def init_poolmanager(self, *args, **kwargs):
-        kwargs['source_address'] = self.source_address
-        return super().init_poolmanager(*args, **kwargs)
-
-# 初始化直连物理网卡的 requests Session
-lan_ip = get_physical_lan_ip()
+# Let the OS select the outbound interface. Hostname IP order may put VMware
+# or other private virtual adapters before the actual internet connection.
 session = requests.Session()
-if lan_ip != "0.0.0.0":
-    session.mount('https://', SourceAddressAdapter((lan_ip, 0)))
-    session.mount('http://', SourceAddressAdapter((lan_ip, 0)))
-    print(f"[网络适配] 已成功将请求绑定到物理网卡 IP: {lan_ip} (直连武汉晴川学院官方服务器)")
-else:
-    print("[网络适配] 未检测到特殊虚拟网卡，使用系统默认路由")
 
 session.headers.update({
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -378,7 +346,7 @@ def get_campus_news(cat_name="xxyw", page_num=None):
 @app.route("/api/image_proxy", methods=["GET"])
 def image_proxy():
     """
-    图片代理服务：通过绑定物理网卡的中继 session 实时从学校官网下载高清图片并缓存分发
+    图片代理服务：通过系统默认路由的中继 session 实时从学校官网下载高清图片并缓存分发
     """
     img_url = request.args.get("url")
     if not img_url:
@@ -1042,7 +1010,7 @@ def school_page(page_id):
 if __name__ == "__main__":
     print("=" * 68)
     print(f"  [*] {SCHOOL_NAME} 100% 真实实时官网爬虫服务启动中...")
-    print(f"  ● 物理绑定网卡: {lan_ip}")
+    print("  ● 网络连接: 系统默认路由")
     print(f"  ● 目标官网地址: {OFFICIAL_NEWS_URL}")
     print(f"  ● 零死代码/零硬编码：每次请求均实时直连抓取")
     print(f"  ● Android 模拟器访问地址: http://10.0.2.2:5000/api/news")

@@ -49,8 +49,9 @@ try {
     foreach ($candidate in @($candidates | Select-Object -Unique)) {
         if (!(Test-Path -LiteralPath $candidate -PathType Leaf)) { continue }
         Write-Host "检查解释器：$candidate"
-        $probe = @(Invoke-PythonCode $candidate 'import sys; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,10) else "TOO_OLD"); print(sys.executable)')
+        $probe = @(Invoke-PythonCode $candidate 'import sys, sysconfig, importlib.util; print("CAMPUS_PYTHON_OK" if sys.version_info >= (3,10) and sysconfig.get_platform().startswith("win") and (importlib.util.find_spec("pip") or importlib.util.find_spec("ensurepip")) else "UNSUPPORTED_PYTHON"); print(sys.executable)')
         if ($pythonExit -eq 0 -and $probe -contains 'CAMPUS_PYTHON_OK') { $pythonPath = $candidate; break }
+        Write-Host '跳过：需要 Windows 原生 Python 3.10+，并具备 pip 或 ensurepip（不使用 MSYS/MinGW Python）。' -ForegroundColor Yellow
     }
     if (!$pythonPath) { throw '未找到可用的 Python 3.10+。请安装 Python 并勾选 Add Python to PATH，然后重新双击启动。' }
     Write-Host "使用解释器：$pythonPath" -ForegroundColor Green
@@ -58,11 +59,19 @@ try {
     if (!(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'backend/campus_news_fastapi.py'))) { throw '项目中缺少 campus_news_fastapi.py。' }
     $checkCode = 'import importlib.util; mods={"fastapi":"fastapi","uvicorn":"uvicorn","requests":"requests","bs4":"beautifulsoup4","flask":"flask"}; print(" ".join(pkg for mod,pkg in mods.items() if importlib.util.find_spec(mod) is None))'
     $missingOutput = @(Invoke-PythonCode $pythonPath $checkCode)
+    if ($pythonExit -ne 0) { throw 'Python 依赖检测失败，请查看上方错误。' }
     $missing = if ($missingOutput) { ($missingOutput[-1] -split '\s+') | Where-Object { $_ } } else { @() }
+    if ($CheckOnly -and $missing.Count) { Write-Host ('检测完成，缺少依赖：' + ($missing -join ', ') + '（未安装、未启动服务）。'); exit 0 }
     if ($missing.Count -eq 0) {
         Write-Host '依赖完整，无需安装。' -ForegroundColor Green
     } else {
         Step 3 ("安装缺失依赖（{0}）" -f ($missing -join ', '))
+        Invoke-PythonCommand $pythonPath @('-m', 'pip', '--version')
+        if ($pythonExit -ne 0) {
+            Write-Host '正在通过 ensurepip 初始化 pip…'
+            Invoke-PythonCommand $pythonPath @('-m', 'ensurepip', '--upgrade')
+            if ($pythonExit -ne 0) { throw '无法初始化 pip，请修复 Python 安装。' }
+        }
         $mirror = 'https://pypi.tuna.tsinghua.edu.cn/simple'
         Write-Host "使用清华镜像源：$mirror"
         Invoke-PythonCommand $pythonPath (@('-m', 'pip', 'install', '-i', $mirror, '--timeout', '60') + $missing)
